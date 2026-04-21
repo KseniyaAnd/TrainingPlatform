@@ -1,19 +1,13 @@
 module.exports = {
-  extends: "stylelint-config-standard",
+  extends: 'stylelint-config-standard',
   rules: {
-    // Allow Tailwind at-rules and @apply
-    "at-rule-no-unknown": [
+    'at-rule-no-unknown': [
       true,
       {
-        "ignoreAtRules": [
-          "tailwind",
-          "apply",
-          "variants",
-          "responsive",
-          "screen",
-          "layer"
-        ]
-      }
-    ]
-  }
+        ignoreAtRules: ['tailwind', 'apply', 'variants', 'responsive', 'screen', 'layer', 'source'],
+      },
+    ],
+    'at-rule-empty-line-before': null,
+    'import-notation': null,
+  },
 };

@@ -8,7 +8,7 @@ import { CardModule } from 'primeng/card';
   standalone: true,
   imports: [CommonModule, ButtonModule, CardModule],
   templateUrl: './app.html',
-  styleUrls: ['./app.css']
+  styleUrls: ['./app.css'],
 })
 export class App {
   // signal-based counter

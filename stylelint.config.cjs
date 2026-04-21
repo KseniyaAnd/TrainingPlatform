@@ -6,6 +6,19 @@ module.exports = {
   ],
   plugins: ['stylelint-scss'],
   rules: {
-    // You can add project-specific stylelint rules here
+    // Allow Tailwind at-rules and directives like @apply
+    'at-rule-no-unknown': [
+      true,
+      {
+        ignoreAtRules: [
+          'tailwind',
+          'apply',
+          'variants',
+          'responsive',
+          'screen',
+          'layer'
+        ]
+      }
+    ]
   },
 };

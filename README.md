@@ -10,50 +10,45 @@ To start a local development server, run:
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+# LearningPlatform
 
-## Code scaffolding
+Angular (21+) standalone sample app with Signals, TailwindCSS (v4+), PrimeNG (v21+), ESLint and Prettier.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Prerequisites:
+- Node.js (>=18 recommended)
+- npm
+- (optional) Angular CLI global: `npm install -g @angular/cli@latest`
 
-```bash
-ng generate component component-name
+Quick start (PowerShell):
+
+1. Install dependencies
+```powershell
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
+2. Serve in development
+```powershell
+npm start
+# opens at http://localhost:4200
 ```
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
+3. Build production
+```powershell
+npm run build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+4. Lint
+```powershell
+npm run lint
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
+5. Format
+```powershell
+npm run format
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Notes:
+- Tailwind is configured in `tailwind.config.js` and integrated via `postcss.config.js`.
+- PrimeNG theme and core CSS are imported from `src/styles.css`.
+- `App` component is standalone and demonstrates Angular signals with PrimeNG components.
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

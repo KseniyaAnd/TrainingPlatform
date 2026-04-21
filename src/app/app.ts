@@ -1,11 +1,24 @@
 import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, ButtonModule, CardModule],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrls: ['./app.css']
 })
 export class App {
-  protected readonly title = signal('learning-platform');
+  // signal-based counter
+  counter = signal(0);
+
+  increment() {
+    this.counter.update((n) => n + 1);
+  }
+
+  reset() {
+    this.counter.set(0);
+  }
 }

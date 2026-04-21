@@ -1,4 +1,6 @@
 module.exports = {
+  // Use postcss-scss parser so Tailwind directives and modern PostCSS at-rules are parsed correctly
+  customSyntax: 'postcss-scss',
   extends: [
     'stylelint-config-standard',
     'stylelint-config-recommended-scss',
@@ -10,15 +12,8 @@ module.exports = {
     'at-rule-no-unknown': [
       true,
       {
-        ignoreAtRules: [
-          'tailwind',
-          'apply',
-          'variants',
-          'responsive',
-          'screen',
-          'layer'
-        ]
-      }
-    ]
+        ignoreAtRules: ['tailwind', 'apply', 'variants', 'responsive', 'screen', 'layer'],
+      },
+    ],
   },
 };

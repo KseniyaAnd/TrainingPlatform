@@ -1,10 +1,12 @@
-/* Import Prime icons and PrimeFlex from node_modules (primeng theme and core CSS are not included in this primeng version) */
+/* Import Prime icons and PrimeFlex from node_modules */
 @import url('../node_modules/primeicons/primeicons.css');
 @import url('../node_modules/primeflex/primeflex.css');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* stylelint-disable-next-line at-rule-empty-line-before, import-notation */
+@import 'tailwindcss';
+
+@source '../src/**/*.{html,ts,css,scss}';
+@source '../index.html';
 
 /* PrimeNG theme */
 body {

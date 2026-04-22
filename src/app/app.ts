@@ -1,24 +1,10 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, ButtonModule, CardModule],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
-  styleUrls: ['./app.css'],
 })
-export class App {
-  // signal-based counter
-  counter = signal(0);
-
-  increment() {
-    this.counter.update((n) => n + 1);
-  }
-
-  reset() {
-    this.counter.set(0);
-  }
-}
+export class App {}

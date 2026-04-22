@@ -1,0 +1,60 @@
+<header class="sticky top-0 z-50 bg-white border-b border-gray-200">
+  <div style="height: 80px; padding: 0 24px">
+    <div style="height: 100%; display: flex; align-items: center; gap: 12px">
+      <a
+        routerLink="/"
+        style="font-weight: 700; font-size: 20px; color: #1a1a1a; text-decoration: none"
+      >
+        udemy
+      </a>
+
+      <button pButton type="button" class="p-button-text p-button-sm" label="Explore"></button>
+
+      <div style="flex: 1; min-width: 0; padding: 0 8px">
+        <div style="position: relative; width: 100%">
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="search"
+            placeholder="Search for anything"
+            style="
+              width: 100%;
+              height: 44px;
+              border-radius: 999px;
+              padding: 0 48px 0 16px;
+              background: #f3f4f6;
+              border: 1px solid #d1d5db;
+              box-sizing: border-box;
+              outline: none;
+              font-size: 14px;
+            "
+          />
+          <span
+            style="
+              position: absolute;
+              right: 16px;
+              top: 50%;
+              transform: translateY(-50%);
+              display: flex;
+              align-items: center;
+              pointer-events: none;
+            "
+          >
+            <i class="pi pi-search" style="color: #4b5563; font-size: 14px"></i>
+          </span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px">
+        <button
+          pButton
+          type="button"
+          style="border-color: currentColor"
+          class="p-button-outlined p-button-sm !bg-white !border !text-gray-900 hover:!bg-gray-50"
+          label="Log in"
+        ></button>
+        <button pButton type="button" class="p-button-sm" label="Sign up"></button>
+      </div>
+    </div>
+  </div>
+</header>

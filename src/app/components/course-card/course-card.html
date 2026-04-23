@@ -1,0 +1,14 @@
+<div
+  class="border border-accent rounded-md rounded-md-fix p-4 shadow-sm hover:shadow-md transition-colors bg-white"
+>
+  <div class="flex justify-between items-start">
+    <h2 class="text-xl font-semibold">{{ course.title }}</h2>
+    <div class="text-sm text-gray-500 pl-4">{{ course.createdAt | date: 'mediumDate' }}</div>
+  </div>
+
+  <p class="mt-2 text-gray-700">{{ course.description }}</p>
+
+  <div class="mt-3 text-sm text-gray-600">
+    Teacher: <span class="font-medium">{{ course.teacherId || '—' }}</span>
+  </div>
+</div>

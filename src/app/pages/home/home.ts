@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { Banner } from './banner/banner';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [RouterLink, ButtonModule],
+  imports: [ButtonModule, Banner],
   templateUrl: './home.html',
 })
 export class HomePageComponent {}

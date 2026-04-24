@@ -1,0 +1,96 @@
+<div class="py-10 px-4 bg-gray-50">
+  <div class="max-w-4xl mx-auto">
+    <!-- Back link -->
+    <a
+      routerLink="/courses"
+      class="inline-flex items-center gap-2 text-sm text-gray-600 hover:underline"
+    >
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Back to courses</span>
+    </a>
+
+    <!-- Course card -->
+    @if (course) {
+      <article class="mt-4 rounded-2xl border-2 border-gray-300 bg-white shadow-sm overflow-hidden">
+        <!-- Header section -->
+        <header class="p-6">
+          <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
+            <!-- Title & description -->
+            <div class="min-w-0">
+              <h1 class="text-4xl font-bold leading-tight">{{ course.title }}</h1>
+              @if (course.description) {
+                <p class="mt-2 text-gray-700">{{ course.description }}</p>
+              }
+            </div>
+
+            <!-- Meta info -->
+            <div class="text-sm text-gray-700">
+              <div class="grid gap-3 justify-items-start md:justify-items-end">
+                <button
+                  pButton
+                  type="button"
+                  class="w-full md:w-auto"
+                  [label]="subscribed ? 'Вы подписаны' : 'Подписаться'"
+                  [severity]="subscribed ? 'secondary' : 'success'"
+                  [outlined]="subscribed"
+                  (click)="toggleSubscribe()"
+                ></button>
+
+                @if (course.createdAt) {
+                  <div class="inline-flex items-center gap-2 whitespace-nowrap">
+                    <i class="pi pi-calendar text-gray-500" aria-hidden="true"></i>
+                    <time [attr.datetime]="course.createdAt">
+                      {{ course.createdAt | date: 'mediumDate' }}
+                    </time>
+                  </div>
+                }
+
+                <div class="inline-flex items-center gap-2">
+                  <i class="pi pi-user text-gray-500" aria-hidden="true"></i>
+                  <span>Teacher:</span>
+                  <span class="font-medium">{{ course.teacherId || '—' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Lessons section -->
+        <section class="border-t-2 border-gray-300 bg-gray-50 p-6">
+          <h2 class="text-2xl font-bold inline-flex items-center gap-3 leading-tight">
+            <i class="pi pi-book text-gray-700" aria-hidden="true"></i>
+            <span>Лекции и уроки</span>
+          </h2>
+
+          @if (courseLessons.length === 0) {
+            <p-message severity="info" styleClass="mt-4 w-full" text="Пока нет лекций или уроков" />
+          } @else {
+            <div class="mt-5 grid gap-4">
+              @for (lesson of courseLessons; track lesson.id) {
+                <p-card
+                  [styleClass]="
+                    'overflow-hidden rounded-xl border-2 border-gray-300 bg-white shadow-sm transition hover:shadow-md border-l-4 p-0 ' +
+                    (lesson.kind === 'lecture' ? 'border-l-indigo-500' : 'border-l-emerald-500')
+                  "
+                >
+                  <ng-template pTemplate="header">
+                    <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                      <p-tag
+                        [value]="lesson.kind === 'lecture' ? 'Лекция' : 'Урок'"
+                        severity="success"
+                        styleClass="custom-lesson-tag px-2 py-0.5 text-xs font-semibold"
+                      />
+                      <h3 class="text-2xl font-bold leading-snug black-color">
+                        {{ lesson.title }}
+                      </h3>
+                    </div>
+                  </ng-template>
+                </p-card>
+              }
+            </div>
+          }
+        </section>
+      </article>
+    }
+  </div>
+</div>

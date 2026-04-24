@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { Banner } from './banner/banner';
+import { Banner } from '../../components/banner/banner';
 
 @Component({
   selector: 'app-home-page',

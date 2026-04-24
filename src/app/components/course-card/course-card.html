@@ -1,5 +1,6 @@
-<div
-  class="border border-accent rounded-md rounded-md-fix p-4 shadow-sm hover:shadow-md transition-colors bg-white"
+<a
+  class="block border border-accent rounded-md rounded-md-fix p-4 shadow-sm hover:shadow-md transition-colors bg-white"
+  [routerLink]="['/courses', course.id]"
 >
   <div class="flex justify-between items-start">
     <h2 class="text-xl font-semibold">{{ course.title }}</h2>
@@ -11,4 +12,4 @@
   <div class="mt-3 text-sm text-gray-600">
     Teacher: <span class="font-medium">{{ course.teacherId || '—' }}</span>
   </div>
-</div>
+</a>

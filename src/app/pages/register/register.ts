@@ -7,14 +7,15 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 
-type Role = 'TEACHER' | 'STUDENT';
+import { Role } from '../../models/auth/user-registration.model';
+import { UserRegistrationService } from '../../services/auth/user-registration.service';
 
 @Component({
   selector: 'app-register-page',
@@ -34,11 +35,17 @@ type Role = 'TEACHER' | 'STUDENT';
 })
 export class RegisterPage {
   private readonly fb = inject(FormBuilder);
+  private readonly userRegistrationService = inject(UserRegistrationService);
+  private readonly router = inject(Router);
 
   readonly roles: Array<{ label: string; value: Role }> = [
+    { label: 'Admin', value: 'ADMIN' },
     { label: 'Teacher', value: 'TEACHER' },
     { label: 'Student', value: 'STUDENT' },
   ];
+
+  readonly loading = signal(false);
+  readonly submitError = signal<string | null>(null);
 
   private readonly passwordsMatchValidator = (
     control: AbstractControl,
@@ -51,7 +58,10 @@ export class RegisterPage {
 
   readonly form = this.fb.nonNullable.group(
     {
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      username: [
+        '',
+        [Validators.required, Validators.minLength(3), Validators.pattern(/^[A-Za-z0-9._-]+$/)],
+      ],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required, Validators.minLength(8)]],
@@ -64,7 +74,10 @@ export class RegisterPage {
 
   submit(): void {
     this.submitted.set(true);
+    this.submitError.set(null);
     if (this.form.invalid) return;
+
+    if (this.loading()) return;
 
     const payload = {
       username: this.form.controls.username.value,
@@ -73,6 +86,20 @@ export class RegisterPage {
       role: this.form.controls.role.value,
     };
 
-    console.log('REGISTER_PAYLOAD', payload);
+    this.loading.set(true);
+    this.userRegistrationService.register(payload).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.router.navigateByUrl('/login');
+      },
+      error: (err) => {
+        this.loading.set(false);
+        const message =
+          (err?.error && (err.error.message || err.error.error)) ||
+          err?.message ||
+          'Registration failed';
+        this.submitError.set(String(message));
+      },
+    });
   }
 }

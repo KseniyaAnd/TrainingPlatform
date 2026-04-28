@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 
@@ -16,12 +16,17 @@ import { AuthService } from '../../services/auth/auth.service';
 export class HeaderComponent {
   private readonly authStateService = inject(AuthStateService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   search = '';
 
   readonly isAuthenticated = this.authStateService.isAuthenticated;
   readonly username = this.authStateService.username;
   readonly role = this.authStateService.role;
+
+  onExplore(): void {
+    void this.router.navigate([this.isAuthenticated() ? '/courses' : '/login']);
+  }
 
   logout(): void {
     this.authService.logout();

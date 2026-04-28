@@ -56,7 +56,17 @@ export class AuthService {
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (token) return token;
+
+    const raw = localStorage.getItem('auth:state');
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as { accessToken?: string | null };
+      return parsed.accessToken ?? null;
+    } catch {
+      return null;
+    }
   }
 
   parseToken(token: string): JwtPayload {

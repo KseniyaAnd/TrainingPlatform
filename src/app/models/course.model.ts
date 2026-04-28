@@ -5,3 +5,15 @@ export interface Course {
   teacherId?: string;
   createdAt?: string;
 }
+
+export interface CourseListPage {
+  limit: number;
+  returned: number;
+  nextCursor?: string;
+}
+
+export interface CourseListResponse {
+  items: Course[];
+  page: CourseListPage;
+  links?: Record<string, string>;
+}

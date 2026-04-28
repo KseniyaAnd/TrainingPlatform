@@ -46,18 +46,43 @@
       </div>
 
       <div style="display: flex; align-items: center; gap: 8px">
-        <a routerLink="/login">
+        @if (!isAuthenticated()) {
+          <a routerLink="/login">
+            <button
+              pButton
+              type="button"
+              style="border-color: currentColor"
+              class="p-button-outlined p-button-sm !bg-white !border !text-gray-900 hover:!bg-gray-50"
+              label="Log in"
+            ></button>
+          </a>
+          <a routerLink="/register">
+            <button pButton type="button" class="p-button-sm" label="Sign up"></button>
+          </a>
+        } @else {
+          <a routerLink="/courses">
+            <button
+              pButton
+              type="button"
+              class="p-button-text p-button-sm"
+              label="My courses"
+            ></button>
+          </a>
           <button
             pButton
             type="button"
-            style="border-color: currentColor"
-            class="p-button-outlined p-button-sm !bg-white !border !text-gray-900 hover:!bg-gray-50"
-            label="Log in"
+            class="p-button-text p-button-sm"
+            label="Profile"
+            disabled="true"
           ></button>
-        </a>
-        <a routerLink="/register">
-          <button pButton type="button" class="p-button-sm" label="Sign up"></button>
-        </a>
+          <button
+            pButton
+            type="button"
+            class="p-button-text p-button-sm"
+            label="Log out"
+            (click)="logout()"
+          ></button>
+        }
       </div>
     </div>
   </div>

@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { CourseCardComponent } from '../../components/course-card/course-card';
 import { Course } from '../../models/course.model';
+import { CoursesService } from '../../services/courses/courses.service';
 
 @Component({
   selector: 'app-courses-page',
@@ -10,13 +12,44 @@ import { Course } from '../../models/course.model';
   templateUrl: './courses.html',
 })
 export class CoursesPage {
-  items: Course[] = [
-    {
-      id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-      title: 'Java Architecture',
-      description: 'Advanced backend course',
-      teacherId: '1a2b3c4d-...',
-      createdAt: '2026-04-20T19:10:00+00:00',
-    },
-  ];
+  private readonly coursesService = inject(CoursesService);
+
+  items: Course[] = [];
+  loading = false;
+  error: string | null = null;
+  nextCursor: string | null = null;
+
+  constructor() {
+    void this.loadFirstPage();
+  }
+
+  loadMore(): void {
+    if (!this.nextCursor || this.loading) return;
+    void this.loadPage(this.nextCursor);
+  }
+
+  private loadFirstPage(): void {
+    this.items = [];
+    this.nextCursor = null;
+    this.error = null;
+    void this.loadPage(null);
+  }
+
+  private async loadPage(cursor: string | null): Promise<void> {
+    this.loading = true;
+    this.error = null;
+
+    try {
+      const response = await firstValueFrom(this.coursesService.getCourses({ limit: 20, cursor }));
+
+      if (!response) return;
+
+      this.items = cursor ? [...this.items, ...response.items] : response.items;
+      this.nextCursor = response.page?.nextCursor ?? null;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : 'Failed to load courses';
+    } finally {
+      this.loading = false;
+    }
+  }
 }

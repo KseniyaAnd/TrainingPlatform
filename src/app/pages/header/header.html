@@ -46,14 +46,18 @@
       </div>
 
       <div style="display: flex; align-items: center; gap: 8px">
-        <button
-          pButton
-          type="button"
-          style="border-color: currentColor"
-          class="p-button-outlined p-button-sm !bg-white !border !text-gray-900 hover:!bg-gray-50"
-          label="Log in"
-        ></button>
-        <button pButton type="button" class="p-button-sm" label="Sign up"></button>
+        <a routerLink="/login">
+          <button
+            pButton
+            type="button"
+            style="border-color: currentColor"
+            class="p-button-outlined p-button-sm !bg-white !border !text-gray-900 hover:!bg-gray-50"
+            label="Log in"
+          ></button>
+        </a>
+        <a routerLink="/register">
+          <button pButton type="button" class="p-button-sm" label="Sign up"></button>
+        </a>
       </div>
     </div>
   </div>

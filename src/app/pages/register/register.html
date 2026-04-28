@@ -1,0 +1,120 @@
+<div class="flex items-center justify-center bg-white px-4 py-10">
+  <p-card styleClass="max-w-sm shadow-lg rounded-2xl px-2">
+    <div class="flex gap-1 mb-4" style="flex-direction: column !important">
+      <h1 class="text-2xl font-semibold text-gray-900">Welcome to Focus!</h1>
+      <p class="text-sm text-gray-400">Register your account</p>
+    </div>
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="flex gap-2"
+      style="flex-direction: column !important"
+    >
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="username">Username</label>
+        <input
+          id="username"
+          pInputText
+          formControlName="username"
+          class="w-full"
+          autocomplete="username"
+          placeholder="Enter your username"
+        />
+        @if ((submitted() || form.controls.username.touched) && form.controls.username.invalid) {
+          <div class="text-xs text-red-600">Username is required (min 3 chars)</div>
+        }
+      </div>
+
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="email">Email</label>
+        <input
+          id="email"
+          pInputText
+          formControlName="email"
+          class="w-full"
+          autocomplete="email"
+          placeholder="name@example.com"
+        />
+        @if ((submitted() || form.controls.email.touched) && form.controls.email.invalid) {
+          <div class="text-xs text-red-600">Enter a valid email</div>
+        }
+      </div>
+
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [toggleMask]="true"
+          [feedback]="true"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          autocomplete="new-password"
+          placeholder="Create a password"
+        ></p-password>
+        @if ((submitted() || form.controls.password.touched) && form.controls.password.invalid) {
+          <div class="text-xs text-red-600">Password is required (min 8 chars)</div>
+        }
+      </div>
+
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="confirmPassword"
+          >Repeat password</label
+        >
+        <p-password
+          inputId="confirmPassword"
+          formControlName="confirmPassword"
+          [toggleMask]="true"
+          [feedback]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          autocomplete="new-password"
+          placeholder="Repeat your password"
+        ></p-password>
+        @if (
+          (submitted() || form.controls.confirmPassword.touched) &&
+          (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
+        ) {
+          <div class="text-xs text-red-600">
+            @if (form.hasError('passwordMismatch')) {
+              Passwords do not match
+            } @else {
+              Repeat password is required (min 8 chars)
+            }
+          </div>
+        }
+      </div>
+
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="role">Role</label>
+        <p-select
+          inputId="role"
+          formControlName="role"
+          [options]="roles"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select a role"
+          styleClass="w-full"
+        ></p-select>
+        @if ((submitted() || form.controls.role.touched) && form.controls.role.invalid) {
+          <div class="text-xs text-red-600">Role is required</div>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2 mt-4">
+        <a
+          routerLink="/login"
+          class="w-full p-button p-component p-button-outlined !rounded-full !py-3 text-center"
+        >
+          Войти
+        </a>
+        <button
+          pButton
+          type="submit"
+          class="w-full !bg-violet-600 !border-violet-600 hover:!bg-violet-700 hover:!border-violet-700 !rounded-full !py-3"
+          label="Зарегистрироваться"
+        ></button>
+      </div>
+    </form>
+  </p-card>
+</div>

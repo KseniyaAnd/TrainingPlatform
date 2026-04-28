@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 
 import { AuthStateService } from '../../services/auth/auth-state.service';
+import { AuthService } from '../../services/auth/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -14,12 +15,15 @@ import { AuthStateService } from '../../services/auth/auth-state.service';
 })
 export class HeaderComponent {
   private readonly authStateService = inject(AuthStateService);
+  private readonly authService = inject(AuthService);
 
   search = '';
 
   readonly isAuthenticated = this.authStateService.isAuthenticated;
+  readonly username = this.authStateService.username;
+  readonly role = this.authStateService.role;
 
   logout(): void {
-    this.authStateService.logout();
+    this.authService.logout();
   }
 }

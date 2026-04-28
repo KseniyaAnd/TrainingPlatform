@@ -15,7 +15,6 @@ import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 
 import { Role } from '../../models/auth/user-registration.model';
-import { AuthStateService } from '../../services/auth/auth-state.service';
 import { UserRegistrationService } from '../../services/auth/user-registration.service';
 
 @Component({
@@ -36,7 +35,6 @@ import { UserRegistrationService } from '../../services/auth/user-registration.s
 })
 export class RegisterPage {
   private readonly fb = inject(FormBuilder);
-  private readonly authStateService = inject(AuthStateService);
   private readonly userRegistrationService = inject(UserRegistrationService);
   private readonly router = inject(Router);
 
@@ -92,7 +90,6 @@ export class RegisterPage {
     this.userRegistrationService.register(payload).subscribe({
       next: () => {
         this.loading.set(false);
-        this.authStateService.setAuthenticated(true);
         this.router.navigateByUrl('/');
       },
       error: (err) => {

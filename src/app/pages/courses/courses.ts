@@ -23,17 +23,26 @@ export class CoursesPage {
   readonly error = signal<string | null>(null);
   readonly nextCursor = signal<string | null>(null);
   private readonly scope = signal<string | null>(null);
+  private readonly tag = signal<string | null>(null);
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
+  readonly filteredItems = computed(() => {
+    const tag = this.tag();
+    const items = this.items();
+    if (!tag) return items;
+    return items.filter((c) => (c.tags ?? []).includes(tag));
+  });
 
   constructor() {
     this.route.queryParamMap.subscribe((params) => {
       this.scope.set(params.get('scope'));
+      this.tag.set(params.get('tag'));
     });
 
     effect(() => {
       this.scope();
+      this.tag();
       void this.loadFirstPage();
     });
   }

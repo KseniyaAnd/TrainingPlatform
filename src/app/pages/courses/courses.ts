@@ -24,25 +24,38 @@ export class CoursesPage {
   readonly nextCursor = signal<string | null>(null);
   private readonly scope = signal<string | null>(null);
   private readonly tag = signal<string | null>(null);
+  private readonly q = signal<string | null>(null);
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
   readonly filteredItems = computed(() => {
     const tag = this.tag();
+    const q = (this.q() ?? '').trim().toLowerCase();
     const items = this.items();
-    if (!tag) return items;
-    return items.filter((c) => (c.tags ?? []).includes(tag));
+    let next = items;
+
+    if (tag) {
+      next = next.filter((c) => (c.tags ?? []).includes(tag));
+    }
+
+    if (q) {
+      next = next.filter((c) => (c.title ?? '').toLowerCase().includes(q));
+    }
+
+    return next;
   });
 
   constructor() {
     this.route.queryParamMap.subscribe((params) => {
       this.scope.set(params.get('scope'));
       this.tag.set(params.get('tag'));
+      this.q.set(params.get('q'));
     });
 
     effect(() => {
       this.scope();
       this.tag();
+      this.q();
       void this.loadFirstPage();
     });
   }
@@ -65,10 +78,11 @@ export class CoursesPage {
     this.error.set(null);
 
     try {
+      const q = this.q();
       const response = await firstValueFrom(
         this.scope() === 'me'
-          ? this.coursesService.getMyCourses({ limit: 20, cursor })
-          : this.coursesService.getCourses({ limit: 20, cursor }),
+          ? this.coursesService.getMyCourses({ limit: 20, cursor, q })
+          : this.coursesService.getCourses({ limit: 20, cursor, q }),
       );
 
       if (!response) return;

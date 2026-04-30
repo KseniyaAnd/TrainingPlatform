@@ -19,23 +19,10 @@ export class CoursesService {
     return this.http.get<Course>(`${environment.apiUrl}/courses/${id}`);
   }
 
-  getCourses(options?: { limit?: number; cursor?: string | null }): Observable<CourseListResponse> {
-    let params = new HttpParams();
-
-    if (options?.limit != null) {
-      params = params.set('limit', String(options.limit));
-    }
-
-    if (options?.cursor) {
-      params = params.set('cursor', options.cursor);
-    }
-
-    return this.http.get<CourseListResponse>(`${environment.apiUrl}/courses`, { params });
-  }
-
-  getMyCourses(options?: {
+  getCourses(options?: {
     limit?: number;
     cursor?: string | null;
+    q?: string | null;
   }): Observable<CourseListResponse> {
     let params = new HttpParams();
 
@@ -45,6 +32,32 @@ export class CoursesService {
 
     if (options?.cursor) {
       params = params.set('cursor', options.cursor);
+    }
+
+    if (options?.q) {
+      params = params.set('q', options.q);
+    }
+
+    return this.http.get<CourseListResponse>(`${environment.apiUrl}/courses`, { params });
+  }
+
+  getMyCourses(options?: {
+    limit?: number;
+    cursor?: string | null;
+    q?: string | null;
+  }): Observable<CourseListResponse> {
+    let params = new HttpParams();
+
+    if (options?.limit != null) {
+      params = params.set('limit', String(options.limit));
+    }
+
+    if (options?.cursor) {
+      params = params.set('cursor', options.cursor);
+    }
+
+    if (options?.q) {
+      params = params.set('q', options.q);
     }
 
     return this.http.get<CourseListResponse>(`${environment.apiUrl}/courses/me`, { params });

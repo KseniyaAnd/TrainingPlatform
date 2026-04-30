@@ -21,7 +21,10 @@
           <input
             pInputText
             type="text"
-            [(ngModel)]="search"
+            [ngModel]="search()"
+            (ngModelChange)="onSearchInput($event)"
+            (focus)="onSearchInput(search())"
+            (blur)="closeSuggestions()"
             placeholder="Search for anything"
             style="
               width: 100%;
@@ -48,6 +51,61 @@
           >
             <i class="pi pi-search" style="color: #4b5563; font-size: 14px"></i>
           </span>
+
+          @if (showSuggestions() && search().trim().length > 0) {
+            <div
+              style="
+                position: absolute;
+                top: calc(100% + 8px);
+                left: 0;
+                right: 0;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+                z-index: 60;
+              "
+              (mousedown)="$event.preventDefault()"
+            >
+              @for (course of suggestions(); track course.id) {
+                <button
+                  type="button"
+                  (click)="openCourse(course)"
+                  style="
+                    width: 100%;
+                    text-align: left;
+                    padding: 10px 12px;
+                    border: none;
+                    background: white;
+                    cursor: pointer;
+                  "
+                >
+                  <div style="font-size: 14px; color: #111827; font-weight: 600">
+                    {{ course.title }}
+                  </div>
+                </button>
+              }
+
+              <button
+                type="button"
+                (click)="openAllResults()"
+                style="
+                  width: 100%;
+                  text-align: left;
+                  padding: 10px 12px;
+                  border: none;
+                  border-top: 1px solid #e5e7eb;
+                  background: #f9fafb;
+                  cursor: pointer;
+                  font-weight: 600;
+                  color: #111827;
+                "
+              >
+                Show all results for "{{ search().trim() }}"
+              </button>
+            </div>
+          }
         </div>
       </div>
 

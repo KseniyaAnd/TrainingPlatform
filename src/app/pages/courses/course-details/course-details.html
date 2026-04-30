@@ -9,6 +9,10 @@
       <span>Back to courses</span>
     </a>
 
+    @if (error()) {
+      <div class="mt-4 text-red-600">{{ error() }}</div>
+    }
+
     <!-- Course card -->
     @if (course) {
       <article class="mt-4 rounded-2xl border-2 border-gray-300 bg-white shadow-sm overflow-hidden">

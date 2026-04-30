@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
+import { firstValueFrom } from 'rxjs';
 import { Course } from '../../../models/course.model';
 import { Lesson } from '../../../models/lesson.model';
 import { Topic } from '../../../models/topic.model';
+import { CoursesService } from '../../../services/courses/courses.service';
 
 @Component({
   selector: 'app-course-details-page',
@@ -37,15 +39,10 @@ export class CourseDetailsPage {
   readonly courseId: string;
   subscribed = false;
 
-  private readonly courses: Course[] = [
-    {
-      id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-      title: 'Java Architecture',
-      description: 'Advanced backend course',
-      teacherId: '1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
-      createdAt: '2026-04-20T19:10:00+00:00',
-    },
-  ];
+  private readonly coursesService = inject(CoursesService);
+
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
   private readonly lessons: Lesson[] = [
     {
@@ -87,7 +84,7 @@ export class CourseDetailsPage {
   constructor(route: ActivatedRoute) {
     this.courseId = route.snapshot.paramMap.get('id') ?? '';
 
-    this.course = this.courses.find((c) => c.id === this.courseId);
+    void this.loadCourse();
 
     this.courseLessons = this.lessons
       .filter((l) => l.courseId === this.courseId)
@@ -95,6 +92,25 @@ export class CourseDetailsPage {
         ...l,
         topics: this.topics.filter((t) => t.lessonId === l.id),
       }));
+  }
+
+  private async loadCourse(): Promise<void> {
+    if (!this.courseId) {
+      this.course = undefined;
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      this.course = await firstValueFrom(this.coursesService.getCourseById(this.courseId));
+    } catch (e) {
+      this.course = undefined;
+      this.error.set(e instanceof Error ? e.message : 'Failed to load course');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   toggleSubscribe(): void {

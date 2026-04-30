@@ -3,7 +3,12 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { CourseListResponse } from '../../models/course.model';
+import { Course, CourseListResponse } from '../../models/course.model';
+
+export interface CreateCourseRequest {
+  title: string;
+  description: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CoursesService {
@@ -21,5 +26,26 @@ export class CoursesService {
     }
 
     return this.http.get<CourseListResponse>(`${environment.apiUrl}/courses`, { params });
+  }
+
+  getMyCourses(options?: {
+    limit?: number;
+    cursor?: string | null;
+  }): Observable<CourseListResponse> {
+    let params = new HttpParams();
+
+    if (options?.limit != null) {
+      params = params.set('limit', String(options.limit));
+    }
+
+    if (options?.cursor) {
+      params = params.set('cursor', options.cursor);
+    }
+
+    return this.http.get<CourseListResponse>(`${environment.apiUrl}/courses/me`, { params });
+  }
+
+  createCourse(payload: CreateCourseRequest): Observable<Course> {
+    return this.http.post<Course>(`${environment.apiUrl}/courses`, payload);
   }
 }

@@ -8,11 +8,16 @@ import { Course, CourseListResponse } from '../../models/course.model';
 export interface CreateCourseRequest {
   title: string;
   description: string;
+  tags: string[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class CoursesService {
   private readonly http = inject(HttpClient);
+
+  getCourseById(id: string): Observable<Course> {
+    return this.http.get<Course>(`${environment.apiUrl}/courses/${id}`);
+  }
 
   getCourses(options?: { limit?: number; cursor?: string | null }): Observable<CourseListResponse> {
     let params = new HttpParams();

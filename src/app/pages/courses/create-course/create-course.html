@@ -47,6 +47,19 @@
         }
       </div>
 
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="tags">Tags</label>
+        <p-multiSelect
+          inputId="tags"
+          formControlName="tags"
+          [options]="tagOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select tags"
+          styleClass="w-full"
+        ></p-multiSelect>
+      </div>
+
       @if (submitError()) {
         <div class="text-xs text-red-600">{{ submitError() }}</div>
       }

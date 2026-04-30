@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 import { Course } from '../../../models/course.model';
 import { CoursesService } from '../../../services/courses/courses.service';
@@ -18,6 +19,7 @@ import { CoursesService } from '../../../services/courses/courses.service';
     ReactiveFormsModule,
     CardModule,
     InputTextModule,
+    MultiSelectModule,
     ButtonModule,
   ],
   templateUrl: './create-course.html',
@@ -30,9 +32,19 @@ export class CreateCoursePage {
   readonly loading = signal(false);
   readonly submitError = signal<string | null>(null);
 
+  readonly tagOptions: Array<{ label: string; value: string }> = [
+    { label: 'дизайн', value: 'дизайн' },
+    { label: 'фронтенд', value: 'фронтенд' },
+    { label: 'бэкенд', value: 'бэкенд' },
+    { label: 'машинное обучение', value: 'машинное обучение' },
+    { label: 'DevOps', value: 'DevOps' },
+    { label: 'Мобильная разработка', value: 'Мобильная разработка' },
+  ];
+
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
     description: ['', [Validators.required, Validators.minLength(3)]],
+    tags: this.fb.nonNullable.control<string[]>([]),
   });
 
   submit(): void {
@@ -45,6 +57,7 @@ export class CreateCoursePage {
       .createCourse({
         title: this.form.controls.title.value,
         description: this.form.controls.description.value,
+        tags: this.form.controls.tags.value,
       })
       .subscribe({
         next: (course: Course) => {

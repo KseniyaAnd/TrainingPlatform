@@ -2,6 +2,20 @@ import { Injectable, signal } from '@angular/core';
 
 const AUTH_STORAGE_KEY = 'auth:state';
 
+function pickAppRole(roles: string[] | undefined): string | null {
+  if (!roles || roles.length === 0) return null;
+  if (roles.includes('ADMIN')) return 'ADMIN';
+  if (roles.includes('TEACHER')) return 'TEACHER';
+  if (roles.includes('STUDENT')) return 'STUDENT';
+  return null;
+}
+
+function parseJwtPayload(token: string): unknown {
+  const payload = token.split('.')[1];
+  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(atob(normalized)) as unknown;
+}
+
 export interface AuthState {
   isAuthenticated: boolean;
   accessToken: string | null;
@@ -42,11 +56,30 @@ export class AuthStateService {
     if (!raw) return defaultAuthState;
     try {
       const parsed = JSON.parse(raw) as Partial<AuthState>;
-      return {
+      const next: AuthState = {
         ...defaultAuthState,
         ...parsed,
         isAuthenticated: Boolean(parsed.isAuthenticated),
       };
+
+      const hasValidRole =
+        next.role === 'ADMIN' || next.role === 'TEACHER' || next.role === 'STUDENT';
+      if (!hasValidRole && next.accessToken) {
+        try {
+          const tokenPayload = parseJwtPayload(next.accessToken) as {
+            realm_access?: { roles?: string[] };
+            preferred_username?: string;
+          };
+
+          const roleFromToken = pickAppRole(tokenPayload.realm_access?.roles);
+          if (roleFromToken) next.role = roleFromToken;
+          if (tokenPayload.preferred_username) next.username = tokenPayload.preferred_username;
+        } catch {
+          // ignore token parsing issues; fallback to persisted state
+        }
+      }
+
+      return next;
     } catch {
       return defaultAuthState;
     }

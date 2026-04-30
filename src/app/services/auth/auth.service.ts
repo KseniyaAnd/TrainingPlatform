@@ -9,6 +9,14 @@ import { AuthStateService } from './auth-state.service';
 const ACCESS_TOKEN_KEY = 'accessToken';
 const AUTH_USER_KEY = 'auth:user';
 
+function pickAppRole(roles: string[] | undefined): string | null {
+  if (!roles || roles.length === 0) return null;
+  if (roles.includes('ADMIN')) return 'ADMIN';
+  if (roles.includes('TEACHER')) return 'TEACHER';
+  if (roles.includes('STUDENT')) return 'STUDENT';
+  return null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -33,7 +41,7 @@ export class AuthService {
         tap((payload) => {
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(payload));
           const usernameFromToken = payload.preferred_username ?? '';
-          const role = payload.realm_access?.roles?.[0] ?? '';
+          const role = pickAppRole(payload.realm_access?.roles);
           this.authStateService.setAuth({
             isAuthenticated: true,
             accessToken: localStorage.getItem(ACCESS_TOKEN_KEY),

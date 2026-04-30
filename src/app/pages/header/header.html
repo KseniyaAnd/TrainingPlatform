@@ -66,14 +66,25 @@
             <button pButton type="button" class="p-button-sm" label="Sign up"></button>
           </a>
         } @else {
-          <a routerLink="/courses">
-            <button
-              pButton
-              type="button"
-              class="p-button-text p-button-sm"
-              label="My courses"
-            ></button>
-          </a>
+          @if (role() === 'TEACHER') {
+            <a [routerLink]="['/courses']" [queryParams]="{ scope: 'me' }">
+              <button
+                pButton
+                type="button"
+                class="p-button-text p-button-sm"
+                label="My courses"
+              ></button>
+            </a>
+          } @else {
+            <a [routerLink]="['/courses']" [queryParams]="{ scope: 'me' }">
+              <button
+                pButton
+                type="button"
+                class="p-button-text p-button-sm"
+                label="My courses"
+              ></button>
+            </a>
+          }
           <span style="font-size: 14px; color: #374151; padding: 0 6px">
             {{ username() || 'User' }}
           </span>

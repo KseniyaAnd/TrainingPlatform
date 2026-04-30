@@ -1,6 +1,6 @@
 <div class="max-w-5xl mx-auto">
-  <h1 class="text-3xl font-semibold">Courses</h1>
-  <p class="mt-2 text-gray-600">Available courses:</p>
+  <h1 class="text-3xl font-semibold">My courses</h1>
+  <p class="mt-2 text-gray-600">Courses you are subscribed to:</p>
 
   @if (error()) {
     <div class="mt-4 text-red-600">{{ error() }}</div>
@@ -10,9 +10,22 @@
     <div class="mt-4 text-gray-600">Loading...</div>
   }
 
+  @if (!loading() && !error() && items().length === 0) {
+    <div class="mt-4 text-gray-600">No courses yet</div>
+  }
+
   <div class="mt-6 grid gap-4 sm:grid-cols-2">
     @for (course of items(); track course.id) {
-      <app-course-card [course]="course"></app-course-card>
+      <div
+        class="contents"
+        role="link"
+        tabindex="0"
+        (click)="openCourse(course)"
+        (keydown.enter)="openCourse(course)"
+        (keydown.space)="openCourse(course)"
+      >
+        <app-course-card [course]="course"></app-course-card>
+      </div>
     }
   </div>
 

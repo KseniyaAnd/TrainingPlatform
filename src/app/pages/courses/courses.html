@@ -24,7 +24,7 @@
   }
 
   <div class="mt-6 grid gap-4 sm:grid-cols-2">
-    @for (course of items(); track course.id) {
+    @for (course of filteredItems(); track course.id) {
       <app-course-card [course]="course"></app-course-card>
     }
   </div>

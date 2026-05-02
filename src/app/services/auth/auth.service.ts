@@ -1,9 +1,10 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { JwtPayload, TokenResponse } from '../../models/auth/auth.model';
+import { UsersService } from '../users/users.service';
 import { AuthStateService } from './auth-state.service';
 
 const ACCESS_TOKEN_KEY = 'accessToken';
@@ -21,6 +22,7 @@ function pickAppRole(roles: string[] | undefined): string | null {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly authStateService = inject(AuthStateService);
+  private readonly usersService = inject(UsersService);
 
   login(username: string, password: string): Observable<JwtPayload> {
     const body = new URLSearchParams();
@@ -42,12 +44,29 @@ export class AuthService {
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(payload));
           const usernameFromToken = payload.preferred_username ?? '';
           const role = pickAppRole(payload.realm_access?.roles);
+
+          // Set initial auth state without userId
           this.authStateService.setAuth({
             isAuthenticated: true,
             accessToken: localStorage.getItem(ACCESS_TOKEN_KEY),
             username: usernameFromToken,
             role,
+            userId: null, // Will be loaded next
           });
+        }),
+        // Load internal user ID from /users/me
+        switchMap(() => this.usersService.getCurrentUser()),
+        tap((userProfile) => {
+          // Update auth state with internal userId
+          const currentState = this.authStateService['state']();
+          this.authStateService.setAuth({
+            ...currentState,
+            userId: userProfile.id,
+          });
+        }),
+        map(() => {
+          const payload = JSON.parse(localStorage.getItem(AUTH_USER_KEY) ?? '{}');
+          return payload as JwtPayload;
         }),
       );
   }
@@ -60,6 +79,7 @@ export class AuthService {
       accessToken: null,
       username: null,
       role: null,
+      userId: null,
     });
   }
 

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { CourseStudentAnalyticsResponse } from '../../models/analytics.model';
 import { CourseProgressResponse } from '../../models/progress.model';
 
 @Injectable({ providedIn: 'root' })
@@ -29,5 +30,14 @@ export class ProgressService {
     console.log('ProgressService.markLectureCompleted - URL:', url);
 
     return this.http.put<CourseProgressResponse>(url, { completed: true });
+  }
+
+  /**
+   * Get AI-powered student analytics for a course (teacher/admin only)
+   */
+  getCourseStudentAnalytics(courseId: string): Observable<CourseStudentAnalyticsResponse> {
+    return this.http.get<CourseStudentAnalyticsResponse>(
+      `${environment.apiUrl}/courses/${courseId}/ai/student-analytics`,
+    );
   }
 }

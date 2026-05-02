@@ -7,6 +7,7 @@ import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import { firstValueFrom, map } from 'rxjs';
+import { CourseStudentAnalyticsResponse } from '../../../models/analytics.model';
 import { Assessment } from '../../../models/assessment.model';
 import { Course } from '../../../models/course.model';
 import { Lecture } from '../../../models/lecture.model';
@@ -145,6 +146,10 @@ class CourseDetailsDataService {
       }),
     );
   }
+
+  getCourseStudentAnalytics(courseId: string) {
+    return this.progressService.getCourseStudentAnalytics(courseId);
+  }
 }
 
 @Component({
@@ -224,6 +229,12 @@ export class CourseDetailsPage {
   readonly studentAssessments = signal<AssessmentStudentResponse[]>([]);
   readonly submissions = signal<SubmissionResponse[]>([]);
   readonly submittingAssessmentId = signal<string | null>(null);
+
+  // Analytics for teachers
+  readonly activeTab = signal<'content' | 'analytics'>('content');
+  readonly analyticsData = signal<CourseStudentAnalyticsResponse | null>(null);
+  readonly loadingAnalytics = signal(false);
+  readonly analyticsError = signal<string | null>(null);
 
   readonly lessonsOnly = computed(() => this.courseLessons().filter((l) => l.kind === 'lesson'));
 
@@ -1125,6 +1136,71 @@ export class CourseDetailsPage {
       this.submitError.set(e instanceof Error ? e.message : 'Не удалось отправить ответ');
     } finally {
       this.submittingAssessmentId.set(null);
+    }
+  }
+
+  // Analytics methods for teachers
+  switchTab(tab: 'content' | 'analytics'): void {
+    this.activeTab.set(tab);
+    if (tab === 'analytics' && !this.analyticsData()) {
+      void this.loadAnalytics();
+    }
+  }
+
+  async loadAnalytics(): Promise<void> {
+    if (!this.canEditCourse() || !this.courseId) return;
+
+    this.loadingAnalytics.set(true);
+    this.analyticsError.set(null);
+
+    try {
+      const analytics = await firstValueFrom(
+        this.dataService.getCourseStudentAnalytics(this.courseId),
+      );
+      this.analyticsData.set(analytics);
+    } catch (e) {
+      this.analyticsError.set(e instanceof Error ? e.message : 'Не удалось загрузить аналитику');
+    } finally {
+      this.loadingAnalytics.set(false);
+    }
+  }
+
+  getTrendIcon(trend: string): string {
+    switch (trend) {
+      case 'improving':
+        return 'pi-arrow-up';
+      case 'declining':
+        return 'pi-arrow-down';
+      case 'stable':
+        return 'pi-minus';
+      default:
+        return 'pi-minus';
+    }
+  }
+
+  getTrendColor(trend: string): string {
+    switch (trend) {
+      case 'improving':
+        return 'text-emerald-600';
+      case 'declining':
+        return 'text-red-600';
+      case 'stable':
+        return 'text-gray-600';
+      default:
+        return 'text-gray-600';
+    }
+  }
+
+  getTrendLabel(trend: string): string {
+    switch (trend) {
+      case 'improving':
+        return 'Улучшается';
+      case 'declining':
+        return 'Ухудшается';
+      case 'stable':
+        return 'Стабильно';
+      default:
+        return 'Неизвестно';
     }
   }
 }

@@ -1,9 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Course, CourseListResponse } from '../../models/course.model';
+
+export interface GetCourseByIdResponse {
+  course: Course;
+}
 
 export interface CreateCourseRequest {
   title: string;
@@ -11,12 +15,22 @@ export interface CreateCourseRequest {
   tags: string[];
 }
 
+export type UpdateCourseRequest = Partial<CreateCourseRequest>;
+
 @Injectable({ providedIn: 'root' })
 export class CoursesService {
   private readonly http = inject(HttpClient);
 
   getCourseById(id: string): Observable<Course> {
-    return this.http.get<Course>(`${environment.apiUrl}/courses/${id}`);
+    return this.http.get<unknown>(`${environment.apiUrl}/courses/${id}`).pipe(
+      map((r) => {
+        if (r && typeof r === 'object' && 'course' in r) {
+          return (r as GetCourseByIdResponse).course;
+        }
+
+        return r as Course;
+      }),
+    );
   }
 
   getCourses(options?: {
@@ -65,5 +79,13 @@ export class CoursesService {
 
   createCourse(payload: CreateCourseRequest): Observable<Course> {
     return this.http.post<Course>(`${environment.apiUrl}/courses`, payload);
+  }
+
+  updateCourse(courseId: string, payload: UpdateCourseRequest): Observable<Course> {
+    return this.http.patch<Course>(`${environment.apiUrl}/courses/${courseId}`, payload);
+  }
+
+  deleteCourse(courseId: string): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/courses/${courseId}`);
   }
 }

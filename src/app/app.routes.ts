@@ -34,7 +34,7 @@ export const routes: Routes = [
         component: MyLearningCoursesPage,
       },
       {
-        path: 'courses/:id',
+        path: 'courses/:courseId',
         component: CourseDetailsPage,
       },
       {

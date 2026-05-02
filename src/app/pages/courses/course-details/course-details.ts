@@ -173,15 +173,10 @@ class CourseDetailsDataService {
     :host ::ng-deep .custom-lesson-tag .p-tag-value {
       color: #18181b !important;
     }
-
-    :host ::ng-deep .p-card-body {
-      display: none;
-    }
   `,
 })
 export class CourseDetailsPage {
   readonly courseId: string;
-  subscribed = false;
 
   private readonly dataService = inject(CourseDetailsDataService);
   private readonly authState = inject(AuthStateService);
@@ -191,6 +186,7 @@ export class CourseDetailsPage {
   readonly loading = signal(false);
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
+  readonly subscribed = signal(false);
 
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
@@ -325,9 +321,22 @@ export class CourseDetailsPage {
         };
         const progress = results[4] as CourseProgressResponse | null;
 
+        console.log('=== Student data loaded ===');
+        console.log('studentAssessments:', studentAssessments);
+        console.log('studentAssessments type:', typeof studentAssessments);
+        console.log('studentAssessments is array:', Array.isArray(studentAssessments));
+        console.log('studentAssessments length:', studentAssessments?.length);
+        console.log('submissions:', submissions);
+        console.log('submissions type:', typeof submissions);
+        console.log('submissions is array:', Array.isArray(submissions));
+        console.log('submissions length:', submissions?.length);
+        console.log('enrollmentStatus:', enrollmentStatus);
+        console.log('progress:', progress);
+        console.log('=========================');
+
         this.studentAssessments.set(studentAssessments ?? []);
         this.submissions.set(submissions ?? []);
-        this.subscribed = enrollmentStatus.isEnrolled;
+        this.subscribed.set(enrollmentStatus.isEnrolled);
         this.courseProgress.set(progress);
       } else {
         const assessments = results[1] as Assessment[];
@@ -360,18 +369,18 @@ export class CourseDetailsPage {
   }
 
   async toggleSubscribe(): Promise<void> {
-    if (!this.isStudent() || this.subscribed || this.submitting()) return;
+    if (!this.isStudent() || this.subscribed() || this.submitting()) return;
 
     this.submitting.set(true);
     this.submitError.set(null);
 
     try {
       await firstValueFrom(this.dataService.enroll(this.courseId));
-      this.subscribed = true;
+      this.subscribed.set(true);
     } catch (e) {
       // If already enrolled (409 Conflict), just mark as subscribed
       if (e && typeof e === 'object' && 'status' in e && e.status === 409) {
-        this.subscribed = true;
+        this.subscribed.set(true);
       } else {
         this.submitError.set(e instanceof Error ? e.message : 'Failed to enroll');
       }
@@ -971,7 +980,7 @@ export class CourseDetailsPage {
     if (!this.isStudent() || this.markingLecture()) return;
 
     // Check if enrolled first
-    if (!this.subscribed) {
+    if (!this.subscribed()) {
       this.submitError.set('Вы должны быть записаны на курс. Нажмите "Подписаться" сначала.');
       return;
     }
@@ -1011,7 +1020,7 @@ export class CourseDetailsPage {
             'Ваш профиль пользователя не найден в системе. Обратитесь к администратору.';
         } else if (e?.error?.detail?.includes('Enrollment not found')) {
           errorMessage = 'Вы не записаны на этот курс. Нажмите "Подписаться" и попробуйте снова.';
-          this.subscribed = false; // Update local state
+          this.subscribed.set(false); // Update local state
         } else {
           errorMessage = e?.error?.detail || 'Ресурс не найден';
         }
@@ -1068,7 +1077,25 @@ export class CourseDetailsPage {
 
   // Assessment submission methods for students
   getSubmissionForAssessment(assessmentId: string): SubmissionResponse | null {
-    return this.submissions().find((s) => s.assessmentId === assessmentId) ?? null;
+    const submission = this.submissions().find((s) => s.assessmentId === assessmentId) ?? null;
+    console.log('getSubmissionForAssessment called:', {
+      assessmentId,
+      allSubmissions: this.submissions(),
+      allSubmissionsLength: this.submissions().length,
+      foundSubmission: submission,
+    });
+    return submission;
+  }
+
+  // Debug method
+  debugAssessments(): void {
+    console.log('=== DEBUG ASSESSMENTS ===');
+    console.log('isStudent:', this.isStudent());
+    console.log('studentAssessments:', this.studentAssessments());
+    console.log('studentAssessments length:', this.studentAssessments().length);
+    console.log('submissions:', this.submissions());
+    console.log('submissions length:', this.submissions().length);
+    console.log('========================');
   }
 
   async submitAssessmentAnswer(assessment: AssessmentStudentResponse): Promise<void> {

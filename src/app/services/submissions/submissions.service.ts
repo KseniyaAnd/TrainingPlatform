@@ -20,16 +20,36 @@ export class SubmissionsService {
   getCourseAssessments(courseId: string): Observable<AssessmentStudentResponse[]> {
     return this.http
       .get<AssessmentsPageResponse>(`${environment.apiUrl}/courses/${courseId}/assessments`)
-      .pipe(map((response) => response.items));
+      .pipe(
+        map((response) => {
+          console.log('getCourseAssessments response:', response);
+          console.log('getCourseAssessments response type:', typeof response);
+          console.log('getCourseAssessments response.items:', response.items);
+          console.log('getCourseAssessments response.items type:', typeof response.items);
+          console.log('getCourseAssessments response.items length:', response.items?.length);
+
+          // Проверка на случай, если items это не массив
+          if (!response.items || !Array.isArray(response.items)) {
+            console.error('getCourseAssessments: items is not an array!', response);
+            return [];
+          }
+
+          return response.items;
+        }),
+      );
   }
 
   /**
    * Get all submissions for the current student
    */
   getMySubmissions(): Observable<SubmissionResponse[]> {
-    return this.http
-      .get<SubmissionsPageResponse>(`${environment.apiUrl}/submissions/me`)
-      .pipe(map((response) => response.items));
+    return this.http.get<SubmissionsPageResponse>(`${environment.apiUrl}/submissions/me`).pipe(
+      map((response) => {
+        console.log('getMySubmissions response:', response);
+        console.log('getMySubmissions items:', response.items);
+        return response.items;
+      }),
+    );
   }
 
   /**

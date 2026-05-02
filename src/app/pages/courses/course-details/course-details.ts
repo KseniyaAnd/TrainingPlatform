@@ -768,6 +768,10 @@ export class CourseDetailsPage {
     }
   }
 
+  gradeAssessment(a: Assessment): void {
+    this.router.navigate(['/assessments', a.id, 'grade']);
+  }
+
   async submitLesson(): Promise<void> {
     if (!this.canEditCourse()) return;
     this.submitError.set(null);

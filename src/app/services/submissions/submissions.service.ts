@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -37,5 +37,39 @@ export class SubmissionsService {
    */
   createSubmission(payload: CreateSubmissionRequest): Observable<SubmissionResponse> {
     return this.http.post<SubmissionResponse>(`${environment.apiUrl}/submissions`, payload);
+  }
+
+  /**
+   * Get all submissions for a specific assessment (for teachers)
+   */
+  getAssessmentSubmissions(
+    assessmentId: string,
+    limit?: number,
+    cursor?: string,
+  ): Observable<SubmissionsPageResponse> {
+    let params = new HttpParams();
+    if (limit) {
+      params = params.set('limit', limit.toString());
+    }
+    if (cursor) {
+      params = params.set('cursor', cursor);
+    }
+
+    return this.http.get<SubmissionsPageResponse>(
+      `${environment.apiUrl}/submissions/assessment/${assessmentId}`,
+      { params },
+    );
+  }
+
+  /**
+   * Grade a student's submission (PATCH method)
+   */
+  gradeSubmission(submissionId: string, score: number): Observable<SubmissionResponse> {
+    const body = { score };
+    console.log('Grading submission (PATCH):', { submissionId, body });
+    return this.http.patch<SubmissionResponse>(
+      `${environment.apiUrl}/submissions/${submissionId}`,
+      body,
+    );
   }
 }

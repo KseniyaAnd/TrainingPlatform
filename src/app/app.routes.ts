@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AssessmentGradingComponent } from './pages/courses/assessment-grading/assessment-grading';
 import { CourseDetailsPage } from './pages/courses/course-details/course-details';
 import { CourseStudentViewPage } from './pages/courses/course-student-view/course-student-view';
 import { CoursesPage } from './pages/courses/courses';
@@ -41,6 +42,10 @@ export const routes: Routes = [
       {
         path: 'courses/:courseId',
         component: CourseDetailsPage,
+      },
+      {
+        path: 'assessments/:assessmentId/grade',
+        component: AssessmentGradingComponent,
       },
       {
         path: 'register',

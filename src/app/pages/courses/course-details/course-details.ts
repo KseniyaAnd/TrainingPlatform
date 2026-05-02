@@ -7,7 +7,10 @@ import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import { firstValueFrom, map } from 'rxjs';
-import { CourseStudentAnalyticsResponse } from '../../../models/analytics.model';
+import {
+  AiStudyPlanResponse,
+  CourseStudentAnalyticsResponse,
+} from '../../../models/analytics.model';
 import { Assessment } from '../../../models/assessment.model';
 import { Course } from '../../../models/course.model';
 import { Lecture } from '../../../models/lecture.model';
@@ -150,6 +153,10 @@ class CourseDetailsDataService {
   getCourseStudentAnalytics(courseId: string) {
     return this.progressService.getCourseStudentAnalytics(courseId);
   }
+
+  getStudentAiStudyPlan(courseId: string, studentId: string) {
+    return this.progressService.getStudentAiStudyPlan(courseId, studentId);
+  }
 }
 
 @Component({
@@ -235,6 +242,12 @@ export class CourseDetailsPage {
   readonly analyticsData = signal<CourseStudentAnalyticsResponse | null>(null);
   readonly loadingAnalytics = signal(false);
   readonly analyticsError = signal<string | null>(null);
+
+  // Study plan for individual student
+  readonly selectedStudentId = signal<string | null>(null);
+  readonly studyPlanData = signal<AiStudyPlanResponse | null>(null);
+  readonly loadingStudyPlan = signal(false);
+  readonly studyPlanError = signal<string | null>(null);
 
   readonly lessonsOnly = computed(() => this.courseLessons().filter((l) => l.kind === 'lesson'));
 
@@ -1202,5 +1215,32 @@ export class CourseDetailsPage {
       default:
         return 'Неизвестно';
     }
+  }
+
+  // Study plan methods
+  async viewStudentPlan(studentId: string): Promise<void> {
+    if (!this.canEditCourse() || !this.courseId) return;
+
+    this.selectedStudentId.set(studentId);
+    this.studyPlanData.set(null);
+    this.studyPlanError.set(null);
+    this.loadingStudyPlan.set(true);
+
+    try {
+      const plan = await firstValueFrom(
+        this.dataService.getStudentAiStudyPlan(this.courseId, studentId),
+      );
+      this.studyPlanData.set(plan);
+    } catch (e) {
+      this.studyPlanError.set(e instanceof Error ? e.message : 'Не удалось загрузить учебный план');
+    } finally {
+      this.loadingStudyPlan.set(false);
+    }
+  }
+
+  closeStudentPlan(): void {
+    this.selectedStudentId.set(null);
+    this.studyPlanData.set(null);
+    this.studyPlanError.set(null);
   }
 }

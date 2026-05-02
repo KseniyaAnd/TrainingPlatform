@@ -998,6 +998,18 @@
                           </div>
 
                           <div class="flex items-center gap-4">
+                            <!-- Study plan button -->
+                            <button
+                              pButton
+                              type="button"
+                              label="Учебный план"
+                              severity="info"
+                              [outlined]="true"
+                              (click)="viewStudentPlan(student.studentId)"
+                            >
+                              <i class="pi pi-book mr-2"></i>
+                            </button>
+
                             <!-- Average score -->
                             <div class="text-right">
                               <div class="text-sm text-gray-600">Средний балл</div>
@@ -1079,6 +1091,187 @@
                 </div>
               }
             }
+          </section>
+        }
+
+        <!-- Study Plan Modal -->
+        @if (selectedStudentId()) {
+          <section
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            (click)="closeStudentPlan()"
+          >
+            <div
+              class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              (click)="$event.stopPropagation()"
+            >
+              <!-- Modal header -->
+              <div
+                class="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 flex items-center justify-between rounded-t-2xl"
+              >
+                <div class="flex items-center gap-3">
+                  <i class="pi pi-book text-2xl"></i>
+                  <div>
+                    <h2 class="text-2xl font-bold">Персональный учебный план</h2>
+                    <p class="text-sm text-blue-100">Студент ID: {{ selectedStudentId() }}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
+                  (click)="closeStudentPlan()"
+                >
+                  <i class="pi pi-times text-xl"></i>
+                </button>
+              </div>
+
+              <!-- Modal content -->
+              <div class="p-6">
+                @if (studyPlanError()) {
+                  <p-message severity="error" styleClass="w-full mb-4" [text]="studyPlanError()!" />
+                }
+
+                @if (loadingStudyPlan()) {
+                  <div class="text-center py-12 text-gray-600">
+                    <i class="pi pi-spin pi-spinner text-4xl mb-4"></i>
+                    <p class="text-lg">Генерация учебного плана...</p>
+                  </div>
+                }
+
+                @if (studyPlanData() && !loadingStudyPlan()) {
+                  <div class="space-y-6">
+                    <!-- Rationale -->
+                    @if (studyPlanData()!.rationale) {
+                      <div
+                        class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-5 border border-amber-200"
+                      >
+                        <div class="flex items-start gap-3">
+                          <i class="pi pi-info-circle text-2xl text-amber-600 mt-1"></i>
+                          <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                              Обоснование плана
+                            </h3>
+                            <p class="text-gray-700 leading-relaxed">
+                              {{ studyPlanData()!.rationale }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Prioritized Goals -->
+                    @if (
+                      studyPlanData()!.prioritizedGoals &&
+                      studyPlanData()!.prioritizedGoals.length > 0
+                    ) {
+                      <div class="bg-blue-50 rounded-lg p-5 border border-blue-200">
+                        <div class="flex items-center gap-3 mb-4">
+                          <i class="pi pi-flag text-2xl text-blue-600"></i>
+                          <h3 class="text-lg font-semibold text-gray-900">Приоритетные цели</h3>
+                        </div>
+                        <ul class="space-y-3">
+                          @for (goal of studyPlanData()!.prioritizedGoals; track $index) {
+                            <li class="flex items-start gap-3">
+                              <div
+                                class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold"
+                              >
+                                {{ $index + 1 }}
+                              </div>
+                              <p class="text-gray-700 pt-1">{{ goal }}</p>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+
+                    <!-- Weekly Targets -->
+                    @if (
+                      studyPlanData()!.weeklyTargets && studyPlanData()!.weeklyTargets.length > 0
+                    ) {
+                      <div class="bg-emerald-50 rounded-lg p-5 border border-emerald-200">
+                        <div class="flex items-center gap-3 mb-4">
+                          <i class="pi pi-calendar text-2xl text-emerald-600"></i>
+                          <h3 class="text-lg font-semibold text-gray-900">Еженедельные задачи</h3>
+                        </div>
+                        <ul class="space-y-2">
+                          @for (target of studyPlanData()!.weeklyTargets; track $index) {
+                            <li class="flex items-start gap-3">
+                              <i class="pi pi-check-circle text-emerald-600 text-lg mt-0.5"></i>
+                              <p class="text-gray-700">{{ target }}</p>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    }
+
+                    <!-- Recommended Lessons -->
+                    @if (
+                      studyPlanData()!.recommendedLessons &&
+                      studyPlanData()!.recommendedLessons.length > 0
+                    ) {
+                      <div class="bg-purple-50 rounded-lg p-5 border border-purple-200">
+                        <div class="flex items-center gap-3 mb-4">
+                          <i class="pi pi-book text-2xl text-purple-600"></i>
+                          <h3 class="text-lg font-semibold text-gray-900">Рекомендованные уроки</h3>
+                        </div>
+                        <div class="space-y-2">
+                          @for (lesson of studyPlanData()!.recommendedLessons; track $index) {
+                            <div
+                              class="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200"
+                            >
+                              <div
+                                class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold"
+                              >
+                                {{ $index + 1 }}
+                              </div>
+                              <p class="text-gray-700 font-medium">{{ lesson }}</p>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Recommended Lectures -->
+                    @if (
+                      studyPlanData()!.recommendedLectures &&
+                      studyPlanData()!.recommendedLectures.length > 0
+                    ) {
+                      <div class="bg-indigo-50 rounded-lg p-5 border border-indigo-200">
+                        <div class="flex items-center gap-3 mb-4">
+                          <i class="pi pi-video text-2xl text-indigo-600"></i>
+                          <h3 class="text-lg font-semibold text-gray-900">
+                            Рекомендованные лекции
+                          </h3>
+                        </div>
+                        <div class="space-y-2">
+                          @for (lecture of studyPlanData()!.recommendedLectures; track $index) {
+                            <div
+                              class="flex items-center gap-3 p-3 bg-white rounded-lg border border-indigo-200"
+                            >
+                              <i class="pi pi-play-circle text-indigo-600 text-xl"></i>
+                              <p class="text-gray-700">{{ lecture }}</p>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Modal footer -->
+              <div
+                class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-2xl"
+              >
+                <button
+                  pButton
+                  type="button"
+                  label="Закрыть"
+                  severity="secondary"
+                  (click)="closeStudentPlan()"
+                  class="w-full"
+                ></button>
+              </div>
+            </div>
           </section>
         }
       </article>

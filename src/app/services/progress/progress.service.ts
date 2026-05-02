@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CourseStudentAnalyticsResponse } from '../../models/analytics.model';
+import { AiStudyPlanResponse, CourseStudentAnalyticsResponse } from '../../models/analytics.model';
 import { CourseProgressResponse } from '../../models/progress.model';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +38,15 @@ export class ProgressService {
   getCourseStudentAnalytics(courseId: string): Observable<CourseStudentAnalyticsResponse> {
     return this.http.get<CourseStudentAnalyticsResponse>(
       `${environment.apiUrl}/courses/${courseId}/ai/student-analytics`,
+    );
+  }
+
+  /**
+   * Get AI-generated study plan for a specific student (teacher/admin only)
+   */
+  getStudentAiStudyPlan(courseId: string, studentId: string): Observable<AiStudyPlanResponse> {
+    return this.http.get<AiStudyPlanResponse>(
+      `${environment.apiUrl}/courses/${courseId}/students/${studentId}/ai-study-plan`,
     );
   }
 }

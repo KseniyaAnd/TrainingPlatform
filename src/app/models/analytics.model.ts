@@ -18,3 +18,13 @@ export interface CourseStudentAnalyticsResponse {
   aiSummary: string;
   students: StudentAnalytics[];
 }
+
+export interface AiStudyPlanResponse {
+  courseId: string;
+  studentId: string;
+  prioritizedGoals: string[];
+  weeklyTargets: string[];
+  recommendedLessons: string[];
+  recommendedLectures: string[];
+  rationale: string;
+}

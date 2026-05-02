@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { CourseDetailsPage } from './pages/courses/course-details/course-details';
+import { CourseStudentViewPage } from './pages/courses/course-student-view/course-student-view';
 import { CoursesPage } from './pages/courses/courses';
 import { CreateCoursePage } from './pages/courses/create-course/create-course';
 import { MyCreatedCoursesPage } from './pages/courses/my-created-courses/my-created-courses';
@@ -32,6 +33,10 @@ export const routes: Routes = [
       {
         path: 'my-courses/learning',
         component: MyLearningCoursesPage,
+      },
+      {
+        path: 'courses/:courseId/student',
+        component: CourseStudentViewPage,
       },
       {
         path: 'courses/:courseId',

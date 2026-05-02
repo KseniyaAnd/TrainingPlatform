@@ -6,11 +6,12 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { Assessment } from '../../../models/assessment.model';
 import { Course } from '../../../models/course.model';
 import { Lecture } from '../../../models/lecture.model';
 import { Lesson } from '../../../models/lesson.model';
+import { CourseProgressResponse } from '../../../models/progress.model';
 import { AuthStateService } from '../../../services/auth/auth-state.service';
 import {
   AssessmentDifficulty,
@@ -27,11 +28,13 @@ import {
   UpdateLessonRequest,
 } from '../../../services/courses/course-content.service';
 import { CoursesService, UpdateCourseRequest } from '../../../services/courses/courses.service';
+import { ProgressService } from '../../../services/progress/progress.service';
 
 @Injectable({ providedIn: 'root' })
 class CourseDetailsDataService {
   private readonly coursesService = inject(CoursesService);
   private readonly courseContent = inject(CourseContentService);
+  private readonly progressService = inject(ProgressService);
 
   getCourse(courseId: string) {
     return this.coursesService.getCourseById(courseId);
@@ -55,6 +58,14 @@ class CourseDetailsDataService {
 
   getAssessments(courseId: string) {
     return this.courseContent.getAssessmentsByCourseId(courseId);
+  }
+
+  getCourseProgress(courseId: string) {
+    return this.progressService.getCourseProgress(courseId);
+  }
+
+  markLectureCompleted(courseId: string, userId: string, lectureId: string) {
+    return this.progressService.markLectureCompleted(courseId, userId, lectureId);
   }
 
   createLesson(payload: CreateLessonRequest) {
@@ -99,6 +110,25 @@ class CourseDetailsDataService {
 
   createAssessmentFromDraft(payload: CreateAssessmentFromDraftRequest) {
     return this.courseContent.createAssessmentFromDraft(payload);
+  }
+
+  enroll(courseId: string) {
+    return this.coursesService.enroll(courseId);
+  }
+
+  getEnrolledCourses() {
+    return this.coursesService.getEnrolledCourses({ limit: 200 });
+  }
+
+  checkEnrollmentStatus(courseId: string) {
+    return this.coursesService.getEnrolledCourses({ limit: 200 }).pipe(
+      map((response) => {
+        const enrollment = response.items.find((e) => e.course.id === courseId);
+        return enrollment
+          ? { isEnrolled: true, enrollmentId: enrollment.enrollmentId }
+          : { isEnrolled: false, enrollmentId: null };
+      }),
+    );
   }
 }
 
@@ -148,10 +178,17 @@ export class CourseDetailsPage {
   readonly error = signal<string | null>(null);
 
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
+  readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
   readonly canEditCourse = computed(() => {
     const role = this.authState.role();
     return role === 'TEACHER' || role === 'ADMIN';
   });
+
+  // Progress tracking for students
+  readonly courseProgress = signal<CourseProgressResponse | null>(null);
+  readonly expandedLessons = signal<Set<string>>(new Set());
+  readonly markingLecture = signal<string | null>(null);
+
   readonly showLessonForm = signal(false);
   readonly showLectureForm = signal(false);
   readonly showAssessmentForm = signal(false);
@@ -223,6 +260,7 @@ export class CourseDetailsPage {
       this.course.set(undefined);
       this.courseLessons.set([]);
       this.assessments.set([]);
+      this.courseProgress.set(null);
       return;
     }
 
@@ -233,12 +271,35 @@ export class CourseDetailsPage {
     try {
       this.course.set(await firstValueFrom(this.dataService.getCourse(this.courseId)));
 
-      const [lessons, assessments] = await Promise.all([
+      const promises: Promise<unknown>[] = [
         firstValueFrom(this.dataService.getLessons(this.courseId)),
         firstValueFrom(this.dataService.getAssessments(this.courseId)),
-      ]);
+      ];
+
+      // Check enrollment status and load progress for students
+      if (this.isStudent()) {
+        promises.push(firstValueFrom(this.dataService.checkEnrollmentStatus(this.courseId)));
+        promises.push(
+          firstValueFrom(this.dataService.getCourseProgress(this.courseId)).catch(() => null),
+        );
+      }
+
+      const results = await Promise.all(promises);
+      const lessons = results[0] as Lesson[];
+      const assessments = results[1] as Assessment[];
 
       this.assessments.set(assessments ?? []);
+
+      // Check if student is enrolled and load progress
+      if (this.isStudent() && results.length > 2) {
+        const enrollmentStatus = results[2] as { isEnrolled: boolean; enrollmentId: string | null };
+        this.subscribed = enrollmentStatus.isEnrolled;
+
+        if (results.length > 3) {
+          const progress = results[3] as CourseProgressResponse | null;
+          this.courseProgress.set(progress);
+        }
+      }
 
       const lessonsWithLectures = await Promise.all(
         (lessons ?? []).map(async (lesson) => {
@@ -256,14 +317,32 @@ export class CourseDetailsPage {
       this.course.set(undefined);
       this.courseLessons.set([]);
       this.assessments.set([]);
+      this.courseProgress.set(null);
       this.error.set(e instanceof Error ? e.message : 'Failed to load course');
     } finally {
       this.loading.set(false);
     }
   }
 
-  toggleSubscribe(): void {
-    this.subscribed = !this.subscribed;
+  async toggleSubscribe(): Promise<void> {
+    if (!this.isStudent() || this.subscribed || this.submitting()) return;
+
+    this.submitting.set(true);
+    this.submitError.set(null);
+
+    try {
+      await firstValueFrom(this.dataService.enroll(this.courseId));
+      this.subscribed = true;
+    } catch (e) {
+      // If already enrolled (409 Conflict), just mark as subscribed
+      if (e && typeof e === 'object' && 'status' in e && e.status === 409) {
+        this.subscribed = true;
+      } else {
+        this.submitError.set(e instanceof Error ? e.message : 'Failed to enroll');
+      }
+    } finally {
+      this.submitting.set(false);
+    }
   }
 
   addLesson(): void {
@@ -825,5 +904,126 @@ export class CourseDetailsPage {
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  // Progress tracking methods
+  toggleLessonExpanded(lessonId: string): void {
+    const expanded = this.expandedLessons();
+    const newExpanded = new Set(expanded);
+    if (newExpanded.has(lessonId)) {
+      newExpanded.delete(lessonId);
+    } else {
+      newExpanded.add(lessonId);
+    }
+    this.expandedLessons.set(newExpanded);
+  }
+
+  isLessonExpanded(lessonId: string): boolean {
+    return this.expandedLessons().has(lessonId);
+  }
+
+  isLectureCompleted(lectureId: string): boolean {
+    const progress = this.courseProgress();
+    if (!progress) return false;
+    return progress.completedLectureIds.includes(lectureId);
+  }
+
+  async markLectureAsCompleted(lectureId: string): Promise<void> {
+    if (!this.isStudent() || this.markingLecture()) return;
+
+    // Check if enrolled first
+    if (!this.subscribed) {
+      this.submitError.set('Вы должны быть записаны на курс. Нажмите "Подписаться" сначала.');
+      return;
+    }
+
+    // Get userId from auth state (internal DB ID, not Keycloak sub)
+    const userId = this.authState.getUserId();
+    if (!userId) {
+      this.submitError.set('User ID не найден. Пожалуйста, выйдите и войдите заново.');
+      console.error('Internal userId is missing. User needs to re-login.');
+      return;
+    }
+
+    console.log('Marking lecture as completed:', {
+      courseId: this.courseId,
+      userId,
+      lectureId,
+    });
+
+    this.markingLecture.set(lectureId);
+    try {
+      const progress = await firstValueFrom(
+        this.dataService.markLectureCompleted(this.courseId, userId, lectureId),
+      );
+
+      // Update progress with the response
+      this.courseProgress.set(progress);
+      console.log('Lecture marked as completed successfully');
+    } catch (e: any) {
+      console.error('Failed to mark lecture as completed:', e);
+
+      // Extract more detailed error information
+      let errorMessage = 'Не удалось отметить лекцию как просмотренную';
+
+      if (e?.status === 404) {
+        if (e?.error?.detail?.includes('User not found')) {
+          errorMessage =
+            'Ваш профиль пользователя не найден в системе. Обратитесь к администратору.';
+        } else if (e?.error?.detail?.includes('Enrollment not found')) {
+          errorMessage = 'Вы не записаны на этот курс. Нажмите "Подписаться" и попробуйте снова.';
+          this.subscribed = false; // Update local state
+        } else {
+          errorMessage = e?.error?.detail || 'Ресурс не найден';
+        }
+      } else if (e?.status === 403) {
+        errorMessage = 'У вас нет прав для выполнения этого действия';
+      } else if (e?.status === 500) {
+        if (e?.error?.detail?.includes('enrollment')) {
+          errorMessage = 'Ошибка проверки подписки на курс. Убедитесь, что вы подписаны на курс.';
+        } else {
+          errorMessage = e?.error?.detail || 'Внутренняя ошибка сервера';
+        }
+      } else if (e?.error?.detail) {
+        errorMessage = e.error.detail;
+      } else if (e?.error?.message) {
+        errorMessage = e.error.message;
+      } else if (e?.message) {
+        errorMessage = e.message;
+      }
+
+      // Add status code to error message for debugging
+      if (e?.status) {
+        errorMessage = `${errorMessage} (Код: ${e.status})`;
+      }
+
+      this.submitError.set(errorMessage);
+    } finally {
+      this.markingLecture.set(null);
+    }
+  }
+
+  getLessonProgress(lessonId: string): { completed: number; total: number } {
+    const progress = this.courseProgress();
+    if (!progress) return { completed: 0, total: 0 };
+
+    // Calculate progress for this lesson based on completed lectures
+    const lesson = this.courseLessons().find((l) => l.id === lessonId);
+    if (!lesson) return { completed: 0, total: 0 };
+
+    const totalLectures = lesson.lectures?.length ?? 0;
+    const completedLectures =
+      lesson.lectures?.filter((lecture) => progress.completedLectureIds.includes(lecture.id))
+        .length ?? 0;
+
+    return {
+      completed: completedLectures,
+      total: totalLectures,
+    };
+  }
+
+  getOverallProgress(): number {
+    const progress = this.courseProgress();
+    return progress?.progressPercent ?? 0;
   }
 }

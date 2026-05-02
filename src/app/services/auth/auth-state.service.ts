@@ -21,6 +21,7 @@ export interface AuthState {
   accessToken: string | null;
   username: string | null;
   role: string | null;
+  userId: string | null; // Internal user ID from database
 }
 
 const defaultAuthState: AuthState = {
@@ -28,6 +29,7 @@ const defaultAuthState: AuthState = {
   accessToken: null,
   username: null,
   role: null,
+  userId: null,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -37,18 +39,42 @@ export class AuthStateService {
   readonly isAuthenticated = signal<boolean>(this.state().isAuthenticated);
   readonly username = signal<string | null>(this.state().username);
   readonly role = signal<string | null>(this.state().role);
+  readonly userId = signal<string | null>(this.state().userId);
 
   setAuth(next: AuthState): void {
     this.state.set(next);
     this.isAuthenticated.set(next.isAuthenticated);
     this.username.set(next.username);
     this.role.set(next.role);
+    this.userId.set(next.userId);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
   }
 
   setAuthenticated(value: boolean): void {
     const current = this.state();
     this.setAuth({ ...current, isAuthenticated: value });
+  }
+
+  /**
+   * Get the internal user ID from the auth state (from database, not Keycloak)
+   */
+  getUserId(): string | null {
+    return this.state().userId;
+  }
+
+  /**
+   * Get the Keycloak subject ID from the JWT token
+   */
+  getKeycloakSubject(): string | null {
+    const token = this.state().accessToken;
+    if (!token) return null;
+
+    try {
+      const payload = parseJwtPayload(token) as { sub?: string };
+      return payload.sub ?? null;
+    } catch {
+      return null;
+    }
   }
 
   private readInitialState(): AuthState {

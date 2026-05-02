@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CourseCardComponent } from '../../components/course-card/course-card';
-import { Course } from '../../models/course.model';
+import { CourseWithEnrollment } from '../../models/course.model';
 import { AuthStateService } from '../../services/auth/auth-state.service';
 import { CoursesService } from '../../services/courses/courses.service';
 
@@ -18,7 +18,7 @@ export class CoursesPage {
   private readonly route = inject(ActivatedRoute);
   private readonly authState = inject(AuthStateService);
 
-  readonly items = signal<Course[]>([]);
+  readonly items = signal<CourseWithEnrollment[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly nextCursor = signal<string | null>(null);
@@ -28,6 +28,7 @@ export class CoursesPage {
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
+  readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
   readonly filteredItems = computed(() => {
     const tag = this.tag();
     const q = (this.q() ?? '').trim().toLowerCase();
@@ -66,6 +67,40 @@ export class CoursesPage {
     void this.loadPage(cursor);
   }
 
+  async handleEnroll(courseId: string): Promise<void> {
+    try {
+      const response = await firstValueFrom(this.coursesService.enroll(courseId));
+
+      // Update the course in the list
+      this.items.update((items) =>
+        items.map((course) =>
+          course.id === courseId
+            ? { ...course, isEnrolled: true, enrollmentId: response.enrollmentId }
+            : course,
+        ),
+      );
+    } catch (e) {
+      console.error('Failed to enroll:', e);
+      // Optionally show error to user
+    }
+  }
+
+  async handleUnenroll(enrollmentId: string, courseId: string): Promise<void> {
+    try {
+      await firstValueFrom(this.coursesService.unenroll(enrollmentId));
+
+      // Update the course in the list
+      this.items.update((items) =>
+        items.map((course) =>
+          course.id === courseId ? { ...course, isEnrolled: false, enrollmentId: null } : course,
+        ),
+      );
+    } catch (e) {
+      console.error('Failed to unenroll:', e);
+      // Optionally show error to user
+    }
+  }
+
   private loadFirstPage(): void {
     this.items.set([]);
     this.nextCursor.set(null);
@@ -79,16 +114,63 @@ export class CoursesPage {
 
     try {
       const q = this.q();
-      const response = await firstValueFrom(
-        this.scope() === 'me'
-          ? this.coursesService.getMyCourses({ limit: 20, cursor, q })
-          : this.coursesService.getCourses({ limit: 20, cursor, q }),
-      );
+      const role = this.authState.role();
+      const scope = this.scope();
 
-      if (!response) return;
-
-      this.items.set(cursor ? [...this.items(), ...response.items] : response.items);
-      this.nextCursor.set(response.page?.nextCursor ?? null);
+      if (scope === 'me') {
+        // Load user's own courses (enrolled for students, created for teachers)
+        if (role === 'STUDENT') {
+          const response = await firstValueFrom(
+            this.coursesService.getEnrolledCourses({ limit: 20, cursor, q }),
+          );
+          const coursesWithEnrollment: CourseWithEnrollment[] = response.items.map(
+            (enrollment) => ({
+              ...enrollment.course,
+              isEnrolled: true,
+              enrollmentId: enrollment.enrollmentId,
+            }),
+          );
+          this.items.set(
+            cursor ? [...this.items(), ...coursesWithEnrollment] : coursesWithEnrollment,
+          );
+          this.nextCursor.set(response.page?.nextCursor ?? null);
+        } else {
+          const response = await firstValueFrom(
+            this.coursesService.getMyCourses({ limit: 20, cursor, q }),
+          );
+          const coursesWithEnrollment: CourseWithEnrollment[] = response.items.map((course) => ({
+            ...course,
+            isEnrolled: false,
+            enrollmentId: null,
+          }));
+          this.items.set(
+            cursor ? [...this.items(), ...coursesWithEnrollment] : coursesWithEnrollment,
+          );
+          this.nextCursor.set(response.page?.nextCursor ?? null);
+        }
+      } else {
+        // Load all courses with enrollment status for students
+        if (role === 'STUDENT' && !cursor) {
+          const coursesWithEnrollment = await firstValueFrom(
+            this.coursesService.loadCoursesWithEnrollmentStatus({ limit: 20, cursor, q }),
+          );
+          this.items.set(coursesWithEnrollment);
+          this.nextCursor.set(null); // For simplicity, disable pagination when using combined load
+        } else {
+          const response = await firstValueFrom(
+            this.coursesService.getCourses({ limit: 20, cursor, q }),
+          );
+          const coursesWithEnrollment: CourseWithEnrollment[] = response.items.map((course) => ({
+            ...course,
+            isEnrolled: false,
+            enrollmentId: null,
+          }));
+          this.items.set(
+            cursor ? [...this.items(), ...coursesWithEnrollment] : coursesWithEnrollment,
+          );
+          this.nextCursor.set(response.page?.nextCursor ?? null);
+        }
+      }
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Failed to load courses');
     } finally {

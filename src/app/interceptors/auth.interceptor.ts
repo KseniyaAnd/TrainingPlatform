@@ -33,7 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
     return next(cloned).pipe(
       catchError((err) => {
-        if (err?.status === 401 || err?.status === 403) {
+        if (err?.status === 401) {
           authService.logout();
           void router.navigateByUrl('/');
         }

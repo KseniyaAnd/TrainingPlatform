@@ -8,6 +8,17 @@ export interface Course {
   createdAt?: string;
 }
 
+export interface CourseEnrollment {
+  enrollmentId: string;
+  enrolledAt: string;
+  course: Course;
+}
+
+export interface CourseWithEnrollment extends Course {
+  isEnrolled: boolean;
+  enrollmentId: string | null;
+}
+
 export interface CourseListPage {
   limit: number;
   returned: number;
@@ -16,6 +27,12 @@ export interface CourseListPage {
 
 export interface CourseListResponse {
   items: Course[];
+  page: CourseListPage;
+  links?: Record<string, string>;
+}
+
+export interface CourseEnrollmentListResponse {
+  items: CourseEnrollment[];
   page: CourseListPage;
   links?: Record<string, string>;
 }

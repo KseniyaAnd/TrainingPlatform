@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AssessmentsPageResponse,
   AssessmentStudentResponse,
   CreateSubmissionRequest,
   SubmissionResponse,
+  SubmissionsPageResponse,
 } from '../../models/submission.model';
 
 @Injectable({ providedIn: 'root' })
@@ -16,16 +18,18 @@ export class SubmissionsService {
    * Get assessments for a course (student view)
    */
   getCourseAssessments(courseId: string): Observable<AssessmentStudentResponse[]> {
-    return this.http.get<AssessmentStudentResponse[]>(
-      `${environment.apiUrl}/courses/${courseId}/assessments/student`,
-    );
+    return this.http
+      .get<AssessmentsPageResponse>(`${environment.apiUrl}/courses/${courseId}/assessments`)
+      .pipe(map((response) => response.items));
   }
 
   /**
    * Get all submissions for the current student
    */
   getMySubmissions(): Observable<SubmissionResponse[]> {
-    return this.http.get<SubmissionResponse[]>(`${environment.apiUrl}/submissions/me`);
+    return this.http
+      .get<SubmissionsPageResponse>(`${environment.apiUrl}/submissions/me`)
+      .pipe(map((response) => response.items));
   }
 
   /**

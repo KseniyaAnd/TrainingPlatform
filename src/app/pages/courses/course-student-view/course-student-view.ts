@@ -247,12 +247,7 @@ export class CourseStudentViewPage implements OnInit {
   }
 
   getAssessmentQuestions(assessment: AssessmentStudentResponse): string[] {
-    try {
-      const parsed = JSON.parse(assessment.questionsJson);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+    return assessment.questions ?? [];
   }
 
   submitAssessment(): void {

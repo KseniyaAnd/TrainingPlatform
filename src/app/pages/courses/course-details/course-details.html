@@ -632,15 +632,16 @@
             </form>
           }
 
-          @if (assessments().length === 0) {
-            <p-message severity="info" styleClass="mt-4 w-full" text="Пока нет assessments" />
-          } @else {
-            <div class="mt-5 grid gap-3">
-              @for (a of assessments(); track a.id) {
-                <div class="rounded-xl border border-gray-200 p-4">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="font-semibold">{{ a.title }}</div>
-                    @if (canEditCourse()) {
+          <!-- Teacher view: show all assessments with edit controls -->
+          @if (canEditCourse()) {
+            @if (assessments().length === 0) {
+              <p-message severity="info" styleClass="mt-4 w-full" text="Пока нет assessments" />
+            } @else {
+              <div class="mt-5 grid gap-3">
+                @for (a of assessments(); track a.id) {
+                  <div class="rounded-xl border border-gray-200 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="font-semibold">{{ a.title }}</div>
                       <div class="flex gap-2">
                         <button
                           pButton
@@ -659,14 +660,122 @@
                           (click)="deleteAssessment(a)"
                         ></button>
                       </div>
+                    </div>
+                    @if (a.description) {
+                      <div class="mt-1 text-sm text-gray-700">{{ a.description }}</div>
                     }
                   </div>
-                  @if (a.description) {
-                    <div class="mt-1 text-sm text-gray-700">{{ a.description }}</div>
-                  }
-                </div>
-              }
-            </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Student view: show assessments with submission capability -->
+          @if (isStudent()) {
+            @if (studentAssessments().length === 0) {
+              <p-message severity="info" styleClass="mt-4 w-full" text="Пока нет assessments" />
+            } @else {
+              <div class="mt-5 grid gap-4">
+                @for (assessment of studentAssessments(); track assessment.id) {
+                  <p-card
+                    [styleClass]="'overflow-hidden rounded-xl border-2 border-gray-300 bg-white shadow-sm transition hover:shadow-md border-l-4 p-0 border-l-blue-500'"
+                  >
+                    <ng-template pTemplate="header">
+                      <div
+                        class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2"
+                      >
+                        <div class="flex items-center gap-2 flex-1">
+                          <p-tag
+                            value="Assessment"
+                            severity="info"
+                            styleClass="px-2 py-0.5 text-xs font-semibold"
+                          />
+                          <h3 class="text-2xl font-bold leading-snug black-color">
+                            {{ assessment.title }}
+                          </h3>
+                        </div>
+
+                        @if (getSubmissionForAssessment(assessment.id)) {
+                          <div class="flex items-center gap-2 text-emerald-600">
+                            <i class="pi pi-check-circle"></i>
+                            <span class="text-sm font-medium">Отправлено</span>
+                          </div>
+                        }
+                      </div>
+                    </ng-template>
+
+                    <div class="px-4 py-3">
+                      @if (assessment.description) {
+                        <p class="text-gray-700 mb-4">{{ assessment.description }}</p>
+                      }
+
+                      <div class="mb-4">
+                        <h4 class="text-lg font-semibold mb-2">Вопросы:</h4>
+                        <ol class="list-decimal list-inside space-y-2">
+                          @for (question of assessment.questions; track $index) {
+                            <li class="text-gray-700">{{ question }}</li>
+                          }
+                        </ol>
+                      </div>
+
+                      @if (getSubmissionForAssessment(assessment.id); as submission) {
+                        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <h4 class="text-lg font-semibold mb-2">Ваш ответ:</h4>
+                          <p class="text-gray-700 whitespace-pre-wrap">
+                            {{ submission.answerText }}
+                          </p>
+
+                          <div class="mt-3 flex items-center gap-4 text-sm text-gray-600">
+                            <div>
+                              <i class="pi pi-calendar"></i>
+                              Отправлено: {{ submission.submittedAt | date: 'medium' }}
+                            </div>
+
+                            @if (submission.score !== null) {
+                              <div class="font-semibold text-emerald-600">
+                                <i class="pi pi-star-fill"></i>
+                                Оценка: {{ submission.score }}
+                              </div>
+                            } @else {
+                              <div class="text-amber-600">
+                                <i class="pi pi-clock"></i>
+                                Ожидает проверки
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <form
+                          class="mt-4 grid gap-3"
+                          [formGroup]="submissionForm"
+                          (ngSubmit)="submitAssessmentAnswer(assessment)"
+                        >
+                          <label class="grid gap-1">
+                            <span class="text-sm text-gray-700 font-medium">Ваш ответ:</span>
+                            <textarea
+                              class="border rounded px-3 py-2"
+                              rows="6"
+                              formControlName="answerText"
+                              placeholder="Введите ваш ответ здесь..."
+                            ></textarea>
+                          </label>
+
+                          <div>
+                            <button
+                              pButton
+                              type="submit"
+                              label="Отправить ответ"
+                              severity="success"
+                              [disabled]="submittingAssessmentId() === assessment.id"
+                            ></button>
+                          </div>
+                        </form>
+                      }
+                    </div>
+                  </p-card>
+                }
+              </div>
+            }
           }
         </section>
       </article>

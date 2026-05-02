@@ -3,8 +3,20 @@ export interface AssessmentStudentResponse {
   courseId: string;
   title: string;
   description: string;
-  questionsJson: string;
+  questions: string[];
+  sourceType: string;
+  sourceId: string;
   createdAt: string;
+}
+
+export interface AssessmentsPageResponse {
+  items: AssessmentStudentResponse[];
+  page: {
+    limit: number;
+    returned: number;
+    nextCursor: string | null;
+  };
+  links: Record<string, string>;
 }
 
 export interface SubmissionResponse {
@@ -15,6 +27,16 @@ export interface SubmissionResponse {
   score: number | null;
   submittedAt: string;
   gradedAt: string | null;
+}
+
+export interface SubmissionsPageResponse {
+  items: SubmissionResponse[];
+  page: {
+    limit: number;
+    returned: number;
+    nextCursor: string | null;
+  };
+  links: Record<string, string>;
 }
 
 export interface CreateSubmissionRequest {

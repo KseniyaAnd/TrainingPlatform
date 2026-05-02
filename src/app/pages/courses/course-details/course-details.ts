@@ -12,6 +12,7 @@ import { Course } from '../../../models/course.model';
 import { Lecture } from '../../../models/lecture.model';
 import { Lesson } from '../../../models/lesson.model';
 import { CourseProgressResponse } from '../../../models/progress.model';
+import { AssessmentStudentResponse, SubmissionResponse } from '../../../models/submission.model';
 import { AuthStateService } from '../../../services/auth/auth-state.service';
 import {
   AssessmentDifficulty,
@@ -29,12 +30,14 @@ import {
 } from '../../../services/courses/course-content.service';
 import { CoursesService, UpdateCourseRequest } from '../../../services/courses/courses.service';
 import { ProgressService } from '../../../services/progress/progress.service';
+import { SubmissionsService } from '../../../services/submissions/submissions.service';
 
 @Injectable({ providedIn: 'root' })
 class CourseDetailsDataService {
   private readonly coursesService = inject(CoursesService);
   private readonly courseContent = inject(CourseContentService);
   private readonly progressService = inject(ProgressService);
+  private readonly submissionsService = inject(SubmissionsService);
 
   getCourse(courseId: string) {
     return this.coursesService.getCourseById(courseId);
@@ -58,6 +61,18 @@ class CourseDetailsDataService {
 
   getAssessments(courseId: string) {
     return this.courseContent.getAssessmentsByCourseId(courseId);
+  }
+
+  getAssessmentsForStudent(courseId: string) {
+    return this.submissionsService.getCourseAssessments(courseId);
+  }
+
+  getMySubmissions() {
+    return this.submissionsService.getMySubmissions();
+  }
+
+  createSubmission(assessmentId: string, answerText: string) {
+    return this.submissionsService.createSubmission({ assessmentId, answerText });
   }
 
   getCourseProgress(courseId: string) {
@@ -210,6 +225,9 @@ export class CourseDetailsPage {
   readonly course = signal<Course | undefined>(undefined);
   readonly courseLessons = signal<Array<Lesson & { lectures: Lecture[] }>>([]);
   readonly assessments = signal<Assessment[]>([]);
+  readonly studentAssessments = signal<AssessmentStudentResponse[]>([]);
+  readonly submissions = signal<SubmissionResponse[]>([]);
+  readonly submittingAssessmentId = signal<string | null>(null);
 
   readonly lessonsOnly = computed(() => this.courseLessons().filter((l) => l.kind === 'lesson'));
 
@@ -242,6 +260,10 @@ export class CourseDetailsPage {
     rubricCriteriaText: ['', [Validators.required]],
   });
 
+  readonly submissionForm = this.fb.nonNullable.group({
+    answerText: ['', [Validators.required, Validators.minLength(10)]],
+  });
+
   readonly assessmentAiForm = this.fb.nonNullable.group({
     sourceType: ['LESSON' as AssessmentDraftSourceType, [Validators.required]],
     sourceId: ['', [Validators.required]],
@@ -260,6 +282,8 @@ export class CourseDetailsPage {
       this.course.set(undefined);
       this.courseLessons.set([]);
       this.assessments.set([]);
+      this.studentAssessments.set([]);
+      this.submissions.set([]);
       this.courseProgress.set(null);
       return;
     }
@@ -273,32 +297,41 @@ export class CourseDetailsPage {
 
       const promises: Promise<unknown>[] = [
         firstValueFrom(this.dataService.getLessons(this.courseId)),
-        firstValueFrom(this.dataService.getAssessments(this.courseId)),
       ];
 
-      // Check enrollment status and load progress for students
+      // Load different assessment data based on role
       if (this.isStudent()) {
+        promises.push(
+          firstValueFrom(this.dataService.getAssessmentsForStudent(this.courseId)).catch(() => []),
+        );
+        promises.push(firstValueFrom(this.dataService.getMySubmissions()).catch(() => []));
         promises.push(firstValueFrom(this.dataService.checkEnrollmentStatus(this.courseId)));
         promises.push(
           firstValueFrom(this.dataService.getCourseProgress(this.courseId)).catch(() => null),
         );
+      } else {
+        promises.push(firstValueFrom(this.dataService.getAssessments(this.courseId)));
       }
 
       const results = await Promise.all(promises);
       const lessons = results[0] as Lesson[];
-      const assessments = results[1] as Assessment[];
 
-      this.assessments.set(assessments ?? []);
+      if (this.isStudent()) {
+        const studentAssessments = results[1] as AssessmentStudentResponse[];
+        const submissions = results[2] as SubmissionResponse[];
+        const enrollmentStatus = results[3] as {
+          isEnrolled: boolean;
+          enrollmentId: string | null;
+        };
+        const progress = results[4] as CourseProgressResponse | null;
 
-      // Check if student is enrolled and load progress
-      if (this.isStudent() && results.length > 2) {
-        const enrollmentStatus = results[2] as { isEnrolled: boolean; enrollmentId: string | null };
+        this.studentAssessments.set(studentAssessments ?? []);
+        this.submissions.set(submissions ?? []);
         this.subscribed = enrollmentStatus.isEnrolled;
-
-        if (results.length > 3) {
-          const progress = results[3] as CourseProgressResponse | null;
-          this.courseProgress.set(progress);
-        }
+        this.courseProgress.set(progress);
+      } else {
+        const assessments = results[1] as Assessment[];
+        this.assessments.set(assessments ?? []);
       }
 
       const lessonsWithLectures = await Promise.all(
@@ -317,6 +350,8 @@ export class CourseDetailsPage {
       this.course.set(undefined);
       this.courseLessons.set([]);
       this.assessments.set([]);
+      this.studentAssessments.set([]);
+      this.submissions.set([]);
       this.courseProgress.set(null);
       this.error.set(e instanceof Error ? e.message : 'Failed to load course');
     } finally {
@@ -1025,5 +1060,40 @@ export class CourseDetailsPage {
   getOverallProgress(): number {
     const progress = this.courseProgress();
     return progress?.progressPercent ?? 0;
+  }
+
+  // Assessment submission methods for students
+  getSubmissionForAssessment(assessmentId: string): SubmissionResponse | null {
+    return this.submissions().find((s) => s.assessmentId === assessmentId) ?? null;
+  }
+
+  async submitAssessmentAnswer(assessment: AssessmentStudentResponse): Promise<void> {
+    if (!this.isStudent() || this.submittingAssessmentId()) return;
+
+    this.submitError.set(null);
+    if (this.submissionForm.invalid) {
+      this.submitError.set('Пожалуйста, заполните ответ');
+      return;
+    }
+
+    this.submittingAssessmentId.set(assessment.id);
+    try {
+      const submission = await firstValueFrom(
+        this.dataService.createSubmission(
+          assessment.id,
+          this.submissionForm.controls.answerText.value,
+        ),
+      );
+
+      // Add to submissions list
+      this.submissions.set([submission, ...this.submissions()]);
+
+      // Reset form
+      this.submissionForm.reset();
+    } catch (e) {
+      this.submitError.set(e instanceof Error ? e.message : 'Не удалось отправить ответ');
+    } finally {
+      this.submittingAssessmentId.set(null);
+    }
   }
 }

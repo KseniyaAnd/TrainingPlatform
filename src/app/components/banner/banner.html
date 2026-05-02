@@ -1,0 +1,30 @@
+<div
+  class="flex items-center justify-between p-8 gap-4 text-white"
+  style="background: linear-gradient(90deg, #159a72 0%, #1bad84 100%)"
+  role="region"
+  aria-label="Homepage banner"
+>
+  <div class="max-w-[60%]">
+    <h1 class="m-0 text-4xl font-bold">{{ title() }}</h1>
+    <p class="mt-2 mb-4 opacity-95">{{ subtitle() }}</p>
+    <p-button
+      [label]="ctaText()"
+      [routerLink]="link()"
+      outlined
+      styleClass="!border-white !text-white hover:!bg-white/10"
+    />
+  </div>
+
+  @if (hasImage()) {
+    <div>
+      <img
+        [ngSrc]="imageUrl()!"
+        width="220"
+        height="140"
+        alt="Banner image"
+        class="max-w-[220px] h-auto"
+        priority
+      />
+    </div>
+  }
+</div>

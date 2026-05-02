@@ -1,0 +1,66 @@
+<app-banner
+  title="Build real skills with hands-on courses"
+  subtitle="Short, practical lessons from expert instructors"
+  ctaText="Browse courses"
+  link="/courses"
+  imageUrl="/assets/banner-hero.png"
+>
+</app-banner>
+
+<section class="home-body">
+  <div class="max-w-5xl mx-auto">
+    @if (error()) {
+      <div class="mt-4 text-red-600">{{ error() }}</div>
+    }
+
+    @if (loading() && backendCourses().length === 0 && designCourses().length === 0) {
+      <div class="mt-4 text-gray-600">Loading...</div>
+    }
+
+    <div class="mt-8">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-semibold">{{ backendTag }}</h2>
+          <p class="mt-1 text-gray-600">Курсы по бэкенду</p>
+        </div>
+
+        <a
+          class="text-violet-700 hover:text-violet-800 hover:underline"
+          [routerLink]="['/courses']"
+          [queryParams]="{ tag: backendTag }"
+        >
+          Все курсы
+        </a>
+      </div>
+
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        @for (course of backendCourses(); track course.id) {
+          <app-course-card [course]="course"></app-course-card>
+        }
+      </div>
+    </div>
+
+    <div class="mt-10">
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-semibold">{{ designTag }}</h2>
+          <p class="mt-1 text-gray-600">Курсы по дизайну</p>
+        </div>
+
+        <a
+          class="text-violet-700 hover:text-violet-800 hover:underline"
+          [routerLink]="['/courses']"
+          [queryParams]="{ tag: designTag }"
+        >
+          Все курсы
+        </a>
+      </div>
+
+      <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        @for (course of designCourses(); track course.id) {
+          <app-course-card [course]="course"></app-course-card>
+        }
+      </div>
+    </div>
+  </div>
+</section>

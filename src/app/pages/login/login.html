@@ -1,0 +1,66 @@
+<div class="flex items-center justify-center bg-white px-4 py-10">
+  <p-card styleClass="max-w-sm shadow-lg rounded-2xl px-2">
+    <div class="flex gap-1 mb-4" style="flex-direction: column !important">
+      <h1 class="text-2xl font-semibold text-gray-900">Welcome to Focus!</h1>
+      <p class="text-sm text-gray-400">Sign in to your account</p>
+    </div>
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="flex gap-2"
+      style="flex-direction: column !important"
+    >
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="username">Username</label>
+        <input
+          id="username"
+          pInputText
+          formControlName="username"
+          class="w-full"
+          autocomplete="username"
+          placeholder="Enter your username"
+        />
+        @if ((submitted() || form.controls.username.touched) && form.controls.username.invalid) {
+          <div class="text-xs text-red-600">Username is required</div>
+        }
+      </div>
+
+      <div class="flex gap-1" style="flex-direction: column !important">
+        <label class="text-sm font-medium text-gray-800" for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [toggleMask]="true"
+          [feedback]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          autocomplete="current-password"
+          placeholder="Enter your password"
+        ></p-password>
+        @if ((submitted() || form.controls.password.touched) && form.controls.password.invalid) {
+          <div class="text-xs text-red-600">Password is required (min 8 chars)</div>
+        }
+      </div>
+
+      @if (submitError()) {
+        <div class="text-xs text-red-600">{{ submitError() }}</div>
+      }
+
+      <div class="flex flex-col gap-2 mt-4">
+        <button
+          pButton
+          type="submit"
+          class="w-full !bg-violet-600 !border-violet-600 hover:!bg-violet-700 hover:!border-violet-700 !rounded-full !py-3"
+          label="Войти"
+          [disabled]="loading()"
+        ></button>
+        <a
+          routerLink="/register"
+          class="w-full p-button p-component p-button-outlined !rounded-full !py-3 text-center"
+        >
+          Зарегистрироваться
+        </a>
+      </div>
+    </form>
+  </p-card>
+</div>

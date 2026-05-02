@@ -1,0 +1,46 @@
+<div class="max-w-5xl mx-auto">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold">My created courses</h1>
+      <p class="mt-2 text-gray-600">Courses you created:</p>
+    </div>
+
+    <a
+      routerLink="/my-courses/teaching/create"
+      class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
+    >
+      Create course
+    </a>
+  </div>
+
+  @if (error()) {
+    <div class="mt-4 text-red-600">{{ error() }}</div>
+  }
+
+  @if (loading() && items().length === 0) {
+    <div class="mt-4 text-gray-600">Loading...</div>
+  }
+
+  @if (!loading() && !error() && items().length === 0) {
+    <div class="mt-4 text-gray-600">No courses yet</div>
+  }
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-2">
+    @for (course of items(); track course.id) {
+      <app-course-card [course]="course"></app-course-card>
+    }
+  </div>
+
+  @if (nextCursor()) {
+    <div class="mt-6">
+      <button
+        type="button"
+        class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-60"
+        [disabled]="loading()"
+        (click)="loadMore()"
+      >
+        {{ loading() ? 'Loading...' : 'Load more' }}
+      </button>
+    </div>
+  }
+</div>

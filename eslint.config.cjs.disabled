@@ -1,0 +1,33 @@
+const { readFileSync } = require('fs');
+
+/**
+ * Backup of the flat ESLint config. Disabled because this project uses the legacy
+ * `.eslintrc.cjs` CommonJS config. Keep as a backup but do not allow ESLint to
+ * pick it up automatically (ESLint prefers `eslint.config.cjs` for flat configs).
+ */
+module.exports = [
+  {
+    ignores: ['projects/**/*'],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: __dirname,
+        createDefaultProgram: true
+      }
+    },
+    files: ['**/*.ts'],
+    plugins: {
+      '@angular-eslint': require('@angular-eslint/eslint-plugin')
+    },
+    extends: ['plugin:@angular-eslint/recommended', 'plugin:prettier/recommended'],
+    rules: {}
+  },
+  {
+    files: ['**/*.html'],
+    languageOptions: {
+      parser: require.resolve('@angular-eslint/template-parser')
+    },
+    extends: ['plugin:@angular-eslint/template/recommended'],
+    rules: {}
+  }
+];

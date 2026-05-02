@@ -1,13 +1,20 @@
-/* Import Prime icons and PrimeFlex from node_modules (primeng theme and core CSS are not included in this primeng version) */
-@import "../node_modules/primeicons/primeicons.css";
-@import "../node_modules/primeflex/primeflex.css";
+/* Import Prime icons and PrimeFlex from node_modules */
+@import 'primeicons/primeicons.css';
+@import 'primeflex/primeflex.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@source '../src/**/*.{html,ts,css,scss}';
+@source '../index.html';
 
 /* PrimeNG theme */
 body {
-	@apply bg-gray-50 text-gray-900;
-	font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial;
 }

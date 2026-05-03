@@ -3,6 +3,10 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CourseCardComponent } from '../../components/course-card/course-card';
+import {
+  CourseFilters,
+  CourseFiltersComponent,
+} from '../../components/course-filters/course-filters';
 import { CourseWithEnrollment } from '../../models/course.model';
 import { AuthStateService } from '../../services/auth/auth-state.service';
 import { CoursesService } from '../../services/courses/courses.service';
@@ -10,13 +14,13 @@ import { CoursesService } from '../../services/courses/courses.service';
 @Component({
   selector: 'app-courses-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, CourseCardComponent],
+  imports: [CommonModule, RouterLink, CourseCardComponent, CourseFiltersComponent],
   templateUrl: './courses.html',
   styleUrls: ['./courses.css'],
 })
 export class CoursesPage {
   private readonly coursesService = inject(CoursesService);
-  private readonly route = inject(ActivatedRoute);
+  readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly authState = inject(AuthStateService);
 
@@ -25,27 +29,42 @@ export class CoursesPage {
   readonly error = signal<string | null>(null);
   readonly nextCursor = signal<string | null>(null);
   private readonly scope = signal<string | null>(null);
-  private readonly tag = signal<string | null>(null);
+  readonly tag = signal<string | null>(null);
   private readonly q = signal<string | null>(null);
+  private readonly sortBy = signal<'date' | 'title' | null>(null);
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
+  readonly selectedSort = computed(() => this.sortBy());
   readonly filteredItems = computed(() => {
     const tag = this.tag();
     const q = (this.q() ?? '').trim().toLowerCase();
-    const items = this.items();
-    let next = items;
+    const sortBy = this.sortBy();
+    let items = this.items();
 
+    // Фильтрация по тегу
     if (tag) {
-      next = next.filter((c) => (c.tags ?? []).includes(tag));
+      items = items.filter((c) => (c.tags ?? []).includes(tag));
     }
 
+    // Фильтрация по поиску
     if (q) {
-      next = next.filter((c) => (c.title ?? '').toLowerCase().includes(q));
+      items = items.filter((c) => (c.title ?? '').toLowerCase().includes(q));
     }
 
-    return next;
+    // Сортировка
+    if (sortBy === 'title') {
+      items = [...items].sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+    } else if (sortBy === 'date') {
+      items = [...items].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+
+    return items;
   });
 
   constructor() {
@@ -63,6 +82,9 @@ export class CoursesPage {
       this.scope.set(params.get('scope'));
       this.tag.set(params.get('tag'));
       this.q.set(params.get('q'));
+
+      const sortByParam = params.get('sortBy');
+      this.sortBy.set(sortByParam === 'date' || sortByParam === 'title' ? sortByParam : null);
     });
 
     effect(() => {
@@ -111,6 +133,28 @@ export class CoursesPage {
       console.error('Failed to unenroll:', e);
       // Optionally show error to user
     }
+  }
+
+  onFiltersChange(filters: CourseFilters): void {
+    const queryParams: Record<string, string | null> = {
+      tag: filters.tag,
+      sortBy: filters.sortBy,
+    };
+
+    // Сохраняем существующие параметры
+    const currentParams = this.route.snapshot.queryParamMap;
+    if (currentParams.has('scope')) {
+      queryParams['scope'] = currentParams.get('scope');
+    }
+    if (currentParams.has('q')) {
+      queryParams['q'] = currentParams.get('q');
+    }
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
   }
 
   private loadFirstPage(): void {

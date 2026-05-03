@@ -1,8 +1,7 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">Courses</h1>
       <p class="mt-2 text-gray-600">
         @if (isMyCoursesScope()) {
           @if (isTeacher()) {
@@ -10,8 +9,6 @@
           } @else {
             Your enrolled courses
           }
-        } @else {
-          Explore available courses
         }
       </p>
     </div>
@@ -52,6 +49,15 @@
       </div>
     </div>
   }
+
+  <!-- Filters -->
+  <div class="mb-6">
+    <app-course-filters
+      [selectedTag]="tag()"
+      [selectedSort]="selectedSort()"
+      (filtersChange)="onFiltersChange($event)"
+    ></app-course-filters>
+  </div>
 
   <!-- Loading State -->
   @if (loading() && items().length === 0) {

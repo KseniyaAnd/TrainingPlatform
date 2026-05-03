@@ -1,0 +1,46 @@
+<div class="filters-container">
+  <!-- Tags Filter -->
+  <div class="filter-section">
+    <h3 class="filter-title">Теги</h3>
+    <div class="filter-chips">
+      <!-- Тег "Все" -->
+      <button
+        type="button"
+        class="filter-chip"
+        [class.active]="selectedTag() === null"
+        (click)="selectTag(null)"
+      >
+        Все
+      </button>
+
+      <!-- Остальные теги -->
+      @for (tag of tags; track tag) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="selectedTag() === tag"
+          (click)="selectTag(tag)"
+        >
+          {{ tag }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Sort Filter -->
+  <div class="filter-section">
+    <h3 class="filter-title">Сортировка</h3>
+    <div class="filter-chips">
+      @for (option of sortOptions; track option.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="selectedSort() === option.value"
+          (click)="selectSort(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  </div>
+</div>

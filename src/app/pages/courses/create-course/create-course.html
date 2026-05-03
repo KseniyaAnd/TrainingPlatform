@@ -73,7 +73,8 @@
           [disabled]="loading()"
         ></button>
         <a
-          routerLink="/my-courses/teaching"
+          [routerLink]="['/courses']"
+          [queryParams]="{ scope: 'me' }"
           class="w-full p-button p-component p-button-outlined !rounded-full !py-3 text-center"
         >
           Cancel

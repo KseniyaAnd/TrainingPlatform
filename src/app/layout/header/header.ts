@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 
 import { LogoComponent } from '../../components/logo/logo';
@@ -9,7 +9,7 @@ import { UserMenuComponent } from '../../components/user-menu/user-menu';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, ButtonModule, LogoComponent, SearchBarComponent, UserMenuComponent],
+  imports: [ButtonModule, LogoComponent, SearchBarComponent, UserMenuComponent],
   templateUrl: './header.html',
 })
 export class HeaderComponent {

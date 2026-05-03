@@ -1,15 +1,9 @@
 import { Routes } from '@angular/router';
-import { AdminCoursesComponent } from './pages/admin/admin-courses/admin-courses';
-import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard';
-import { AdminUserDetailsComponent } from './pages/admin/admin-user-details/admin-user-details';
-import { AdminUsersComponent } from './pages/admin/admin-users/admin-users';
 import { AssessmentGradingComponent } from './pages/courses/assessment-grading/assessment-grading';
 import { CourseDetailsPage } from './pages/courses/course-details/course-details';
 import { CourseStudentViewPage } from './pages/courses/course-student-view/course-student-view';
 import { CoursesPage } from './pages/courses/courses';
 import { CreateCoursePage } from './pages/courses/create-course/create-course';
-import { MyCreatedCoursesPage } from './pages/courses/my-created-courses/my-created-courses';
-import { MyLearningCoursesPage } from './pages/courses/my-learning-courses/my-learning-courses';
 import { HomePageComponent } from './pages/home/home';
 import { LoginPage } from './pages/login/login';
 import { RegisterPage } from './pages/register/register';
@@ -26,18 +20,26 @@ export const routes: Routes = [
       {
         path: 'courses',
         component: CoursesPage,
+        // Query params: ?scope=me (my courses), ?scope=all or no param (all courses)
+        // Additional filters: ?tag=..., ?q=...
       },
       {
         path: 'my-courses/teaching',
-        component: MyCreatedCoursesPage,
+        component: CoursesPage,
+        data: { redirectToScope: 'me' },
       },
       {
-        path: 'my-courses/teaching/create',
+        path: 'courses/create',
         component: CreateCoursePage,
       },
       {
+        path: 'my-courses/teaching/create',
+        redirectTo: 'courses/create',
+      },
+      {
         path: 'my-courses/learning',
-        component: MyLearningCoursesPage,
+        component: CoursesPage,
+        data: { redirectToScope: 'me' },
       },
       {
         path: 'courses/:courseId/student',
@@ -58,22 +60,6 @@ export const routes: Routes = [
       {
         path: 'login',
         component: LoginPage,
-      },
-      {
-        path: 'admin',
-        component: AdminDashboardComponent,
-      },
-      {
-        path: 'admin/users',
-        component: AdminUsersComponent,
-      },
-      {
-        path: 'admin/users/:userId',
-        component: AdminUserDetailsComponent,
-      },
-      {
-        path: 'admin/courses',
-        component: AdminCoursesComponent,
       },
     ],
   },

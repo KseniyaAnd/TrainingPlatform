@@ -202,6 +202,7 @@ export class CourseDetailsPage {
 
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
+  readonly isAdmin = computed(() => this.authState.role() === 'ADMIN');
   readonly canEditCourse = computed(() => {
     const role = this.authState.role();
     return role === 'TEACHER' || role === 'ADMIN';
@@ -1178,7 +1179,8 @@ export class CourseDetailsPage {
     }
   }
 
-  getTrendIcon(trend: string): string {
+  getTrendIcon(trend: string | undefined): string {
+    if (!trend) return 'pi-minus';
     switch (trend) {
       case 'improving':
         return 'pi-arrow-up';
@@ -1191,7 +1193,8 @@ export class CourseDetailsPage {
     }
   }
 
-  getTrendColor(trend: string): string {
+  getTrendColor(trend: string | undefined): string {
+    if (!trend) return 'text-gray-600';
     switch (trend) {
       case 'improving':
         return 'text-emerald-600';
@@ -1204,7 +1207,8 @@ export class CourseDetailsPage {
     }
   }
 
-  getTrendLabel(trend: string): string {
+  getTrendLabel(trend: string | undefined): string {
+    if (!trend) return 'Неизвестно';
     switch (trend) {
       case 'improving':
         return 'Улучшается';

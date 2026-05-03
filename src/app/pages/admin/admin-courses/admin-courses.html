@@ -1,0 +1,81 @@
+<div class="admin-courses">
+  <div class="header">
+    <h1>Управление курсами</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <p-progressSpinner />
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  @if (!loading() && courses().length > 0) {
+    <p-table [value]="courses()" [tableStyle]="{ 'min-width': '50rem' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Название</th>
+          <th>Преподаватель</th>
+          <th>Дата создания</th>
+          <th>Действия</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-course>
+        <tr>
+          <td>{{ course.title }}</td>
+          <td>{{ course.teacherName || 'Н/Д' }}</td>
+          <td>{{ formatDate(course.createdAt) }}</td>
+          <td>
+            <div class="actions">
+              <p-button
+                label="Просмотр"
+                icon="pi pi-eye"
+                [text]="true"
+                (onClick)="viewCourse(course.id)"
+              />
+              <p-button
+                label="Редактировать"
+                icon="pi pi-pencil"
+                [text]="true"
+                (onClick)="editCourse(course.id)"
+              />
+              <p-button
+                label="Удалить"
+                icon="pi pi-trash"
+                [text]="true"
+                severity="danger"
+                [loading]="deletingCourseId() === course.id"
+                (onClick)="confirmDelete(course)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    @if (nextCursor()) {
+      <div class="load-more">
+        <p-button
+          label="Загрузить ещё"
+          icon="pi pi-refresh"
+          [loading]="loadingMore()"
+          (onClick)="loadMore()"
+        />
+      </div>
+    }
+  }
+
+  @if (!loading() && courses().length === 0) {
+    <div class="empty-state">
+      <p>Курсы не найдены</p>
+    </div>
+  }
+</div>
+
+<p-toast />
+<p-confirmDialog />

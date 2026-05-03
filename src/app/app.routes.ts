@@ -1,4 +1,8 @@
 import { Routes } from '@angular/router';
+import { AdminCoursesComponent } from './pages/admin/admin-courses/admin-courses';
+import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard';
+import { AdminUserDetailsComponent } from './pages/admin/admin-user-details/admin-user-details';
+import { AdminUsersComponent } from './pages/admin/admin-users/admin-users';
 import { AssessmentGradingComponent } from './pages/courses/assessment-grading/assessment-grading';
 import { CourseDetailsPage } from './pages/courses/course-details/course-details';
 import { CourseStudentViewPage } from './pages/courses/course-student-view/course-student-view';
@@ -54,6 +58,22 @@ export const routes: Routes = [
       {
         path: 'login',
         component: LoginPage,
+      },
+      {
+        path: 'admin',
+        component: AdminDashboardComponent,
+      },
+      {
+        path: 'admin/users',
+        component: AdminUsersComponent,
+      },
+      {
+        path: 'admin/users/:userId',
+        component: AdminUserDetailsComponent,
+      },
+      {
+        path: 'admin/courses',
+        component: AdminCoursesComponent,
       },
     ],
   },

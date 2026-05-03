@@ -1,30 +1,77 @@
-export interface StudentAnalytics {
-  studentId: string;
-  totalSubmissions: number;
-  gradedSubmissions: number;
-  averageScore: number;
-  trend: 'improving' | 'declining' | 'stable';
-  improvementFocus: string;
-  confidence: number;
-  actions: string[];
-}
-
 export interface CourseStudentAnalyticsResponse {
   courseId: string;
+  courseName: string;
+  totalStudents: number;
+  averageProgress: number;
   averageScore: number;
-  totalSubmissions: number;
-  gradedSubmissions: number;
-  recencyTrendDelta: number;
-  aiSummary: string;
-  students: StudentAnalytics[];
+  studentsAtRisk: number;
+  totalSubmissions?: number;
+  gradedSubmissions?: number;
+  recencyTrendDelta?: number;
+  aiSummary?: string;
+  students?: Array<{
+    studentId: string;
+    studentName: string;
+    progress: number;
+    averageScore: number;
+    gradedSubmissions?: number;
+    totalSubmissions?: number;
+    trend?: string;
+    improvementFocus?: string;
+    confidence?: number;
+    actions?: string[];
+  }>;
+  topPerformers: Array<{
+    studentId: string;
+    studentName: string;
+    progress: number;
+    averageScore: number;
+  }>;
 }
 
 export interface AiStudyPlanResponse {
-  courseId: string;
   studentId: string;
-  prioritizedGoals: string[];
-  weeklyTargets: string[];
-  recommendedLessons: string[];
-  recommendedLectures: string[];
-  rationale: string;
+  courseId: string;
+  currentProgress: number;
+  recommendations: string[];
+  focusAreas: string[];
+  estimatedCompletionWeeks: number;
+  rationale?: string;
+  prioritizedGoals?: string[];
+  weeklyTargets?: string[];
+  recommendedLessons?: string[];
+  recommendedLectures?: string[];
+}
+
+export interface PlatformStatistics {
+  usersCount: number;
+  coursesCount: number;
+  enrollmentsCount: number;
+  averageSubmissionScore: number;
+}
+
+export interface UserDetails {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  enrollments?: Array<{
+    courseId: string;
+    courseName: string;
+    enrolledAt: string;
+    progress: number;
+  }>;
+  courses?: Array<{
+    id: string;
+    title: string;
+    createdAt: string;
+  }>;
+  submissions?: Array<{
+    id: string;
+    assessmentId: string;
+    assessmentTitle: string;
+    score: number | null;
+    submittedAt: string;
+  }>;
 }

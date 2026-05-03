@@ -77,6 +77,17 @@
           <p-button label="Зарегестрироваться" size="small" />
         </a>
       } @else {
+        @if (isAdmin()) {
+          <a routerLink="/admin">
+            <p-button
+              label="Админ панель"
+              [text]="true"
+              size="small"
+              styleClass="!border-b !border-b-transparent !bg-transparent hover:!border-b-teal-400 !rounded-none transition-colors"
+            />
+          </a>
+        }
+
         <a [routerLink]="['/courses']" [queryParams]="{ scope: 'me' }">
           <p-button
             label="Мои курсы"

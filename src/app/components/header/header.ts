@@ -29,6 +29,7 @@ export class HeaderComponent implements OnDestroy {
   readonly isAuthenticated = this.authState.isAuthenticated;
   readonly username = this.authState.username;
   readonly role = this.authState.role;
+  readonly isAdmin = computed(() => this.role() === 'ADMIN');
 
   readonly hasSuggestions = computed(
     () => this.showSuggestions() && this.search().trim().length > 0,

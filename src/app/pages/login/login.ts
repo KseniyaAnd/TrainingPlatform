@@ -57,9 +57,25 @@ export class LoginPage {
       },
       error: (err) => {
         this.loading.set(false);
-        const message =
-          (err?.error && (err.error.message || err.error.error)) || err?.message || 'Login failed';
-        this.submitError.set(String(message));
+        let message = 'Ошибка входа. Попробуйте еще раз.';
+
+        if (err?.status === 401 || err?.status === 400) {
+          message = 'Неверное имя пользователя или пароль';
+        } else if (err?.status === 403) {
+          message = 'Доступ запрещен';
+        } else if (err?.status === 404) {
+          message = 'Пользователь не найден';
+        } else if (err?.status === 500) {
+          message = 'Ошибка сервера. Попробуйте позже.';
+        } else if (err?.status === 0) {
+          message = 'Не удается подключиться к серверу';
+        } else if (err?.error?.message) {
+          message = err.error.message;
+        } else if (err?.error?.error) {
+          message = err.error.error;
+        }
+
+        this.submitError.set(message);
       },
     });
   }

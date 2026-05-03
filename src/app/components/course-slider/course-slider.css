@@ -1,6 +1,6 @@
 /* Glider.js динамически создаваемые элементы */
 :host ::ng-deep .glider-track {
-  gap: 13.5rem !important;
+  gap: 4rem !important;
 }
 
 :host ::ng-deep .glider-dot {

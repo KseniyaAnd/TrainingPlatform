@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CourseCardComponent } from '../../components/course-card/course-card';
 import { CourseWithEnrollment } from '../../models/course.model';
@@ -12,10 +12,12 @@ import { CoursesService } from '../../services/courses/courses.service';
   standalone: true,
   imports: [CommonModule, RouterLink, CourseCardComponent],
   templateUrl: './courses.html',
+  styleUrls: ['./courses.css'],
 })
 export class CoursesPage {
   private readonly coursesService = inject(CoursesService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly authState = inject(AuthStateService);
 
   readonly items = signal<CourseWithEnrollment[]>([]);
@@ -27,7 +29,6 @@ export class CoursesPage {
   private readonly q = signal<string | null>(null);
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
-  readonly isAuthenticated = this.authState.isAuthenticated;
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
   readonly filteredItems = computed(() => {
@@ -48,6 +49,16 @@ export class CoursesPage {
   });
 
   constructor() {
+    // Handle legacy routes - redirect to new format with query params
+    const redirectToScope = this.route.snapshot.data['redirectToScope'];
+    if (redirectToScope) {
+      void this.router.navigate(['/courses'], {
+        queryParams: { scope: redirectToScope },
+        replaceUrl: true,
+      });
+      return;
+    }
+
     this.route.queryParamMap.subscribe((params) => {
       this.scope.set(params.get('scope'));
       this.tag.set(params.get('tag'));
@@ -117,15 +128,8 @@ export class CoursesPage {
       const q = this.q();
       const role = this.authState.role();
       const scope = this.scope();
-      const isAuthenticated = this.isAuthenticated();
 
-      // Redirect to login if trying to access "my courses" without authentication
-      if (scope === 'me' && !isAuthenticated) {
-        this.error.set('Необходимо войти в систему для просмотра своих курсов');
-        return;
-      }
-
-      if (scope === 'me' && isAuthenticated) {
+      if (scope === 'me') {
         // Load user's own courses (enrolled for students, created for teachers)
         if (role === 'STUDENT') {
           const response = await firstValueFrom(
@@ -157,16 +161,14 @@ export class CoursesPage {
           this.nextCursor.set(response.page?.nextCursor ?? null);
         }
       } else {
-        // Load all courses - available for everyone (authenticated and non-authenticated)
-        if (isAuthenticated && role === 'STUDENT' && !cursor) {
-          // For authenticated students, load with enrollment status
+        // Load all courses with enrollment status for students
+        if (role === 'STUDENT' && !cursor) {
           const coursesWithEnrollment = await firstValueFrom(
             this.coursesService.loadCoursesWithEnrollmentStatus({ limit: 20, cursor, q }),
           );
           this.items.set(coursesWithEnrollment);
           this.nextCursor.set(null); // For simplicity, disable pagination when using combined load
         } else {
-          // For non-authenticated users or teachers, just load courses
           const response = await firstValueFrom(
             this.coursesService.getCourses({ limit: 20, cursor, q }),
           );

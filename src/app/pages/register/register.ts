@@ -39,9 +39,8 @@ export class RegisterPage {
   private readonly router = inject(Router);
 
   readonly roles: Array<{ label: string; value: Role }> = [
-    { label: 'Admin', value: 'ADMIN' },
-    { label: 'Teacher', value: 'TEACHER' },
-    { label: 'Student', value: 'STUDENT' },
+    { label: 'Преподаватель', value: 'TEACHER' },
+    { label: 'Студент', value: 'STUDENT' },
   ];
 
   readonly loading = signal(false);
@@ -94,11 +93,35 @@ export class RegisterPage {
       },
       error: (err) => {
         this.loading.set(false);
-        const message =
-          (err?.error && (err.error.message || err.error.error)) ||
-          err?.message ||
-          'Registration failed';
-        this.submitError.set(String(message));
+        let message = 'Ошибка регистрации. Попробуйте еще раз.';
+
+        if (err?.status === 400) {
+          message = 'Неверные данные. Проверьте правильность заполнения полей.';
+        } else if (err?.status === 409) {
+          message = 'Пользователь с таким именем или email уже существует';
+        } else if (err?.status === 500) {
+          message = 'Ошибка сервера. Попробуйте позже.';
+        } else if (err?.status === 0) {
+          message = 'Не удается подключиться к серверу';
+        } else if (err?.error?.message) {
+          const serverMessage = err.error.message;
+          if (/[а-яА-Я]/.test(serverMessage)) {
+            message = serverMessage;
+          } else {
+            // Переводим типичные английские сообщения
+            if (serverMessage.toLowerCase().includes('already exists')) {
+              message = 'Пользователь с таким именем или email уже существует';
+            } else if (serverMessage.toLowerCase().includes('invalid')) {
+              message = 'Неверные данные';
+            } else {
+              message = serverMessage;
+            }
+          }
+        } else if (err?.error?.error) {
+          message = err.error.error;
+        }
+
+        this.submitError.set(message);
       },
     });
   }

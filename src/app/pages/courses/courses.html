@@ -133,7 +133,7 @@
       @for (course of filteredItems(); track course.id) {
         <app-course-card
           [course]="course"
-          [clickable]="isMyCoursesScope()"
+          [clickable]="true"
           [showEnrollButton]="!isMyCoursesScope() && isStudent()"
           [isEnrolled]="course.isEnrolled"
           [enrollmentId]="course.enrollmentId"

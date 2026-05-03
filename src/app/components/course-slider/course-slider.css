@@ -1,0 +1,43 @@
+/* Glider.js динамически создаваемые элементы */
+:host ::ng-deep .glider-track {
+  gap: 4rem !important;
+}
+
+:host ::ng-deep .glider-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  cursor: pointer;
+  border-radius: 9999px;
+  border: 0;
+  background-color: rgb(209 213 219);
+  transition: all 0.3s;
+}
+
+:host ::ng-deep .glider-dot:hover {
+  background-color: rgb(156 163 175);
+}
+
+:host ::ng-deep .glider-dot.active {
+  width: 1.5rem;
+  border-radius: 0.375rem;
+  background-color: rgb(20 184 166);
+}
+
+/* Стили для карточки "Все курсы" */
+.more-link-card {
+  border-color: #34d399;
+  background-color: #d1fae5;
+}
+
+.more-link-card:hover {
+  border-color: #10b981;
+  background-color: #a7f3d0;
+}
+
+.more-link-icon {
+  color: #34d399;
+}
+
+.more-link-text {
+  color: #059669;
+}

@@ -1,6 +1,17 @@
 :host {
   display: block;
+  height: 100%;
 }
+
+/* Карточка курса с фиксированной высотой */
+.course-card {
+  display: flex;
+  flex-direction: column;
+  height: 120px;
+  min-width: 350px;
+  overflow: hidden;
+}
+
 .shadow-sm {
   box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
@@ -11,6 +22,71 @@
   transition:
     box-shadow 150ms ease,
     background-color 150ms ease;
+}
+
+/* Заголовок карточки */
+.course-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Заголовок курса с обрезкой */
+.course-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  max-height: 1.4em;
+}
+
+/* Описание курса с обрезкой */
+.course-description {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+  line-height: 1.4 !important;
+  max-height: 1.4em !important;
+  flex-shrink: 0;
+  word-break: break-word;
+}
+
+/* Теги курса с ограничением высоты */
+.course-tags {
+  min-height: 1.5rem;
+  max-height: 3rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Кастомные стили для тегов PrimeNG */
+.course-tags ::ng-deep .p-tag {
+  background-color: #34d399 !important; /* Мятно-зелёный фон */
+  color: #ffffff !important; /* Белый текст */
+  border: none !important;
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 1rem !important;
+}
+
+/* Информация о преподавателе */
+.course-teacher {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Кнопки действий */
+.course-actions {
+  margin-top: auto;
+  padding-top: 0.5rem;
 }
 
 /* Fallback explicit border class to avoid relying on Tailwind arbitrary colors

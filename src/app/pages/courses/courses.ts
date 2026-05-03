@@ -27,6 +27,7 @@ export class CoursesPage {
   private readonly q = signal<string | null>(null);
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
+  readonly isAuthenticated = this.authState.isAuthenticated;
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
   readonly filteredItems = computed(() => {
@@ -116,8 +117,15 @@ export class CoursesPage {
       const q = this.q();
       const role = this.authState.role();
       const scope = this.scope();
+      const isAuthenticated = this.isAuthenticated();
 
-      if (scope === 'me') {
+      // Redirect to login if trying to access "my courses" without authentication
+      if (scope === 'me' && !isAuthenticated) {
+        this.error.set('Необходимо войти в систему для просмотра своих курсов');
+        return;
+      }
+
+      if (scope === 'me' && isAuthenticated) {
         // Load user's own courses (enrolled for students, created for teachers)
         if (role === 'STUDENT') {
           const response = await firstValueFrom(
@@ -149,14 +157,16 @@ export class CoursesPage {
           this.nextCursor.set(response.page?.nextCursor ?? null);
         }
       } else {
-        // Load all courses with enrollment status for students
-        if (role === 'STUDENT' && !cursor) {
+        // Load all courses - available for everyone (authenticated and non-authenticated)
+        if (isAuthenticated && role === 'STUDENT' && !cursor) {
+          // For authenticated students, load with enrollment status
           const coursesWithEnrollment = await firstValueFrom(
             this.coursesService.loadCoursesWithEnrollmentStatus({ limit: 20, cursor, q }),
           );
           this.items.set(coursesWithEnrollment);
           this.nextCursor.set(null); // For simplicity, disable pagination when using combined load
         } else {
+          // For non-authenticated users or teachers, just load courses
           const response = await firstValueFrom(
             this.coursesService.getCourses({ limit: 20, cursor, q }),
           );

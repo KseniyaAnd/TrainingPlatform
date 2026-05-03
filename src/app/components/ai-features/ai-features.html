@@ -1,0 +1,25 @@
+<section class="mb-12">
+  <h2 class="mb-2 text-3xl font-bold">Почему наши курсы круче?</h2>
+  <p-accordion [multiple]="true" styleClass="w-full">
+    @for (feature of features; track feature.value) {
+      <p-accordion-panel [value]="feature.value">
+        <p-accordion-header>{{ feature.title }}</p-accordion-header>
+        <p-accordion-content>
+          <p class="m-0 leading-relaxed">{{ feature.description }}</p>
+
+          @if (feature.benefits.length > 0) {
+            <ul class="mt-3 space-y-2">
+              @for (benefit of feature.benefits; track $index) {
+                <li>{{ benefit }}</li>
+              }
+            </ul>
+          }
+
+          @if (feature.conclusion) {
+            <p class="mt-3 font-medium">{{ feature.conclusion }}</p>
+          }
+        </p-accordion-content>
+      </p-accordion-panel>
+    }
+  </p-accordion>
+</section>

@@ -1,0 +1,81 @@
+<div class="admin-dashboard">
+  <h1>Панель администратора</h1>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <p-progressSpinner />
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-message">
+      <p>{{ error() }}</p>
+    </div>
+  }
+
+  @if (statistics() && !loading()) {
+    <div class="statistics-grid">
+      <p-card class="stat-card" (click)="navigateToUsers()">
+        <div class="stat-content">
+          <div class="stat-icon users-icon">
+            <i class="pi pi-users"></i>
+          </div>
+          <div class="stat-details">
+            <h3>Пользователи</h3>
+            <p class="stat-value">{{ statistics()!.usersCount }}</p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card class="stat-card" (click)="navigateToCourses()">
+        <div class="stat-content">
+          <div class="stat-icon courses-icon">
+            <i class="pi pi-book"></i>
+          </div>
+          <div class="stat-details">
+            <h3>Курсы</h3>
+            <p class="stat-value">{{ statistics()!.coursesCount }}</p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon enrollments-icon">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <div class="stat-details">
+            <h3>Записей на курсы</h3>
+            <p class="stat-value">{{ statistics()!.enrollmentsCount }}</p>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon score-icon">
+            <i class="pi pi-chart-line"></i>
+          </div>
+          <div class="stat-details">
+            <h3>Средний балл</h3>
+            <p class="stat-value">{{ statistics()!.averageSubmissionScore.toFixed(1) }}</p>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <div class="quick-actions">
+      <h2>Быстрые действия</h2>
+      <div class="actions-grid">
+        <button class="action-button" (click)="navigateToUsers()">
+          <i class="pi pi-users"></i>
+          <span>Управление пользователями</span>
+        </button>
+        <button class="action-button" (click)="navigateToCourses()">
+          <i class="pi pi-book"></i>
+          <span>Управление курсами</span>
+        </button>
+      </div>
+    </div>
+  }
+</div>

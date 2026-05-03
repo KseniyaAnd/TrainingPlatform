@@ -2,6 +2,9 @@
 @import 'primeicons/primeicons.css';
 @import 'primeflex/primeflex.css';
 
+/* Import Glider.js styles */
+@import 'glider-js/glider.min.css';
+
 @import 'tailwindcss';
 
 @source '../src/**/*.{html,ts,css,scss}';

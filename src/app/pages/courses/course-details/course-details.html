@@ -925,31 +925,31 @@
 
                 <div
                   class="rounded-lg p-4 border"
-                  [class.bg-emerald-50]="analyticsData()!.recencyTrendDelta >= 0"
-                  [class.border-emerald-200]="analyticsData()!.recencyTrendDelta >= 0"
-                  [class.bg-red-50]="analyticsData()!.recencyTrendDelta < 0"
-                  [class.border-red-200]="analyticsData()!.recencyTrendDelta < 0"
+                  [class.bg-emerald-50]="(analyticsData()!.recencyTrendDelta ?? 0) >= 0"
+                  [class.border-emerald-200]="(analyticsData()!.recencyTrendDelta ?? 0) >= 0"
+                  [class.bg-red-50]="(analyticsData()!.recencyTrendDelta ?? 0) < 0"
+                  [class.border-red-200]="(analyticsData()!.recencyTrendDelta ?? 0) < 0"
                 >
                   <div
                     class="text-sm font-medium mb-1"
-                    [class.text-emerald-600]="analyticsData()!.recencyTrendDelta >= 0"
-                    [class.text-red-600]="analyticsData()!.recencyTrendDelta < 0"
+                    [class.text-emerald-600]="(analyticsData()!.recencyTrendDelta ?? 0) >= 0"
+                    [class.text-red-600]="(analyticsData()!.recencyTrendDelta ?? 0) < 0"
                   >
                     Тренд
                   </div>
                   <div
                     class="text-2xl font-bold flex items-center gap-2"
-                    [class.text-emerald-900]="analyticsData()!.recencyTrendDelta >= 0"
-                    [class.text-red-900]="analyticsData()!.recencyTrendDelta < 0"
+                    [class.text-emerald-900]="(analyticsData()!.recencyTrendDelta ?? 0) >= 0"
+                    [class.text-red-900]="(analyticsData()!.recencyTrendDelta ?? 0) < 0"
                   >
                     <i
                       class="pi text-lg"
-                      [class.pi-arrow-up]="analyticsData()!.recencyTrendDelta > 0"
-                      [class.pi-arrow-down]="analyticsData()!.recencyTrendDelta < 0"
-                      [class.pi-minus]="analyticsData()!.recencyTrendDelta === 0"
+                      [class.pi-arrow-up]="(analyticsData()!.recencyTrendDelta ?? 0) > 0"
+                      [class.pi-arrow-down]="(analyticsData()!.recencyTrendDelta ?? 0) < 0"
+                      [class.pi-minus]="(analyticsData()!.recencyTrendDelta ?? 0) === 0"
                     ></i>
-                    {{ analyticsData()!.recencyTrendDelta >= 0 ? '+' : ''
-                    }}{{ analyticsData()!.recencyTrendDelta.toFixed(1) }}
+                    {{ (analyticsData()!.recencyTrendDelta ?? 0) >= 0 ? '+' : ''
+                    }}{{ (analyticsData()!.recencyTrendDelta ?? 0).toFixed(1) }}
                   </div>
                 </div>
               </div>
@@ -970,12 +970,12 @@
               }
 
               <!-- Students list -->
-              @if (analyticsData()!.students.length === 0) {
+              @if (analyticsData()!.students && analyticsData()!.students!.length === 0) {
                 <p-message severity="info" styleClass="w-full" text="Пока нет данных о студентах" />
               } @else {
                 <div class="space-y-4">
                   <h3 class="text-xl font-semibold text-gray-900">
-                    Студенты ({{ analyticsData()!.students.length }})
+                    Студенты ({{ analyticsData()!.students?.length ?? 0 }})
                   </h3>
 
                   @for (student of analyticsData()!.students; track student.studentId) {
@@ -1053,16 +1053,17 @@
                               <div class="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
                                 <div
                                   class="h-full rounded-full transition-all"
-                                  [class.bg-emerald-500]="student.confidence >= 0.7"
+                                  [class.bg-emerald-500]="(student.confidence ?? 0) >= 0.7"
                                   [class.bg-amber-500]="
-                                    student.confidence >= 0.4 && student.confidence < 0.7
+                                    (student.confidence ?? 0) >= 0.4 &&
+                                    (student.confidence ?? 0) < 0.7
                                   "
-                                  [class.bg-red-500]="student.confidence < 0.4"
-                                  [style.width.%]="student.confidence * 100"
+                                  [class.bg-red-500]="(student.confidence ?? 0) < 0.4"
+                                  [style.width.%]="(student.confidence ?? 0) * 100"
                                 ></div>
                               </div>
                               <span class="text-sm font-medium text-gray-700">
-                                {{ (student.confidence * 100).toFixed(0) }}%
+                                {{ ((student.confidence ?? 0) * 100).toFixed(0) }}%
                               </span>
                             </div>
                           </div>
@@ -1161,7 +1162,7 @@
                     <!-- Prioritized Goals -->
                     @if (
                       studyPlanData()!.prioritizedGoals &&
-                      studyPlanData()!.prioritizedGoals.length > 0
+                      studyPlanData()!.prioritizedGoals!.length > 0
                     ) {
                       <div class="bg-blue-50 rounded-lg p-5 border border-blue-200">
                         <div class="flex items-center gap-3 mb-4">
@@ -1185,7 +1186,7 @@
 
                     <!-- Weekly Targets -->
                     @if (
-                      studyPlanData()!.weeklyTargets && studyPlanData()!.weeklyTargets.length > 0
+                      studyPlanData()!.weeklyTargets && studyPlanData()!.weeklyTargets!.length > 0
                     ) {
                       <div class="bg-emerald-50 rounded-lg p-5 border border-emerald-200">
                         <div class="flex items-center gap-3 mb-4">
@@ -1206,7 +1207,7 @@
                     <!-- Recommended Lessons -->
                     @if (
                       studyPlanData()!.recommendedLessons &&
-                      studyPlanData()!.recommendedLessons.length > 0
+                      studyPlanData()!.recommendedLessons!.length > 0
                     ) {
                       <div class="bg-purple-50 rounded-lg p-5 border border-purple-200">
                         <div class="flex items-center gap-3 mb-4">
@@ -1233,7 +1234,7 @@
                     <!-- Recommended Lectures -->
                     @if (
                       studyPlanData()!.recommendedLectures &&
-                      studyPlanData()!.recommendedLectures.length > 0
+                      studyPlanData()!.recommendedLectures!.length > 0
                     ) {
                       <div class="bg-indigo-50 rounded-lg p-5 border border-indigo-200">
                         <div class="flex items-center gap-3 mb-4">

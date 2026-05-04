@@ -4,9 +4,7 @@
     [class.border-emerald-500]="isEnrolled"
     [class.border-accent]="!isEnrolled"
     [class.bg-emerald-50]="isEnrolled"
-    [routerLink]="
-      isStudent() && isEnrolled ? ['/courses', course.id, 'student'] : ['/courses', course.id]
-    "
+    [routerLink]="['/courses', course.id]"
   >
     <div class="course-card-header">
       <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -33,12 +31,6 @@
         </div>
       }
     </div>
-
-    @if (course.teacherName) {
-      <div class="course-teacher mt-2 text-xs text-gray-600">
-        Teacher: <span class="font-medium">{{ course.teacherName }}</span>
-      </div>
-    }
   </a>
 } @else {
   <div
@@ -72,11 +64,5 @@
         </div>
       }
     </div>
-
-    @if (course.teacherName) {
-      <div class="course-teacher mt-2 text-xs text-gray-600">
-        Teacher: <span class="font-medium">{{ course.teacherName }}</span>
-      </div>
-    }
   </div>
 }

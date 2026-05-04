@@ -1,0 +1,124 @@
+<header class="py-6">
+  <div class="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
+    <div class="min-w-0">
+      <h1 class="text-4xl font-bold leading-tight">{{ course().title }}</h1>
+      @if (course().description) {
+        <p class="mt-2 text-gray-700">{{ course().description }}</p>
+      }
+    </div>
+
+    <div class="flex flex-col gap-3 items-end text-sm text-gray-700 flex-1">
+      @if (course().createdAt) {
+        <div class="inline-flex items-center gap-2 whitespace-nowrap">
+          Дата публикации:
+          <time [attr.datetime]="course().createdAt">
+            {{ course().createdAt | date: 'mediumDate' }}
+          </time>
+        </div>
+      }
+
+      @if (!isTeacher()) {
+        <button
+          pButton
+          type="button"
+          class="w-full md:w-auto"
+          [label]="subscribed() ? 'Вы подписаны' : 'Подписаться'"
+          [outlined]="subscribed()"
+          [disabled]="subscribed()"
+          [style]="subscribed() ? '' : 'background-color: #10b981; border-color: #10b981;'"
+          (click)="subscribe.emit()"
+        ></button>
+      }
+
+      @if (canEditCourse()) {
+        <div class="flex gap-2">
+          <button
+            pButton
+            type="button"
+            label="Edit"
+            severity="secondary"
+            [outlined]="true"
+            (click)="editCourse.emit()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Delete"
+            severity="danger"
+            [outlined]="true"
+            (click)="deleteCourse.emit()"
+          ></button>
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+@if (showCourseForm()) {
+  <section class="py-6">
+    <form class="grid gap-3" [formGroup]="courseForm()" (ngSubmit)="submitCourse.emit()">
+      <label class="grid gap-1">
+        <span class="text-sm text-gray-700">Course title</span>
+        <input class="border rounded px-3 py-2" type="text" formControlName="title" />
+      </label>
+
+      <label class="grid gap-1">
+        <span class="text-sm text-gray-700">Description</span>
+        <textarea
+          class="border rounded px-3 py-2"
+          rows="3"
+          formControlName="description"
+        ></textarea>
+      </label>
+
+      <div class="flex gap-2">
+        <button
+          pButton
+          type="submit"
+          label="Save course"
+          severity="success"
+          [disabled]="submitting()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          label="Cancel"
+          severity="secondary"
+          [outlined]="true"
+          (click)="cancelForm.emit()"
+        ></button>
+      </div>
+    </form>
+  </section>
+}
+
+@if (canEditCourse()) {
+  <section class="py-4">
+    <div class="flex border-b border-gray-200">
+      <button
+        type="button"
+        class="px-6 py-3 font-medium transition-colors"
+        [class.text-blue-600]="activeTab() === 'content'"
+        [class.border-b-2]="activeTab() === 'content'"
+        [class.border-blue-600]="activeTab() === 'content'"
+        [class.text-gray-600]="activeTab() !== 'content'"
+        (click)="tabChange.emit('content')"
+      >
+        <i class="pi pi-book mr-2"></i>
+        Контент
+      </button>
+      <button
+        type="button"
+        class="px-6 py-3 font-medium transition-colors"
+        [class.text-blue-600]="activeTab() === 'analytics'"
+        [class.border-b-2]="activeTab() === 'analytics'"
+        [class.border-blue-600]="activeTab() === 'analytics'"
+        [class.text-gray-600]="activeTab() !== 'analytics'"
+        (click)="tabChange.emit('analytics')"
+      >
+        <i class="pi pi-chart-line mr-2"></i>
+        Аналитика
+      </button>
+    </div>
+  </section>
+}

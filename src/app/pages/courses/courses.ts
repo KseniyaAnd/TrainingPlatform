@@ -43,9 +43,10 @@ export class CoursesPage {
     const sortBy = this.sortBy();
     let items = this.items();
 
-    // Фильтрация по тегу
+    // Фильтрация по тегу (регистронезависимо)
     if (tag) {
-      items = items.filter((c) => (c.tags ?? []).includes(tag));
+      const tagLower = tag.toLowerCase();
+      items = items.filter((c) => (c.tags ?? []).some((t) => t.toLowerCase() === tagLower));
     }
 
     // Фильтрация по поиску
@@ -136,13 +137,10 @@ export class CoursesPage {
   }
 
   onFiltersChange(filters: CourseFilters): void {
-    const queryParams: Record<string, string | null> = {
-      tag: filters.tag,
-      sortBy: filters.sortBy,
-    };
-
-    // Сохраняем существующие параметры
+    // Сохраняем существующие параметры и явно перезаписываем tag/sortBy
     const currentParams = this.route.snapshot.queryParamMap;
+    const queryParams: Record<string, string | null> = {};
+
     if (currentParams.has('scope')) {
       queryParams['scope'] = currentParams.get('scope');
     }
@@ -150,10 +148,14 @@ export class CoursesPage {
       queryParams['q'] = currentParams.get('q');
     }
 
+    // Явно задаём tag и sortBy — null удалит параметр из URL
+    queryParams['tag'] = filters.tag;
+    queryParams['sortBy'] = filters.sortBy;
+
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
-      queryParamsHandling: 'merge',
+      // Без merge — чтобы null корректно удалял параметры из URL
     });
   }
 

@@ -1,0 +1,41 @@
+<p-card styleClass="overflow-hidden rounded-xl border-2 border-gray-300 bg-white shadow-sm">
+  <ng-template pTemplate="header">
+    <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <p-tag value="Лекция" severity="info" styleClass="px-2 py-0.5 text-xs font-semibold" />
+        <h3 class="text-2xl font-bold leading-snug black-color">{{ lecture().title }}</h3>
+      </div>
+      @if (canEditCourse() && editMode()) {
+        <div class="flex gap-2">
+          <button
+            pButton
+            type="button"
+            label="Edit"
+            severity="secondary"
+            [outlined]="true"
+            (click)="onEdit.emit(lecture())"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Delete"
+            severity="danger"
+            [outlined]="true"
+            (click)="onDelete.emit(lecture())"
+          ></button>
+        </div>
+      }
+    </div>
+  </ng-template>
+  @if (lecture().videoUrl) {
+    <div class="px-4 py-3 text-sm text-gray-600">
+      <i class="pi pi-video mr-1"></i>
+      <a [href]="lecture().videoUrl" target="_blank" class="underline">{{ lecture().videoUrl }}</a>
+    </div>
+  }
+  @if (lecture().content) {
+    <div class="py-3">
+      <p class="text-gray-700 whitespace-pre-wrap">{{ lecture().content }}</p>
+    </div>
+  }
+</p-card>

@@ -1,123 +1,29 @@
-<section class="border-t-2 border-gray-300 bg-gray-50 p-6">
+<section>
   <div class="flex items-start justify-between gap-4">
-    <h2 class="text-2xl font-bold inline-flex items-center gap-3 leading-tight">
-      <i class="pi pi-video text-gray-700" aria-hidden="true"></i>
-      <span>Лекции</span>
-    </h2>
-    @if (canEditCourse()) {
+    <h2 class="text-2xl font-bold leading-tight">Лекции</h2>
+    @if (canEditCourse() && editMode() && !formService.showForm()) {
       <button
         pButton
         type="button"
         label="Добавить лекцию"
-        severity="help"
+        [style]="'background-color: #10b981; border-color: #10b981;'"
         (click)="openAdd()"
       ></button>
     }
   </div>
 
-  @if (error()) {
-    <div class="mt-4 text-red-600">{{ error() }}</div>
+  @if (formService.error()) {
+    <div class="mt-4 text-red-600">{{ formService.error() }}</div>
   }
 
-  @if (showForm()) {
-    <form class="mt-4 grid gap-3" [formGroup]="form" (ngSubmit)="submit()">
-      <label class="grid gap-1">
-        <span class="text-sm text-gray-700">Урок</span>
-        <select class="border rounded px-3 py-2" formControlName="lessonId">
-          @for (l of lessonsOnly(); track l.id) {
-            <option [value]="l.id">{{ l.title }}</option>
-          }
-        </select>
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm text-gray-700">Название лекции</span>
-        <input class="border rounded px-3 py-2" type="text" formControlName="title" />
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm text-gray-700"
-          >Видео URL (если заполняешь, текст должен быть пустым)</span
-        >
-        <input class="border rounded px-3 py-2" type="text" formControlName="videoUrl" />
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm text-gray-700"
-          >Текст лекции (если заполняешь, видео должно быть пустым)</span
-        >
-        <textarea class="border rounded px-3 py-2" rows="4" formControlName="content"></textarea>
-      </label>
-      <div class="flex gap-2">
-        <button
-          pButton
-          type="submit"
-          label="Сохранить лекцию"
-          severity="success"
-          [disabled]="submitting()"
-        ></button>
-        <button
-          pButton
-          type="button"
-          label="Отмена"
-          severity="secondary"
-          [outlined]="true"
-          (click)="cancel()"
-        ></button>
-      </div>
-    </form>
+  @if (formService.showForm()) {
+    <app-lecture-form [lessons]="lessonsOnly()" (onSubmit)="submit()" />
   }
 
-  @if (allLectures().length === 0) {
-    <p-message severity="info" styleClass="mt-4 w-full" text="Пока нет лекций" />
-  } @else {
-    <div class="mt-5 grid gap-4">
-      @for (lecture of allLectures(); track lecture.id) {
-        <p-card styleClass="overflow-hidden rounded-xl border-2 border-gray-300 bg-white shadow-sm">
-          <ng-template pTemplate="header">
-            <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <p-tag
-                  value="Лекция"
-                  severity="info"
-                  styleClass="px-2 py-0.5 text-xs font-semibold"
-                />
-                <h3 class="text-2xl font-bold leading-snug black-color">{{ lecture.title }}</h3>
-              </div>
-              @if (canEditCourse()) {
-                <div class="flex gap-2">
-                  <button
-                    pButton
-                    type="button"
-                    label="Edit"
-                    severity="secondary"
-                    [outlined]="true"
-                    (click)="openEdit(lecture)"
-                  ></button>
-                  <button
-                    pButton
-                    type="button"
-                    label="Delete"
-                    severity="danger"
-                    [outlined]="true"
-                    (click)="deleteLecture(lecture)"
-                  ></button>
-                </div>
-              }
-            </div>
-          </ng-template>
-          @if (lecture.videoUrl) {
-            <div class="px-4 py-3 text-sm text-gray-600">
-              <i class="pi pi-video mr-1"></i>
-              <a [href]="lecture.videoUrl" target="_blank" class="underline">{{
-                lecture.videoUrl
-              }}</a>
-            </div>
-          }
-          @if (lecture.content) {
-            <div class="px-4 py-3">
-              <p class="text-gray-700 whitespace-pre-wrap">{{ lecture.content }}</p>
-            </div>
-          }
-        </p-card>
-      }
-    </div>
-  }
+  <app-lectures-list
+    [lectures]="allLectures()"
+    [editMode]="editMode()"
+    (onEdit)="openEdit($event)"
+    (onDelete)="deleteLecture($event)"
+  />
 </section>

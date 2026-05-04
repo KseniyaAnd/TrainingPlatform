@@ -1,0 +1,138 @@
+<form class="flex flex-col gap-3" [formGroup]="formService.form" (ngSubmit)="submit()">
+  <!-- AI Generation Toggle -->
+  <div class="flex items-center justify-between">
+    <label class="flex items-center gap-2 cursor-pointer">
+      <input
+        type="checkbox"
+        class="h-4 w-4 rounded border-gray-300 focus:ring-emerald-500"
+        style="accent-color: #10b981"
+        [checked]="formService.useAi()"
+        (change)="setUseAi($any($event.target).checked)"
+      />
+      <span class="text-sm font-medium text-gray-700 whitespace-nowrap">Генерировать с AI</span>
+    </label>
+    @if (formService.isDraftMode()) {
+      <span class="text-xs text-emerald-600 font-medium flex items-center gap-1 whitespace-nowrap">
+        <i class="pi pi-check-circle"></i>
+        Черновик готов
+      </span>
+    }
+  </div>
+
+  <!-- AI Draft Form -->
+  @if (formService.useAi()) {
+    <div class="flex flex-col gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Количество вопросов</label>
+          <input
+            type="number"
+            min="1"
+            max="20"
+            [value]="formService.aiQuestionCount()"
+            (input)="formService.aiQuestionCount.set(+$any($event.target).value)"
+            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Сложность</label>
+          <select
+            [value]="formService.aiDifficulty()"
+            (change)="formService.aiDifficulty.set($any($event.target).value)"
+            class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            <option value="EASY">Легко</option>
+            <option value="MEDIUM">Средне</option>
+            <option value="HARD">Сложно</option>
+          </select>
+        </div>
+      </div>
+      <button
+        pButton
+        type="button"
+        label="Сгенерировать"
+        size="small"
+        [style]="'background-color: #10b981; border-color: #10b981; width: 100%;'"
+        (click)="generateDraft()"
+        [disabled]="formService.generatingDraft()"
+      ></button>
+      @if (formService.isDraftMode()) {
+        <div class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+          <i class="pi pi-info-circle"></i>
+          Если количество вопросов, ответов и критериев не совпадает, они будут автоматически
+          обрезаны до минимального
+        </div>
+      }
+    </div>
+  }
+
+  <div class="flex flex-col gap-2">
+    <label class="text-sm font-medium text-gray-700">Название assessment</label>
+    <input
+      type="text"
+      formControlName="title"
+      placeholder="Введите название"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+    />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label class="text-sm font-medium text-gray-700">Описание</label>
+    <textarea
+      formControlName="description"
+      placeholder="Введите описание"
+      rows="2"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-vertical"
+    ></textarea>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label class="text-sm font-medium text-gray-700">Вопросы (один на строку)</label>
+    <textarea
+      formControlName="questionsText"
+      placeholder="Вопрос 1&#10;Вопрос 2&#10;Вопрос 3"
+      rows="3"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-vertical"
+    ></textarea>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label class="text-sm font-medium text-gray-700">Ответы (один на строку)</label>
+    <textarea
+      formControlName="answerKeyText"
+      placeholder="Ответ 1&#10;Ответ 2&#10;Ответ 3"
+      rows="3"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-vertical"
+    ></textarea>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label class="text-sm font-medium text-gray-700">Критерии оценки (один на строку)</label>
+    <textarea
+      formControlName="rubricCriteriaText"
+      placeholder="Критерий 1&#10;Критерий 2&#10;Критерий 3"
+      rows="3"
+      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-vertical"
+    ></textarea>
+  </div>
+
+  <div class="flex gap-2">
+    <button
+      pButton
+      type="submit"
+      label="Сохранить assessment"
+      size="small"
+      [style]="'background-color: #10b981; border-color: #10b981;'"
+      [disabled]="formService.submitting()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="Отмена"
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      (click)="cancel()"
+    ></button>
+  </div>
+</form>

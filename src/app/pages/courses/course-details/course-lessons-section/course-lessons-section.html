@@ -1,180 +1,331 @@
-<section class="border-t-2 border-gray-300 bg-gray-50 p-6">
+<section class="py-4">
   <div class="flex items-start justify-between gap-4">
     <div class="flex items-center gap-4">
-      <h2 class="text-2xl font-bold inline-flex items-center gap-3 leading-tight">
-        <i class="pi pi-book text-gray-700" aria-hidden="true"></i>
-        <span>Уроки</span>
-      </h2>
       @if (isStudent() && courseProgress()) {
-        <div class="text-sm text-gray-600">
-          Прогресс:
-          <span class="font-semibold text-emerald-600">{{ getOverallProgress() }}%</span>
-        </div>
+        <app-course-progress-display [progressPercent]="getOverallProgress()" />
       }
     </div>
-    @if (canEditCourse()) {
-      <button
-        pButton
-        type="button"
-        label="Добавить урок"
-        severity="help"
-        (click)="openAdd()"
-      ></button>
+    @if (canEditCourse() && editMode() && !lessonFormService.showForm()) {
+      <app-lesson-actions (onAddLesson)="openAdd()" />
     }
   </div>
 
-  @if (error()) {
-    <div class="mt-4 text-red-600">{{ error() }}</div>
+  <app-error-display [error]="combinedError()" />
+
+  @if (lessonFormService.showForm()) {
+    <app-lesson-form (onSubmit)="submit()" (onCancel)="cancel()" />
   }
 
-  @if (showForm()) {
-    <form class="mt-4 grid gap-3" [formGroup]="form" (ngSubmit)="submit()">
-      <label class="grid gap-1">
-        <span class="text-sm text-gray-700">Название урока</span>
-        <input class="border rounded px-3 py-2" type="text" formControlName="title" />
-      </label>
-      <label class="grid gap-1">
-        <span class="text-sm text-gray-700">Текст урока</span>
-        <textarea class="border rounded px-3 py-2" rows="4" formControlName="content"></textarea>
-      </label>
-      <div class="flex gap-2">
-        <button
-          pButton
-          type="submit"
-          label="Сохранить урок"
-          severity="success"
-          [disabled]="submitting()"
-        ></button>
-        <button
-          pButton
-          type="button"
-          label="Отмена"
-          severity="secondary"
-          [outlined]="true"
-          (click)="cancel()"
-        ></button>
-      </div>
-    </form>
-  }
+  @if (!lessonFormService.showForm()) {
+    @if (lessonsOnly().length === 0) {
+      <p class="mt-4 text-gray-600">Пока нет уроков</p>
+    } @else {
+      <div class="mt-5 flex flex-col gap-4">
+        @for (lesson of lessonsOnly(); track lesson.id) {
+          <p-card
+            styleClass="overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm transition hover:shadow-md p-0"
+          >
+            <!-- LESSON HEADER (встроенный) -->
+            <ng-template pTemplate="header">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 flex-1">
+                    <button
+                      type="button"
+                      class="p-2 hover:bg-gray-100 rounded"
+                      (click)="uiStateService.toggleLessonCollapsed(lesson.id)"
+                    >
+                      <i
+                        class="pi"
+                        [class.pi-chevron-down]="uiStateService.isLessonCollapsed(lesson.id)"
+                        [class.pi-chevron-up]="!uiStateService.isLessonCollapsed(lesson.id)"
+                      ></i>
+                    </button>
+                    <h3 class="text-2xl font-bold leading-snug" style="color: #111827">
+                      {{ lesson.title }}
+                    </h3>
 
-  @if (lessonsOnly().length === 0) {
-    <p-message severity="info" styleClass="mt-4 w-full" text="Пока нет уроков" />
-  } @else {
-    <div class="mt-5 grid gap-4">
-      @for (lesson of lessonsOnly(); track lesson.id) {
-        <p-card
-          styleClass="overflow-hidden rounded-xl border-2 border-gray-300 bg-white shadow-sm transition hover:shadow-md border-l-4 p-0 border-l-emerald-500"
-        >
-          <ng-template pTemplate="header">
-            <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1">
-                <p-tag
-                  value="Урок"
-                  severity="success"
-                  styleClass="custom-lesson-tag px-2 py-0.5 text-xs font-semibold"
-                />
-                <h3 class="text-2xl font-bold leading-snug black-color">{{ lesson.title }}</h3>
-
-                @if (isStudent() && courseProgress()) {
-                  <div class="ml-auto text-sm text-gray-600">
-                    {{ getLessonProgress(lesson.id).completed }} /
-                    {{ getLessonProgress(lesson.id).total }} лекций
-                  </div>
-                }
-
-                @if (isStudent()) {
-                  <button
-                    type="button"
-                    class="ml-2 p-2 hover:bg-gray-100 rounded"
-                    (click)="toggleExpanded(lesson.id)"
-                  >
-                    <i
-                      class="pi"
-                      [class.pi-chevron-down]="!isExpanded(lesson.id)"
-                      [class.pi-chevron-up]="isExpanded(lesson.id)"
-                    ></i>
-                  </button>
-                }
-              </div>
-
-              @if (canEditCourse()) {
-                <div class="flex gap-2">
-                  <button
-                    pButton
-                    type="button"
-                    label="Edit"
-                    severity="secondary"
-                    [outlined]="true"
-                    (click)="openEdit(lesson)"
-                  ></button>
-                  <button
-                    pButton
-                    type="button"
-                    label="Delete"
-                    severity="danger"
-                    [outlined]="true"
-                    (click)="deleteLesson(lesson)"
-                  ></button>
-                  <button
-                    pButton
-                    type="button"
-                    label="Добавить лекцию"
-                    severity="help"
-                    (click)="addLectureToLesson.emit(lesson)"
-                  ></button>
-                </div>
-              }
-            </div>
-          </ng-template>
-
-          <div class="px-4 py-3">
-            <p class="text-gray-700 whitespace-pre-wrap">{{ lesson.content }}</p>
-          </div>
-
-          @if (
-            isStudent() && isExpanded(lesson.id) && lesson.lectures && lesson.lectures.length > 0
-          ) {
-            <div class="px-4 pb-4">
-              <h4 class="text-lg font-semibold mb-3">Лекции:</h4>
-              <div class="space-y-2">
-                @for (lecture of lesson.lectures; track lecture.id) {
-                  <div class="flex items-center gap-3 p-3 border rounded hover:bg-gray-50">
-                    <div class="flex-1">
-                      <div class="font-medium">{{ lecture.title }}</div>
-                      @if (lecture.videoUrl) {
-                        <div class="text-sm text-gray-600 mt-1">
-                          <i class="pi pi-video"></i> Видео лекция
-                        </div>
-                      }
-                      @if (lecture.content) {
-                        <div class="text-sm text-gray-600 mt-1">
-                          <i class="pi pi-file-edit"></i> Текстовая лекция
-                        </div>
-                      }
-                    </div>
-                    @if (isLectureCompleted(lecture.id)) {
-                      <div class="flex items-center gap-2 text-emerald-600">
-                        <i class="pi pi-check-circle"></i>
-                        <span class="text-sm font-medium">Просмотрено</span>
+                    @if (isStudent() && courseProgress()) {
+                      <div class="ml-auto text-sm text-gray-600">
+                        {{ getLessonProgress(lesson).completed }} /
+                        {{ getLessonProgress(lesson).total }} лекций
                       </div>
-                    } @else {
+                    }
+
+                    @if (isStudent() && lesson.lectures && lesson.lectures.length > 0) {
+                      <button
+                        type="button"
+                        class="ml-2 p-2 hover:bg-gray-100 rounded"
+                        (click)="uiStateService.toggleExpanded(lesson.id)"
+                      >
+                        <i
+                          class="pi"
+                          [class.pi-chevron-down]="!uiStateService.isExpanded(lesson.id)"
+                          [class.pi-chevron-up]="uiStateService.isExpanded(lesson.id)"
+                        ></i>
+                      </button>
+                    }
+                  </div>
+
+                  @if (canEditCourse() && editMode()) {
+                    <div class="flex gap-2">
                       <button
                         pButton
                         type="button"
-                        label="Отметить как просмотренное"
-                        severity="success"
+                        label="Редактировать"
                         [outlined]="true"
-                        [disabled]="markingLecture() === lecture.id"
-                        (click)="markLectureCompleted(lecture.id)"
+                        [style]="'color: #10b981; border-color: #10b981;'"
+                        (click)="openEdit(lesson)"
                       ></button>
+                      <button
+                        pButton
+                        type="button"
+                        label="Удалить"
+                        [style]="'background-color: #10b981; border-color: #10b981; color: white;'"
+                        (click)="deleteLesson(lesson)"
+                      ></button>
+                    </div>
+                  }
+                </div>
+              </div>
+            </ng-template>
+
+            @if (!uiStateService.isLessonCollapsed(lesson.id)) {
+              <!-- LESSON CONTENT -->
+              <app-lesson-content [content]="lesson.content ?? ''" />
+
+              <!-- LECTURES LIST (встроенный) -->
+              @if (shouldShowLectures(lesson)) {
+                <div class="pb-4">
+                  <h4 class="text-lg font-semibold mb-3">Лекции:</h4>
+                  <div class="space-y-2">
+                    @for (lecture of lesson.lectures; track lecture.id) {
+                      <!-- LECTURE CARD (встроенный) -->
+                      <div class="border border-gray-300 rounded-lg p-3">
+                        <div class="flex items-center gap-3 mb-2">
+                          <button
+                            type="button"
+                            class="p-2 hover:bg-gray-100 rounded"
+                            (click)="uiStateService.toggleLectureCollapsed(lecture.id)"
+                          >
+                            <i
+                              class="pi"
+                              [class.pi-chevron-down]="
+                                uiStateService.isLectureCollapsed(lecture.id)
+                              "
+                              [class.pi-chevron-up]="!uiStateService.isLectureCollapsed(lecture.id)"
+                            ></i>
+                          </button>
+                          <div class="flex-1">
+                            <div class="font-medium text-lg">{{ lecture.title }}</div>
+                          </div>
+                          @if (isStudent()) {
+                            @if (isLectureCompleted(lecture.id)) {
+                              <div class="flex items-center gap-2 text-emerald-600">
+                                <i class="pi pi-check-circle"></i>
+                                <span class="text-sm font-medium">Просмотрено</span>
+                              </div>
+                            } @else {
+                              <button
+                                pButton
+                                type="button"
+                                label="Отметить как просмотренное"
+                                severity="success"
+                                [outlined]="true"
+                                [disabled]="markingLecture() === lecture.id"
+                                (click)="markLectureCompleted(lecture.id)"
+                              ></button>
+                            }
+                          }
+                        </div>
+
+                        @if (!uiStateService.isLectureCollapsed(lecture.id)) {
+                          <!-- Lecture content -->
+                          @if (lecture.videoUrl) {
+                            <div class="mb-3">
+                              <a
+                                [href]="lecture.videoUrl"
+                                target="_blank"
+                                class="text-sm text-blue-600 hover:underline break-all"
+                              >
+                                {{ lecture.videoUrl }}
+                              </a>
+                            </div>
+                          }
+                          @if (lecture.content) {
+                            <div class="mb-3">
+                              <p class="text-sm text-gray-700 whitespace-pre-wrap">
+                                {{ lecture.content }}
+                              </p>
+                            </div>
+                          }
+
+                          <!-- Assessments for this lecture -->
+                          @if (isStudent()) {
+                            @if (getAssessmentsForLecture(lecture.id).length > 0) {
+                              <div class="mt-3 pl-4 border-l-2 border-emerald-400">
+                                <h5 class="text-sm font-semibold mb-2">Assessments:</h5>
+                                @for (
+                                  assessment of getAssessmentsForLecture(lecture.id);
+                                  track assessment.id
+                                ) {
+                                  <!-- ASSESSMENT CARD STUDENT (встроенный) -->
+                                  <div class="mb-3 p-3 border border-gray-200 rounded">
+                                    <h6 class="font-medium mb-2">{{ assessment.title }}</h6>
+                                    <p class="text-sm text-gray-700 mb-2">
+                                      {{ assessment.description }}
+                                    </p>
+                                    @if (getSubmission(assessment.id); as submission) {
+                                      <div class="mt-2 p-2 bg-gray-50 rounded">
+                                        <p class="text-sm font-medium">Ваш ответ:</p>
+                                        <p class="text-sm text-gray-700">
+                                          {{ submission.answerText }}
+                                        </p>
+                                        @if (submission.score !== null) {
+                                          <p class="text-sm font-medium mt-1">
+                                            Оценка: {{ submission.score }}
+                                          </p>
+                                        }
+                                      </div>
+                                    } @else {
+                                      <form
+                                        [formGroup]="submissionForm"
+                                        (ngSubmit)="submitAnswer(assessment)"
+                                      >
+                                        <textarea
+                                          formControlName="answerText"
+                                          class="w-full p-2 border border-gray-300 rounded"
+                                          rows="3"
+                                          placeholder="Введите ваш ответ..."
+                                        ></textarea>
+                                        <button
+                                          pButton
+                                          type="submit"
+                                          label="Отправить"
+                                          [disabled]="
+                                            submittingAssessmentId() === assessment.id ||
+                                            submissionForm.invalid
+                                          "
+                                          [style]="'background-color: #10b981; border-color: #10b981;'"
+                                          class="mt-2"
+                                        ></button>
+                                      </form>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                          } @else if (canEditCourse()) {
+                            <!-- Teacher view: assessments always visible -->
+
+                            <!-- Assessment form (only in edit mode) -->
+                            @if (
+                              editMode() &&
+                              assessmentFormService.showForm() &&
+                              assessmentFormService.lectureId() === lecture.id
+                            ) {
+                              <div class="mt-3 pl-4 border-l-2 border-emerald-400">
+                                <app-assessment-form
+                                  [courseId]="courseId()"
+                                  (onSubmit)="submitAssessment()"
+                                  (onCancel)="cancelAssessmentForm()"
+                                />
+                              </div>
+                            }
+
+                            <!-- Existing assessments list -->
+                            @if (getTeacherAssessmentsForLecture(lecture.id).length > 0) {
+                              <div class="mt-3 pl-4 border-l-2 border-emerald-400">
+                                <h5 class="text-sm font-semibold mb-2">Assessments:</h5>
+                                @for (
+                                  a of getTeacherAssessmentsForLecture(lecture.id);
+                                  track a.id
+                                ) {
+                                  <!-- ASSESSMENT CARD TEACHER (встроенный) -->
+                                  <div class="mb-2 p-2 border border-gray-200 rounded">
+                                    <div class="flex items-center justify-between">
+                                      <div>
+                                        <h6 class="font-medium">{{ a.title }}</h6>
+                                        <p class="text-sm text-gray-600">{{ a.description }}</p>
+                                      </div>
+                                      <div class="flex gap-2">
+                                        <button
+                                          pButton
+                                          type="button"
+                                          label="Оценить"
+                                          size="small"
+                                          [outlined]="true"
+                                          (click)="gradeAssessment(a)"
+                                        ></button>
+                                        <button
+                                          pButton
+                                          type="button"
+                                          label="Удалить"
+                                          size="small"
+                                          severity="danger"
+                                          [outlined]="true"
+                                          (click)="deleteAssessment(a)"
+                                        ></button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+
+                            <!-- Add assessment button (only in edit mode) -->
+                            @if (
+                              editMode() &&
+                              (!assessmentFormService.showForm() ||
+                                assessmentFormService.lectureId() !== lecture.id)
+                            ) {
+                              <div class="mt-3">
+                                <button
+                                  pButton
+                                  type="button"
+                                  label="Добавить assessment"
+                                  size="small"
+                                  [style]="'background-color: #10b981; border-color: #10b981;'"
+                                  (click)="openAddAssessment(lecture.id)"
+                                ></button>
+                              </div>
+                            }
+                          }
+                        }
+                      </div>
                     }
                   </div>
-                }
-              </div>
-            </div>
-          }
-        </p-card>
-      }
-    </div>
+                </div>
+              }
+
+              <!-- LESSON FOOTER (встроенный) -->
+              @if (canEditCourse() && editMode()) {
+                <div class="px-4 py-2 border-t border-gray-100">
+                  @if (
+                    lectureFormService.showForm() && lectureFormService.lessonId() === lesson.id
+                  ) {
+                    <app-lecture-form
+                      [lessonId]="lesson.id"
+                      (onSubmit)="submitLecture()"
+                      (onCancel)="cancelLectureForm()"
+                    />
+                  } @else {
+                    <div class="flex justify-end">
+                      <button
+                        pButton
+                        type="button"
+                        label="Добавить лекцию"
+                        [style]="'background-color: #10b981; border-color: #10b981;'"
+                        (click)="openAddLecture(lesson.id)"
+                      ></button>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </p-card>
+        }
+      </div>
+    }
   }
 </section>

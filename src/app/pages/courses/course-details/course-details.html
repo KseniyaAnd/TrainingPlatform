@@ -70,25 +70,58 @@
               [courseId]="courseId"
               [lessons]="courseLessons()"
               [courseProgress]="courseProgress()"
+              [editMode]="showCourseForm()"
+              [assessments]="assessments()"
+              [studentAssessments]="studentAssessments()"
+              [submissions]="submissions()"
               (lessonsChange)="courseLessons.set($event)"
-              (addLectureToLesson)="lecturesSection.openAdd($event.id)"
+              (assessmentsChange)="onAssessmentsChange($event)"
+              (submissionsChange)="submissions.set($event)"
             />
 
+            <!-- Hidden: lectures section kept for potential future use -->
             <app-course-lectures-section
               #lecturesSection
               [lessons]="courseLessons()"
+              [editMode]="showCourseForm()"
               (lessonsChange)="courseLessons.set($event)"
+              style="display: none"
             />
 
+            <!-- Hidden: assessments section now nested in lectures -->
+            <!--
             <app-course-assessments-section
               [courseId]="courseId"
               [lessons]="courseLessons()"
               [assessments]="assessments()"
               [studentAssessments]="studentAssessments()"
               [submissions]="submissions()"
+              [editMode]="showCourseForm()"
               (assessmentsChange)="assessments.set($event)"
               (submissionsChange)="submissions.set($event)"
             />
+            -->
+
+            @if (showCourseForm()) {
+              <div class="mt-8 flex gap-3 justify-end">
+                <button
+                  pButton
+                  type="button"
+                  label="Сохранить"
+                  [style]="'background-color: #10b981; border-color: #10b981;'"
+                  [disabled]="submitting()"
+                  (click)="submitCourse()"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  label="Отмена"
+                  severity="secondary"
+                  [outlined]="true"
+                  (click)="cancelCourseForm()"
+                ></button>
+              </div>
+            }
           }
         }
 

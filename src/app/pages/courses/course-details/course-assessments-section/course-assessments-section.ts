@@ -14,7 +14,6 @@ import { AuthStateService } from '../../../../services/auth/auth-state.service';
 import {
   AssessmentDifficulty,
   AssessmentDraftResponse,
-  AssessmentDraftSourceType,
 } from '../../../../services/courses/course-content.service';
 import { CourseDetailsDataService } from '../course-details-data.service';
 import { LessonWithLectures } from '../course-lessons-section/course-lessons-section';
@@ -33,6 +32,7 @@ import { LessonWithLectures } from '../course-lessons-section/course-lessons-sec
 export class CourseAssessmentsSectionComponent {
   readonly courseId = input.required<string>();
   readonly lessons = input.required<LessonWithLectures[]>();
+  readonly editMode = input<boolean>(false);
 
   // Teacher inputs
   readonly assessments = input<Assessment[]>([]);
@@ -66,8 +66,7 @@ export class CourseAssessmentsSectionComponent {
   readonly useAi = signal(false);
   readonly isDraftMode = signal(false);
   readonly draft = signal<AssessmentDraftResponse | null>(null);
-  readonly draftSourceType = signal<AssessmentDraftSourceType>('LESSON');
-  readonly draftSourceId = signal<string>('');
+  readonly draftLessonId = signal<string>('');
   readonly generatingDraft = signal(false);
 
   readonly form = this.fb.nonNullable.group({
@@ -81,8 +80,7 @@ export class CourseAssessmentsSectionComponent {
   });
 
   readonly aiForm = this.fb.nonNullable.group({
-    sourceType: ['LESSON' as AssessmentDraftSourceType, [Validators.required]],
-    sourceId: ['', [Validators.required]],
+    lessonId: ['', [Validators.required]],
     questionCount: [5, [Validators.required]],
     difficulty: ['MEDIUM' as AssessmentDifficulty, [Validators.required]],
   });
@@ -116,13 +114,11 @@ export class CourseAssessmentsSectionComponent {
       rubricCriteriaText: '',
     });
     this.aiForm.reset({
-      sourceType: 'LESSON',
-      sourceId: lessonId,
+      lessonId,
       questionCount: 5,
       difficulty: 'MEDIUM',
     });
-    this.draftSourceType.set('LESSON');
-    this.draftSourceId.set(lessonId);
+    this.draftLessonId.set(lessonId);
   }
 
   openEdit(a: Assessment): void {
@@ -151,8 +147,7 @@ export class CourseAssessmentsSectionComponent {
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
-    this.draftSourceType.set('LESSON');
-    this.draftSourceId.set('');
+    this.draftLessonId.set('');
   }
 
   setUseAi(val: boolean): void {
@@ -160,8 +155,7 @@ export class CourseAssessmentsSectionComponent {
     if (!val) {
       this.isDraftMode.set(false);
       this.draft.set(null);
-      this.draftSourceType.set('LESSON');
-      this.draftSourceId.set('');
+      this.draftLessonId.set('');
     }
   }
 
@@ -172,31 +166,8 @@ export class CourseAssessmentsSectionComponent {
     if (!lectures.some((l) => l.id === currentLectureId)) {
       this.form.controls.lectureId.setValue(lectures[0]?.id ?? '');
     }
-    if (this.aiForm.controls.sourceType.value === 'LESSON') {
-      this.aiForm.controls.sourceId.setValue(lessonId ?? '');
-      this.draftSourceId.set(lessonId ?? '');
-    }
-  }
-
-  onAiSourceTypeChange(): void {
-    const sourceType = this.aiForm.controls.sourceType.value;
-    if (sourceType === 'LESSON') {
-      const lessonId = this.form.controls.lessonId.value;
-      this.aiForm.controls.sourceId.setValue(lessonId ?? '');
-      this.draftSourceType.set('LESSON');
-      this.draftSourceId.set(lessonId ?? '');
-    } else {
-      const lectureId = this.form.controls.lectureId.value;
-      this.aiForm.controls.sourceId.setValue(lectureId ?? '');
-      this.draftSourceType.set('LECTURE');
-      this.draftSourceId.set(lectureId ?? '');
-    }
-  }
-
-  aiSources(): Array<{ id: string; title: string }> {
-    return this.aiForm.controls.sourceType.value === 'LECTURE'
-      ? this.allLectures().map((l) => ({ id: l.id, title: l.title }))
-      : this.lessonsOnly().map((l) => ({ id: l.id, title: l.title }));
+    this.aiForm.controls.lessonId.setValue(lessonId ?? '');
+    this.draftLessonId.set(lessonId ?? '');
   }
 
   lecturesForLesson(): Array<{ id: string; title: string }> {
@@ -206,25 +177,33 @@ export class CourseAssessmentsSectionComponent {
 
   async generateDraft(): Promise<void> {
     if (this.aiForm.invalid || this.generatingDraft()) return;
-    const sourceId = this.aiForm.controls.sourceId.value;
-    if (!sourceId) return;
+    const lessonId = this.aiForm.controls.lessonId.value;
+    if (!lessonId) return;
+
+    // Получаем lectureId из формы, если он выбран
+    const lectureId = this.form.controls.lectureId.value;
 
     this.error.set(null);
     try {
       this.generatingDraft.set(true);
-      const d = await firstValueFrom(
-        this.dataService.generateAssessmentDraft({
-          courseId: this.courseId(),
-          sourceType: this.aiForm.controls.sourceType.value,
-          sourceId,
-          questionCount: Number(this.aiForm.controls.questionCount.value),
-          difficulty: this.aiForm.controls.difficulty.value,
-        }),
-      );
+
+      // Отправляем либо lectureId (если выбран), либо lessonId
+      const payload: any = {
+        courseId: this.courseId(),
+        questionCount: Number(this.aiForm.controls.questionCount.value),
+        difficulty: this.aiForm.controls.difficulty.value,
+      };
+
+      if (lectureId) {
+        payload.lectureId = lectureId;
+      } else {
+        payload.lessonId = lessonId;
+      }
+
+      const d = await firstValueFrom(this.dataService.generateAssessmentDraft(payload));
       this.draft.set(d);
       this.isDraftMode.set(true);
-      this.draftSourceType.set(this.aiForm.controls.sourceType.value);
-      this.draftSourceId.set(sourceId);
+      this.draftLessonId.set(lessonId);
       this.form.patchValue({
         title: d.title ?? '',
         description: d.description ?? '',
@@ -276,8 +255,7 @@ export class CourseAssessmentsSectionComponent {
           ? await firstValueFrom(
               this.dataService.createAssessmentFromDraft({
                 courseId: this.courseId(),
-                sourceType: this.draftSourceType(),
-                sourceId: this.draftSourceId(),
+                lessonId: this.draftLessonId(),
                 ...payload,
               }),
             )

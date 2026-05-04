@@ -1,51 +1,79 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { MessageModule } from 'primeng/message';
-import { TagModule } from 'primeng/tag';
 import { firstValueFrom } from 'rxjs';
 
+import { Assessment } from '../../../../models/assessment.model';
 import { Lecture } from '../../../../models/lecture.model';
 import { Lesson } from '../../../../models/lesson.model';
 import { CourseProgressResponse } from '../../../../models/progress.model';
+import { AssessmentStudentResponse, SubmissionResponse } from '../../../../models/submission.model';
 import { AuthStateService } from '../../../../services/auth/auth-state.service';
 import { CourseDetailsDataService } from '../course-details-data.service';
+import { AssessmentFormComponent } from './components/assessment-form/assessment-form.component';
+import { CourseProgressDisplayComponent } from './components/course-progress-display/course-progress-display.component';
+import { ErrorDisplayComponent } from './components/error-display/error-display.component';
+import { LectureFormComponent } from './components/lecture-form/lecture-form.component';
+import { LessonActionsComponent } from './components/lesson-actions/lesson-actions.component';
+import { LessonContentComponent } from './components/lesson-content/lesson-content.component';
+import { LessonFormComponent } from './components/lesson-form/lesson-form.component';
+import { AssessmentFormService } from './services/assessment-form.service';
+import { LectureFormService } from './services/lecture-form.service';
+import { LessonFormService } from './services/lesson-form.service';
+import { LessonUiStateService } from './services/lesson-ui-state.service';
 
 export type LessonWithLectures = Lesson & { lectures: Lecture[] };
 
 @Component({
   selector: 'app-course-lessons-section',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonModule, CardModule, TagModule, MessageModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    CardModule,
+    ButtonModule,
+    CourseProgressDisplayComponent,
+    ErrorDisplayComponent,
+    LessonActionsComponent,
+    LessonFormComponent,
+    LessonContentComponent,
+    LectureFormComponent,
+    AssessmentFormComponent,
+  ],
+  providers: [LessonFormService, LectureFormService, AssessmentFormService, LessonUiStateService],
   templateUrl: './course-lessons-section.html',
-  styles: `
-    :host ::ng-deep .p-card .black-color {
-      color: #111827 !important;
-    }
-    :host ::ng-deep .custom-lesson-tag.p-tag {
-      background: #34d399;
-      border: none;
-    }
-    :host ::ng-deep .custom-lesson-tag .p-tag-value {
-      color: #18181b !important;
-    }
-  `,
 })
 export class CourseLessonsSectionComponent {
   readonly courseId = input.required<string>();
   readonly lessons = input.required<LessonWithLectures[]>();
   readonly courseProgress = input<CourseProgressResponse | null>(null);
+  readonly editMode = input<boolean>(false);
+
+  // Assessment-related inputs
+  readonly assessments = input<Assessment[]>([]);
+  readonly studentAssessments = input<AssessmentStudentResponse[]>([]);
+  readonly submissions = input<SubmissionResponse[]>([]);
 
   /** Emitted when lessons list changes (add/edit/delete) */
   readonly lessonsChange = output<LessonWithLectures[]>();
-  /** Emitted when teacher wants to add a lecture to a specific lesson */
-  readonly addLectureToLesson = output<Lesson>();
+  /** Emitted when assessments change */
+  readonly assessmentsChange = output<Assessment[]>();
+  /** Emitted when submissions change */
+  readonly submissionsChange = output<SubmissionResponse[]>();
 
   private readonly dataService = inject(CourseDetailsDataService);
   private readonly authState = inject(AuthStateService);
+  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+
+  // Inject services
+  readonly lessonFormService: LessonFormService = inject(LessonFormService);
+  readonly lectureFormService: LectureFormService = inject(LectureFormService);
+  readonly assessmentFormService: AssessmentFormService = inject(AssessmentFormService);
+  readonly uiStateService: LessonUiStateService = inject(LessonUiStateService);
 
   readonly canEditCourse = computed(() => {
     const role = this.authState.role();
@@ -53,124 +81,104 @@ export class CourseLessonsSectionComponent {
   });
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
 
-  readonly showForm = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly submitting = signal(false);
+  readonly markingLecture = signal<string | null>(null);
+  readonly submittingAssessmentId = signal<string | null>(null);
   readonly error = signal<string | null>(null);
 
-  readonly expandedLessons = signal<Set<string>>(new Set());
-  readonly markingLecture = signal<string | null>(null);
-
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3)]],
-    content: ['', [Validators.required, Validators.minLength(1)]],
+  readonly submissionForm = this.fb.nonNullable.group({
+    answerText: ['', [Validators.required, Validators.minLength(10)]],
   });
 
   readonly lessonsOnly = computed(() => this.lessons().filter((l) => l.kind === 'lesson'));
 
-  openAdd(): void {
-    this.showForm.set(true);
-    this.editingId.set(null);
-    this.error.set(null);
-    this.form.reset({ title: '', content: '' });
+  readonly combinedError = computed(() => {
+    return (
+      this.error() ||
+      this.lessonFormService.error() ||
+      this.lectureFormService.error() ||
+      this.assessmentFormService.error()
+    );
+  });
+
+  shouldShowLectures(lesson: LessonWithLectures): boolean {
+    return (
+      ((this.isStudent() && this.uiStateService.isExpanded(lesson.id)) || this.canEditCourse()) &&
+      lesson.lectures &&
+      lesson.lectures.length > 0
+    );
   }
 
-  openEdit(lesson: Lesson): void {
-    this.showForm.set(true);
-    this.editingId.set(lesson.id);
-    this.error.set(null);
-    this.form.reset({ title: lesson.title ?? '', content: lesson.content ?? '' });
-  }
-
-  cancel(): void {
-    this.showForm.set(false);
-    this.editingId.set(null);
-    this.error.set(null);
-  }
-
-  async submit(): Promise<void> {
-    if (this.form.invalid || this.submitting()) return;
-    this.error.set(null);
-
-    try {
-      this.submitting.set(true);
-      const editingId = this.editingId();
-      const createdOrUpdated = editingId
-        ? await firstValueFrom(
-            this.dataService.updateLesson(editingId, {
-              title: this.form.controls.title.value,
-              content: this.form.controls.content.value,
-            }),
-          )
-        : await firstValueFrom(
-            this.dataService.createLesson({
-              courseId: this.courseId(),
-              title: this.form.controls.title.value,
-              content: this.form.controls.content.value,
-            }),
-          );
-
-      if (editingId) {
-        this.lessonsChange.emit(
-          this.lessons().map((l) =>
-            l.id === editingId ? { ...l, ...createdOrUpdated, lectures: l.lectures ?? [] } : l,
-          ),
-        );
-      } else {
-        const next: LessonWithLectures = {
-          ...createdOrUpdated,
-          kind: createdOrUpdated.kind ?? 'lesson',
-          lectures: [],
-        };
-        this.lessonsChange.emit([next, ...this.lessons()]);
-      }
-      this.cancel();
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to save lesson');
-    } finally {
-      this.submitting.set(false);
-    }
-  }
-
-  async deleteLesson(lesson: Lesson): Promise<void> {
-    if (!confirm('Удалить урок?')) return;
-    try {
-      this.submitting.set(true);
-      await firstValueFrom(this.dataService.deleteLesson(lesson.id));
-      this.lessonsChange.emit(this.lessons().filter((l) => l.id !== lesson.id));
-      if (this.editingId() === lesson.id) this.cancel();
-    } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to delete lesson');
-    } finally {
-      this.submitting.set(false);
-    }
-  }
-
-  toggleExpanded(lessonId: string): void {
-    const s = new Set(this.expandedLessons());
-    s.has(lessonId) ? s.delete(lessonId) : s.add(lessonId);
-    this.expandedLessons.set(s);
-  }
-
-  isExpanded(lessonId: string): boolean {
-    return this.expandedLessons().has(lessonId);
-  }
-
-  isLectureCompleted(lectureId: string): boolean {
-    return this.courseProgress()?.completedLectureIds.includes(lectureId) ?? false;
-  }
-
-  getLessonProgress(lessonId: string): { completed: number; total: number } {
+  getLessonProgress(lesson: LessonWithLectures): { completed: number; total: number } {
     const progress = this.courseProgress();
     if (!progress) return { completed: 0, total: 0 };
-    const lesson = this.lessons().find((l) => l.id === lessonId);
-    if (!lesson) return { completed: 0, total: 0 };
     const total = lesson.lectures?.length ?? 0;
     const completed =
       lesson.lectures?.filter((lec) => progress.completedLectureIds.includes(lec.id)).length ?? 0;
     return { completed, total };
   }
 
+  isLectureCompleted(lectureId: string): boolean {
+    return this.courseProgress()?.completedLectureIds.includes(lectureId) ?? false;
+  }
+
+  getAssessmentsForLecture(lectureId: string): AssessmentStudentResponse[] {
+    return this.studentAssessments().filter(
+      (a) => a.sourceId === lectureId && a.sourceType === 'LECTURE',
+    );
+  }
+
+  getTeacherAssessmentsForLecture(lectureId: string): Assessment[] {
+    return this.assessments();
+  }
+
+  getSubmission(assessmentId: string): SubmissionResponse | null {
+    return this.submissions().find((s) => s.assessmentId === assessmentId) ?? null;
+  }
+
+  // Lesson form methods
+  openAdd(): void {
+    this.lessonFormService.openAdd();
+  }
+
+  openEdit(lesson: Lesson): void {
+    this.lessonFormService.openEdit(lesson);
+  }
+
+  cancel(): void {
+    this.lessonFormService.cancel();
+  }
+
+  async submit(): Promise<void> {
+    const result = await this.lessonFormService.submit(this.courseId(), this.lessons());
+    if (result) {
+      this.lessonsChange.emit(result);
+    }
+  }
+
+  async deleteLesson(lesson: Lesson): Promise<void> {
+    const result = await this.lessonFormService.deleteLesson(lesson.id, this.lessons());
+    if (result) {
+      this.lessonsChange.emit(result);
+    }
+  }
+
+  // Lecture form methods
+  openAddLecture(lessonId: string): void {
+    this.lectureFormService.openAdd(lessonId);
+  }
+
+  cancelLectureForm(): void {
+    this.lectureFormService.cancel();
+  }
+
+  async submitLecture(): Promise<void> {
+    const result = await this.lectureFormService.submit(this.lessons());
+    if (result) {
+      this.lessonsChange.emit(result);
+    }
+  }
+
+  // Progress methods
   getOverallProgress(): number {
     return this.courseProgress()?.progressPercent ?? 0;
   }
@@ -191,6 +199,61 @@ export class CourseLessonsSectionComponent {
       this.error.set(e?.error?.detail ?? e?.message ?? 'Не удалось отметить лекцию');
     } finally {
       this.markingLecture.set(null);
+    }
+  }
+
+  // Assessment form methods
+  openAddAssessment(lectureId: string): void {
+    this.assessmentFormService.openAdd(lectureId);
+  }
+
+  cancelAssessmentForm(): void {
+    this.assessmentFormService.cancel();
+  }
+
+  async submitAssessment(): Promise<void> {
+    const result = await this.assessmentFormService.submit(this.courseId(), this.assessments());
+    if (result) {
+      this.assessmentsChange.emit(result);
+    }
+  }
+
+  async deleteAssessment(a: Assessment): Promise<void> {
+    if (!confirm('Удалить assessment?')) return;
+    try {
+      await firstValueFrom(this.dataService.deleteAssessment(a.id));
+      this.assessmentsChange.emit(this.assessments().filter((x) => x.id !== a.id));
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'Failed to delete assessment');
+    }
+  }
+
+  gradeAssessment(a: Assessment): void {
+    void this.router.navigate(['/assessments', a.id, 'grade']);
+  }
+
+  // Student submission methods
+  async submitAnswer(assessment: AssessmentStudentResponse): Promise<void> {
+    if (!this.isStudent() || this.submittingAssessmentId()) return;
+    this.error.set(null);
+    if (this.submissionForm.invalid) {
+      this.error.set('Пожалуйста, заполните ответ');
+      return;
+    }
+    this.submittingAssessmentId.set(assessment.id);
+    try {
+      const sub = await firstValueFrom(
+        this.dataService.createSubmission(
+          assessment.id,
+          this.submissionForm.controls.answerText.value,
+        ),
+      );
+      this.submissionsChange.emit([sub, ...this.submissions()]);
+      this.submissionForm.reset();
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'Не удалось отправить ответ');
+    } finally {
+      this.submittingAssessmentId.set(null);
     }
   }
 }

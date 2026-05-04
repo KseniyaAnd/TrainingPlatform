@@ -39,13 +39,12 @@ export type UpdateAssessmentRequest = Partial<
   Omit<CreateAssessmentRequest, 'courseId' | 'lessonId' | 'lectureId'>
 >;
 
-export type AssessmentDraftSourceType = 'LESSON' | 'LECTURE';
 export type AssessmentDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface GenerateAssessmentDraftRequest {
   courseId: string;
-  sourceType: AssessmentDraftSourceType;
-  sourceId: string;
+  lessonId?: string;
+  lectureId?: string;
   questionCount: number;
   difficulty: AssessmentDifficulty;
 }
@@ -60,8 +59,7 @@ export interface AssessmentDraftResponse {
 
 export interface CreateAssessmentFromDraftRequest {
   courseId: string;
-  sourceType: AssessmentDraftSourceType;
-  sourceId: string;
+  lessonId: string;
   title: string;
   description: string;
   questions: string[];
@@ -104,9 +102,14 @@ export class CourseContentService {
   }
 
   getAssessmentsByCourseId(courseId: string): Observable<Assessment[]> {
-    return this.http
-      .get<unknown>(`${environment.apiUrl}/courses/${courseId}/assessments`)
-      .pipe(map((r) => normalizeArrayResponse<Assessment>(r, ['assessments'])));
+    return this.http.get<unknown>(`${environment.apiUrl}/courses/${courseId}/assessments`).pipe(
+      map((r) => {
+        console.log('🌐 Сырой ответ API /courses/{courseId}/assessments:', r);
+        const normalized = normalizeArrayResponse<Assessment>(r, ['assessments']);
+        console.log('📦 Нормализованные ассесменты:', normalized);
+        return normalized;
+      }),
+    );
   }
 
   createLesson(payload: CreateLessonRequest): Observable<Lesson> {

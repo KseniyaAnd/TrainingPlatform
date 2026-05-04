@@ -14,7 +14,6 @@ import { CourseProgressResponse } from '../../../models/progress.model';
 import { AssessmentStudentResponse, SubmissionResponse } from '../../../models/submission.model';
 import { AuthStateService } from '../../../services/auth/auth-state.service';
 import { CourseAnalyticsComponent } from './course-analytics/course-analytics';
-import { CourseAssessmentsSectionComponent } from './course-assessments-section/course-assessments-section';
 import { CourseDetailsDataService } from './course-details-data.service';
 import { CourseHeaderComponent } from './course-header/course-header';
 import { CourseLecturesSectionComponent } from './course-lectures-section/course-lectures-section';
@@ -35,7 +34,6 @@ import {
     CourseHeaderComponent,
     CourseLessonsSectionComponent,
     CourseLecturesSectionComponent,
-    CourseAssessmentsSectionComponent,
     CourseAnalyticsComponent,
   ],
   templateUrl: './course-details.html',
@@ -143,6 +141,19 @@ export class CourseDetailsPage {
       firstValueFrom(this.dataService.getLessons(this.courseId)),
       firstValueFrom(this.dataService.getAssessments(this.courseId)),
     ]);
+    console.log('📚 Загружены ассесменты для учителя:', {
+      courseId: this.courseId,
+      assessmentsCount: assessments?.length ?? 0,
+      assessments:
+        assessments?.map((a) => ({
+          id: a.id,
+          title: a.title,
+          lectureId: a.lectureId,
+          lessonId: a.lessonId,
+          sourceType: a.sourceType,
+          sourceId: a.sourceId,
+        })) ?? [],
+    });
     this.assessments.set(assessments ?? []);
     this.courseLessons.set(await this.loadLessonsWithLectures(lessons ?? []));
   }
@@ -233,5 +244,22 @@ export class CourseDetailsPage {
   // ── Navigation ────────────────────────────────────────────────────────────
   goBack(): void {
     this.location.back();
+  }
+
+  // ── Assessment handlers ───────────────────────────────────────────────────
+  onAssessmentsChange(newAssessments: Assessment[]): void {
+    console.log('🔄 Обновление списка ассесментов:', {
+      oldCount: this.assessments().length,
+      newCount: newAssessments.length,
+      newAssessments: newAssessments.map((a) => ({
+        id: a.id,
+        title: a.title,
+        lectureId: a.lectureId,
+        lessonId: a.lessonId,
+        sourceType: a.sourceType,
+        sourceId: a.sourceId,
+      })),
+    });
+    this.assessments.set(newAssessments);
   }
 }

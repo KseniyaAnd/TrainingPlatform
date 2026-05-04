@@ -3,7 +3,6 @@ import { map } from 'rxjs';
 
 import {
   AssessmentDifficulty,
-  AssessmentDraftSourceType,
   CourseContentService,
   CreateAssessmentFromDraftRequest,
   CreateAssessmentRequest,
@@ -20,7 +19,6 @@ import { SubmissionsService } from '../../../services/submissions/submissions.se
 
 export type {
   AssessmentDifficulty,
-  AssessmentDraftSourceType,
   CreateAssessmentFromDraftRequest,
   CreateAssessmentRequest,
   CreateLectureRequest,

@@ -13,6 +13,7 @@
       <div>
         @if (isCourse(item)) {
           <div
+            class="w-[350px]"
             (click)="clickable() ? onCourseClick(item, $event) : null"
             [class.cursor-pointer]="clickable()"
           >

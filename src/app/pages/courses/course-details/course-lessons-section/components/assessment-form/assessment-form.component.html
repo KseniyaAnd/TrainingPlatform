@@ -134,5 +134,16 @@
       [outlined]="true"
       (click)="cancel()"
     ></button>
+    @if (formService.editingId()) {
+      <button
+        pButton
+        type="button"
+        label="Удалить assessment"
+        size="small"
+        severity="danger"
+        [outlined]="true"
+        (click)="deleteAssessment()"
+      ></button>
+    }
   </div>
 </form>

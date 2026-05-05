@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
 import { firstValueFrom } from 'rxjs';
 
 import { Assessment } from '../../../../models/assessment.model';
@@ -17,11 +16,11 @@ import { AssessmentFormComponent } from './components/assessment-form/assessment
 import { CourseProgressDisplayComponent } from './components/course-progress-display/course-progress-display.component';
 import { ErrorDisplayComponent } from './components/error-display/error-display.component';
 import { LectureFormComponent } from './components/lecture-form/lecture-form.component';
-import { LessonActionsComponent } from './components/lesson-actions/lesson-actions.component';
 import { LessonContentComponent } from './components/lesson-content/lesson-content.component';
 import { LessonFormComponent } from './components/lesson-form/lesson-form.component';
 import { AssessmentFormService } from './services/assessment-form.service';
 import { LectureFormService } from './services/lecture-form.service';
+import { LectureSectionFormService } from './services/lecture-section-form.service';
 import { LessonFormService } from './services/lesson-form.service';
 import { LessonUiStateService } from './services/lesson-ui-state.service';
 
@@ -33,24 +32,28 @@ export type LessonWithLectures = Lesson & { lectures: Lecture[] };
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    CardModule,
     ButtonModule,
     CourseProgressDisplayComponent,
     ErrorDisplayComponent,
-    LessonActionsComponent,
     LessonFormComponent,
     LessonContentComponent,
     LectureFormComponent,
     AssessmentFormComponent,
   ],
-  providers: [LessonFormService, LectureFormService, AssessmentFormService, LessonUiStateService],
+  providers: [
+    LessonFormService,
+    LectureFormService,
+    LectureSectionFormService,
+    AssessmentFormService,
+    LessonUiStateService,
+  ],
   templateUrl: './course-lessons-section.html',
 })
 export class CourseLessonsSectionComponent {
   readonly courseId = input.required<string>();
   readonly lessons = input.required<LessonWithLectures[]>();
   readonly courseProgress = input<CourseProgressResponse | null>(null);
-  readonly editMode = input<boolean>(false);
+  readonly courseLevelEditMode = input<boolean>(false); // Режим редактирования уровня курса (только создание/удаление уроков)
 
   // Assessment-related inputs
   readonly assessments = input<Assessment[]>([]);
@@ -72,6 +75,7 @@ export class CourseLessonsSectionComponent {
   // Inject services
   readonly lessonFormService: LessonFormService = inject(LessonFormService);
   readonly lectureFormService: LectureFormService = inject(LectureFormService);
+  readonly lectureSectionFormService: LectureSectionFormService = inject(LectureSectionFormService);
   readonly assessmentFormService: AssessmentFormService = inject(AssessmentFormService);
   readonly uiStateService: LessonUiStateService = inject(LessonUiStateService);
 
@@ -84,12 +88,16 @@ export class CourseLessonsSectionComponent {
   readonly markingLecture = signal<string | null>(null);
   readonly submittingAssessmentId = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly lessonEditMode = signal<string | null>(null); // ID урока в режиме редактирования
+  readonly sectionEditMode = signal<string | null>(null); // ID отдела лекций в режиме редактирования
+  readonly lectureEditMode = signal<string | null>(null); // ID лекции в режиме редактирования
 
   readonly submissionForm = this.fb.nonNullable.group({
     answerText: ['', [Validators.required, Validators.minLength(10)]],
   });
 
   readonly lessonsOnly = computed(() => this.lessons().filter((l) => l.kind === 'lesson'));
+  readonly lectureSectionsOnly = computed(() => this.lessons().filter((l) => l.kind === 'lecture'));
 
   readonly combinedError = computed(() => {
     return (
@@ -99,6 +107,17 @@ export class CourseLessonsSectionComponent {
       this.assessmentFormService.error()
     );
   });
+
+  constructor() {
+    // Закрываем режим редактирования урока при выходе из режима редактирования курса
+    const authState = inject(AuthStateService);
+    effect(() => {
+      if (!this.courseLevelEditMode()) {
+        this.lessonEditMode.set(null);
+        this.lessonFormService.cancel();
+      }
+    });
+  }
 
   shouldShowLectures(lesson: LessonWithLectures): boolean {
     return (
@@ -144,14 +163,33 @@ export class CourseLessonsSectionComponent {
     this.lessonFormService.openEdit(lesson);
   }
 
+  toggleLessonEditMode(lessonId: string): void {
+    if (this.lessonEditMode() === lessonId) {
+      this.lessonEditMode.set(null);
+      this.lessonFormService.cancel();
+    } else {
+      this.lessonEditMode.set(lessonId);
+      const lesson = this.lessons().find((l) => l.id === lessonId);
+      if (lesson) {
+        this.lessonFormService.openEdit(lesson);
+      }
+    }
+  }
+
+  isLessonInEditMode(lessonId: string): boolean {
+    return this.lessonEditMode() === lessonId;
+  }
+
   cancel(): void {
     this.lessonFormService.cancel();
+    this.lessonEditMode.set(null); // Выходим из режима редактирования при отмене
   }
 
   async submit(): Promise<void> {
     const result = await this.lessonFormService.submit(this.courseId(), this.lessons());
     if (result) {
       this.lessonsChange.emit(result);
+      this.lessonEditMode.set(null); // Выходим из режима редактирования после сохранения
     }
   }
 
@@ -175,6 +213,67 @@ export class CourseLessonsSectionComponent {
     const result = await this.lectureFormService.submit(this.lessons());
     if (result) {
       this.lessonsChange.emit(result);
+    }
+  }
+
+  toggleLectureEditMode(lectureId: string): void {
+    if (this.lectureEditMode() === lectureId) {
+      this.lectureEditMode.set(null);
+      this.lectureFormService.cancel();
+    } else {
+      // Закрываем форму добавления лекции, если она открыта
+      if (this.lectureFormService.showForm() && !this.lectureFormService.editingId()) {
+        this.lectureFormService.cancel();
+      }
+
+      this.lectureEditMode.set(lectureId);
+      // Найти лекцию и открыть форму редактирования
+      for (const lesson of this.lessons()) {
+        const lecture = lesson.lectures?.find((l) => l.id === lectureId);
+        if (lecture) {
+          this.lectureFormService.openEdit(lecture, lesson.id);
+          break;
+        }
+      }
+    }
+  }
+
+  isLectureInEditMode(lectureId: string): boolean {
+    return this.lectureEditMode() === lectureId;
+  }
+
+  cancelLectureEdit(): void {
+    this.lectureFormService.cancel();
+    this.lectureEditMode.set(null);
+  }
+
+  async submitLectureEdit(): Promise<void> {
+    const result = await this.lectureFormService.submit(this.lessons());
+    if (result) {
+      this.lessonsChange.emit(result);
+      this.lectureEditMode.set(null);
+    }
+  }
+
+  async deleteLecture(lectureId: string, lessonId: string): Promise<void> {
+    if (!confirm('Удалить лекцию?')) return;
+    try {
+      await firstValueFrom(this.dataService.deleteLecture(lectureId));
+      const updated = this.lessons().map((lesson) => {
+        if (lesson.id === lessonId) {
+          return {
+            ...lesson,
+            lectures: lesson.lectures.filter((lec) => lec.id !== lectureId),
+          };
+        }
+        return lesson;
+      });
+      this.lessonsChange.emit(updated);
+      if (this.lectureEditMode() === lectureId) {
+        this.lectureEditMode.set(null);
+      }
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'Failed to delete lecture');
     }
   }
 
@@ -207,6 +306,10 @@ export class CourseLessonsSectionComponent {
     this.assessmentFormService.openAdd(lectureId);
   }
 
+  openEditAssessment(assessment: Assessment): void {
+    this.assessmentFormService.openEdit(assessment);
+  }
+
   cancelAssessmentForm(): void {
     this.assessmentFormService.cancel();
   }
@@ -223,6 +326,19 @@ export class CourseLessonsSectionComponent {
     try {
       await firstValueFrom(this.dataService.deleteAssessment(a.id));
       this.assessmentsChange.emit(this.assessments().filter((x) => x.id !== a.id));
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'Failed to delete assessment');
+    }
+  }
+
+  async deleteAssessmentFromForm(): Promise<void> {
+    const assessmentId = this.assessmentFormService.editingId();
+    if (!assessmentId) return;
+
+    try {
+      await firstValueFrom(this.dataService.deleteAssessment(assessmentId));
+      this.assessmentsChange.emit(this.assessments().filter((x) => x.id !== assessmentId));
+      this.assessmentFormService.cancel();
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Failed to delete assessment');
     }
@@ -254,6 +370,53 @@ export class CourseLessonsSectionComponent {
       this.error.set(e instanceof Error ? e.message : 'Не удалось отправить ответ');
     } finally {
       this.submittingAssessmentId.set(null);
+    }
+  }
+
+  // Lecture Section methods
+  openAddLectureSection(): void {
+    this.lectureSectionFormService.openAdd();
+  }
+
+  openEditLectureSection(section: Lesson): void {
+    this.lectureSectionFormService.openEdit(section);
+    this.sectionEditMode.set(section.id);
+  }
+
+  toggleSectionEditMode(sectionId: string): void {
+    if (this.sectionEditMode() === sectionId) {
+      this.sectionEditMode.set(null);
+      this.lectureSectionFormService.cancel();
+    } else {
+      this.sectionEditMode.set(sectionId);
+      const section = this.lessons().find((l) => l.id === sectionId);
+      if (section) {
+        this.lectureSectionFormService.openEdit(section);
+      }
+    }
+  }
+
+  isSectionInEditMode(sectionId: string): boolean {
+    return this.sectionEditMode() === sectionId;
+  }
+
+  cancelSectionEdit(): void {
+    this.lectureSectionFormService.cancel();
+    this.sectionEditMode.set(null);
+  }
+
+  async submitLectureSection(): Promise<void> {
+    const result = await this.lectureSectionFormService.submit(this.courseId(), this.lessons());
+    if (result) {
+      this.lessonsChange.emit(result);
+      this.sectionEditMode.set(null);
+    }
+  }
+
+  async deleteLectureSection(section: Lesson): Promise<void> {
+    const result = await this.lectureSectionFormService.deleteSection(section.id, this.lessons());
+    if (result) {
+      this.lessonsChange.emit(result);
     }
   }
 }

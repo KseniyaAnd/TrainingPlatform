@@ -70,7 +70,7 @@
               [courseId]="courseId"
               [lessons]="courseLessons()"
               [courseProgress]="courseProgress()"
-              [editMode]="showCourseForm()"
+              [courseLevelEditMode]="showCourseForm()"
               [assessments]="assessments()"
               [studentAssessments]="studentAssessments()"
               [submissions]="submissions()"
@@ -103,23 +103,45 @@
             -->
 
             @if (showCourseForm()) {
-              <div class="mt-8 flex gap-3 justify-end">
-                <button
-                  pButton
-                  type="button"
-                  label="Сохранить"
-                  [style]="'background-color: #10b981; border-color: #10b981;'"
-                  [disabled]="submitting()"
-                  (click)="submitCourse()"
-                ></button>
-                <button
-                  pButton
-                  type="button"
-                  label="Отмена"
-                  severity="secondary"
-                  [outlined]="true"
-                  (click)="cancelCourseForm()"
-                ></button>
+              <div class="mt-8 flex flex-col gap-4">
+                <!-- Кнопка добавить урок -->
+                <div class="flex justify-end">
+                  <button
+                    pButton
+                    type="button"
+                    label="Добавить урок"
+                    [style]="'background-color: #10b981; border-color: #10b981;'"
+                    (click)="openAddLesson()"
+                  ></button>
+                </div>
+
+                <!-- Кнопки управления курсом -->
+                <div class="flex gap-3 justify-end">
+                  <button
+                    pButton
+                    type="button"
+                    label="Сохранить"
+                    [style]="'background-color: #10b981; border-color: #10b981;'"
+                    [disabled]="submitting()"
+                    (click)="submitCourse()"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    label="Отмена"
+                    severity="secondary"
+                    [outlined]="true"
+                    (click)="cancelCourseForm()"
+                  ></button>
+                  <button
+                    pButton
+                    type="button"
+                    label="Удалить курс"
+                    severity="danger"
+                    [outlined]="true"
+                    (click)="deleteCourse()"
+                  ></button>
+                </div>
               </div>
             }
           }

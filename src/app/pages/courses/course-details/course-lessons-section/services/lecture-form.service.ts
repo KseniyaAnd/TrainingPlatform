@@ -30,6 +30,18 @@ export class LectureFormService {
     this.form.reset({ title: '', videoUrl: '', content: '' });
   }
 
+  openEdit(lecture: any, lessonId: string): void {
+    this.showForm.set(true);
+    this.lessonId.set(lessonId);
+    this.editingId.set(lecture.id);
+    this.error.set(null);
+    this.form.reset({
+      title: lecture.title ?? '',
+      videoUrl: lecture.videoUrl ?? '',
+      content: lecture.content ?? '',
+    });
+  }
+
   cancel(): void {
     this.showForm.set(false);
     this.lessonId.set(null);
@@ -59,22 +71,48 @@ export class LectureFormService {
     this.error.set(null);
     try {
       this.submitting.set(true);
-      const created = await firstValueFrom(
-        this.dataService.createLecture({
-          lessonId,
-          title: this.form.controls.title.value,
-          videoUrl: hasVideo ? videoUrl : undefined,
-          content: hasContent ? content : undefined,
-        }),
-      );
+      const editingId = this.editingId();
 
-      const updated = currentLessons.map((l) =>
-        l.id === lessonId ? { ...l, lectures: [...(l.lectures ?? []), created] } : l,
-      );
-      this.cancel();
-      return updated;
+      if (editingId) {
+        // Редактирование существующей лекции
+        const updated = await firstValueFrom(
+          this.dataService.updateLecture(editingId, {
+            title: this.form.controls.title.value,
+            videoUrl: hasVideo ? videoUrl : undefined,
+            content: hasContent ? content : undefined,
+          }),
+        );
+
+        const result = currentLessons.map((lesson) => {
+          if (lesson.id === lessonId) {
+            return {
+              ...lesson,
+              lectures: lesson.lectures.map((lec) => (lec.id === editingId ? updated : lec)),
+            };
+          }
+          return lesson;
+        });
+        this.cancel();
+        return result;
+      } else {
+        // Создание новой лекции
+        const created = await firstValueFrom(
+          this.dataService.createLecture({
+            lessonId,
+            title: this.form.controls.title.value,
+            videoUrl: hasVideo ? videoUrl : undefined,
+            content: hasContent ? content : undefined,
+          }),
+        );
+
+        const result = currentLessons.map((l) =>
+          l.id === lessonId ? { ...l, lectures: [...(l.lectures ?? []), created] } : l,
+        );
+        this.cancel();
+        return result;
+      }
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Не удалось создать лекцию');
+      this.error.set(e instanceof Error ? e.message : 'Не удалось сохранить лекцию');
       return null;
     } finally {
       this.submitting.set(false);

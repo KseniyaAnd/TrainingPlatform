@@ -1,5 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -78,6 +78,9 @@ export class CourseDetailsPage {
     description: [''],
   });
 
+  @ViewChild(CourseLessonsSectionComponent)
+  lessonsSection?: CourseLessonsSectionComponent;
+
   constructor(route: ActivatedRoute) {
     this.courseId = route.snapshot.paramMap.get('courseId') ?? '';
     void this.loadCourse();
@@ -119,7 +122,7 @@ export class CourseDetailsPage {
 
     if (!enrollment.isEnrolled) return;
 
-    const [lessons, studentAssessments, submissions, progress] = await Promise.all([
+    const [lessons, studentAssessmentsList, submissions, progress] = await Promise.all([
       firstValueFrom(this.dataService.getLessons(this.courseId)).catch(() => [] as Lesson[]),
       firstValueFrom(this.dataService.getAssessmentsForStudent(this.courseId)).catch(
         () => [] as AssessmentStudentResponse[],
@@ -130,31 +133,45 @@ export class CourseDetailsPage {
       ),
     ]);
 
-    this.studentAssessments.set(studentAssessments ?? []);
+    console.log('📚 Загружен список студенческих ассесментов:', studentAssessmentsList);
+
+    // Для студентов ассесменты уже приходят с полными данными из /courses/{id}/assessments
+    // Но на всякий случай парсим JSON-поля (это уже делается в сервисе)
+    this.studentAssessments.set(studentAssessmentsList ?? []);
     this.submissions.set(submissions ?? []);
     this.courseProgress.set(progress);
     this.courseLessons.set(await this.loadLessonsWithLectures(lessons ?? []));
   }
 
   private async loadTeacherData(): Promise<void> {
-    const [lessons, assessments] = await Promise.all([
+    const [lessons, assessmentsList] = await Promise.all([
       firstValueFrom(this.dataService.getLessons(this.courseId)),
       firstValueFrom(this.dataService.getAssessments(this.courseId)),
     ]);
-    console.log('📚 Загружены ассесменты для учителя:', {
-      courseId: this.courseId,
-      assessmentsCount: assessments?.length ?? 0,
-      assessments:
-        assessments?.map((a) => ({
-          id: a.id,
-          title: a.title,
-          lectureId: a.lectureId,
-          lessonId: a.lessonId,
-          sourceType: a.sourceType,
-          sourceId: a.sourceId,
-        })) ?? [],
-    });
-    this.assessments.set(assessments ?? []);
+
+    console.log('📚 Загружен список ассесментов:', assessmentsList);
+
+    // Загружаем полные данные для каждого ассесмента
+    const assessmentsWithDetails = await Promise.all(
+      (assessmentsList ?? []).map(async (assessment) => {
+        try {
+          const fullAssessment = await firstValueFrom(
+            this.dataService.getAssessmentDetails(assessment.id),
+          );
+          console.log(`✅ Загружены детали ассесмента ${assessment.id}:`, fullAssessment);
+          return fullAssessment;
+        } catch (e) {
+          console.warn(
+            `⚠️ Не удалось загрузить детали ассесмента ${assessment.id}, используем данные из списка:`,
+            e,
+          );
+          return assessment;
+        }
+      }),
+    );
+
+    console.log('📚 Все ассесменты с полными данными:', assessmentsWithDetails);
+    this.assessments.set(assessmentsWithDetails);
     this.courseLessons.set(await this.loadLessonsWithLectures(lessons ?? []));
   }
 
@@ -201,6 +218,10 @@ export class CourseDetailsPage {
 
   cancelCourseForm(): void {
     this.showCourseForm.set(false);
+  }
+
+  openAddLesson(): void {
+    this.lessonsSection?.openAdd();
   }
 
   async submitCourse(): Promise<void> {

@@ -9,6 +9,7 @@ export class LessonUiStateService {
   readonly expandedLessons = signal<Set<string>>(new Set());
   readonly collapsedLessons = signal<Set<string>>(new Set());
   readonly collapsedLectures = signal<Set<string>>(new Set());
+  readonly collapsedAssessments = signal<Set<string>>(new Set());
 
   toggleExpanded(lessonId: string): void {
     const s = new Set(this.expandedLessons());
@@ -40,9 +41,20 @@ export class LessonUiStateService {
     return this.collapsedLectures().has(lectureId);
   }
 
+  toggleAssessmentCollapsed(assessmentId: string): void {
+    const s = new Set(this.collapsedAssessments());
+    s.has(assessmentId) ? s.delete(assessmentId) : s.add(assessmentId);
+    this.collapsedAssessments.set(s);
+  }
+
+  isAssessmentCollapsed(assessmentId: string): boolean {
+    return this.collapsedAssessments().has(assessmentId);
+  }
+
   reset(): void {
     this.expandedLessons.set(new Set());
     this.collapsedLessons.set(new Set());
     this.collapsedLectures.set(new Set());
+    this.collapsedAssessments.set(new Set());
   }
 }

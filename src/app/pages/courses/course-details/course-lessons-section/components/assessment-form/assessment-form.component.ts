@@ -17,6 +17,7 @@ export class AssessmentFormComponent {
 
   readonly onSubmit = output<void>();
   readonly onCancel = output<void>();
+  readonly onDelete = output<void>();
 
   submit(): void {
     this.onSubmit.emit();
@@ -24,6 +25,12 @@ export class AssessmentFormComponent {
 
   cancel(): void {
     this.onCancel.emit();
+  }
+
+  deleteAssessment(): void {
+    if (confirm('Вы уверены, что хотите удалить этот assessment?')) {
+      this.onDelete.emit();
+    }
   }
 
   generateDraft(): void {

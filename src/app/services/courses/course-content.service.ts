@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Assessment } from '../../models/assessment.model';
+import { Assessment, parseAssessmentJsonFields } from '../../models/assessment.model';
 import { Lecture } from '../../models/lecture.model';
 import { Lesson } from '../../models/lesson.model';
 
@@ -103,13 +103,29 @@ export class CourseContentService {
 
   getAssessmentsByCourseId(courseId: string): Observable<Assessment[]> {
     return this.http.get<unknown>(`${environment.apiUrl}/courses/${courseId}/assessments`).pipe(
-      map((r) => {
+      map((r): Assessment[] => {
         console.log('🌐 Сырой ответ API /courses/{courseId}/assessments:', r);
         const normalized = normalizeArrayResponse<Assessment>(r, ['assessments']);
-        console.log('📦 Нормализованные ассесменты:', normalized);
-        return normalized;
+        console.log('📦 Нормализованные ассесменты (до парсинга):', normalized);
+        // Парсим JSON-поля в массивы
+        const parsed = normalized.map(parseAssessmentJsonFields);
+        console.log('✅ Ассесменты после парсинга JSON-полей:', parsed);
+        return parsed;
       }),
     );
+  }
+
+  getAssessmentDetails(assessmentId: string): Observable<Assessment> {
+    return this.http
+      .get<Assessment>(`${environment.apiUrl}/assessments/${assessmentId}/details`)
+      .pipe(
+        map((assessment) => {
+          console.log('🌐 Сырой ответ API /assessments/{id}/details:', assessment);
+          const parsed = parseAssessmentJsonFields(assessment);
+          console.log('✅ Ассесмент после парсинга JSON-полей:', parsed);
+          return parsed;
+        }),
+      );
   }
 
   createLesson(payload: CreateLessonRequest): Observable<Lesson> {
@@ -137,14 +153,15 @@ export class CourseContentService {
   }
 
   createAssessment(payload: CreateAssessmentRequest): Observable<Assessment> {
-    return this.http.post<Assessment>(`${environment.apiUrl}/assessments`, payload);
+    return this.http
+      .post<Assessment>(`${environment.apiUrl}/assessments`, payload)
+      .pipe(map(parseAssessmentJsonFields));
   }
 
   updateAssessment(assessmentId: string, payload: UpdateAssessmentRequest): Observable<Assessment> {
-    return this.http.patch<Assessment>(
-      `${environment.apiUrl}/assessments/${assessmentId}`,
-      payload,
-    );
+    return this.http
+      .patch<Assessment>(`${environment.apiUrl}/assessments/${assessmentId}`, payload)
+      .pipe(map(parseAssessmentJsonFields));
   }
 
   deleteAssessment(assessmentId: string): Observable<void> {
@@ -161,6 +178,8 @@ export class CourseContentService {
   }
 
   createAssessmentFromDraft(payload: CreateAssessmentFromDraftRequest): Observable<Assessment> {
-    return this.http.post<Assessment>(`${environment.apiUrl}/assessments/from-draft`, payload);
+    return this.http
+      .post<Assessment>(`${environment.apiUrl}/assessments/from-draft`, payload)
+      .pipe(map(parseAssessmentJsonFields));
   }
 }

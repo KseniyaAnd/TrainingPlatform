@@ -61,6 +61,10 @@ export class CourseDetailsDataService {
     return this.courseContent.getAssessmentsByCourseId(courseId);
   }
 
+  getAssessmentDetails(assessmentId: string) {
+    return this.courseContent.getAssessmentDetails(assessmentId);
+  }
+
   getAssessmentsForStudent(courseId: string) {
     return this.submissionsService.getCourseAssessments(courseId);
   }

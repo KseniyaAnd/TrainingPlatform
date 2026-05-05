@@ -59,6 +59,41 @@ export class AssessmentFormService {
     });
   }
 
+  openEdit(assessment: Assessment): void {
+    this.showForm.set(true);
+    this.lectureId.set(assessment.lectureId ?? assessment.sourceId ?? null);
+    this.editingId.set(assessment.id);
+    this.error.set(null);
+    this.useAi.set(false);
+    this.isDraftMode.set(false);
+    this.draft.set(null);
+
+    // Загружаем полные данные ассесмента через API
+    console.log('📥 Загрузка полных данных ассесмента:', assessment.id);
+    firstValueFrom(this.dataService.getAssessmentDetails(assessment.id))
+      .then((fullAssessment) => {
+        console.log('✅ Полные данные ассесмента загружены:', fullAssessment);
+        this.form.reset({
+          title: fullAssessment.title ?? '',
+          description: fullAssessment.description ?? '',
+          questionsText: this.joinLines(fullAssessment.questions ?? []),
+          answerKeyText: this.joinLines(fullAssessment.answerKey ?? []),
+          rubricCriteriaText: this.joinLines(fullAssessment.rubricCriteria ?? []),
+        });
+      })
+      .catch((e) => {
+        console.error('❌ Ошибка загрузки полных данных ассесмента:', e);
+        // Fallback: используем данные из переданного объекта
+        this.form.reset({
+          title: assessment.title ?? '',
+          description: assessment.description ?? '',
+          questionsText: this.joinLines(assessment.questions ?? []),
+          answerKeyText: this.joinLines(assessment.answerKey ?? []),
+          rubricCriteriaText: this.joinLines(assessment.rubricCriteria ?? []),
+        });
+      });
+  }
+
   cancel(): void {
     this.showForm.set(false);
     this.lectureId.set(null);
@@ -80,14 +115,18 @@ export class AssessmentFormService {
   async generateDraft(courseId: string): Promise<void> {
     if (this.generatingDraft()) return;
     const lectureId = this.lectureId();
-    if (!lectureId) return;
+
+    // Если нет lectureId, показываем предупреждение, но продолжаем
+    if (!lectureId) {
+      console.warn('⚠️ Генерация ассесмента без привязки к лекции');
+    }
 
     this.error.set(null);
     try {
       this.generatingDraft.set(true);
       const payload: GenerateAssessmentDraftRequest = {
         courseId,
-        lectureId,
+        lectureId: lectureId ?? undefined,
         questionCount: this.aiQuestionCount(),
         difficulty: this.aiDifficulty(),
       };
@@ -115,8 +154,12 @@ export class AssessmentFormService {
     if (this.form.invalid || this.submitting()) return null;
 
     const lectureId = this.lectureId();
-    if (!lectureId) {
-      this.error.set('Lecture ID не найден');
+    const editingId = this.editingId();
+
+    // При создании нового ассесмента lectureId обязателен
+    // При редактировании - необязателен (ассесмент может быть привязан к уроку)
+    if (!editingId && !lectureId) {
+      this.error.set('Lecture ID не найден. Невозможно создать ассесмент без привязки к лекции.');
       return null;
     }
 
@@ -154,20 +197,30 @@ export class AssessmentFormService {
         rubricCriteria,
       };
 
-      const created = await firstValueFrom(
-        this.dataService.createAssessment({
-          courseId,
-          lectureId,
-          ...payload,
-        }),
-      );
-
-      console.log('✅ Ассесмент создан:', created);
-      this.cancel();
-      return [created, ...currentAssessments];
+      if (editingId) {
+        // Редактирование существующего assessment
+        console.log('📝 Обновление ассесмента:', editingId, payload);
+        const updated = await firstValueFrom(this.dataService.updateAssessment(editingId, payload));
+        console.log('✅ Ассесмент обновлен:', updated);
+        this.cancel();
+        return currentAssessments.map((a) => (a.id === editingId ? updated : a));
+      } else {
+        // Создание нового assessment
+        console.log('➕ Создание нового ассесмента:', payload);
+        const created = await firstValueFrom(
+          this.dataService.createAssessment({
+            courseId,
+            lectureId: lectureId!,
+            ...payload,
+          }),
+        );
+        console.log('✅ Ассесмент создан:', created);
+        this.cancel();
+        return [created, ...currentAssessments];
+      }
     } catch (e) {
-      console.error('❌ Ошибка при создании assessment:', e);
-      this.error.set(e instanceof Error ? e.message : 'Не удалось создать assessment');
+      console.error('❌ Ошибка при сохранении assessment:', e);
+      this.error.set(e instanceof Error ? e.message : 'Не удалось сохранить assessment');
       return null;
     } finally {
       this.submitting.set(false);

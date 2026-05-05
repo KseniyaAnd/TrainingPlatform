@@ -1,13 +1,13 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
     <div>
-      <p class="mt-2 text-gray-600">
+      <p class="text-2xl font-bold inline-flex items-top">
         @if (isMyCoursesScope()) {
           @if (isTeacher()) {
-            Manage your created courses
+            Управление созданными курсами
           } @else {
-            Your enrolled courses
+            Ваши записанные курсы
           }
         }
       </p>
@@ -16,7 +16,7 @@
     @if (isMyCoursesScope() && isTeacher()) {
       <a
         routerLink="/courses/create"
-        class="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-violet-600 text-white font-medium hover:bg-violet-700 transition-colors shadow-sm"
+        class="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-400 text-white font-medium hover:bg-emerald-500 transition-colors shadow-sm whitespace-nowrap"
       >
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -26,7 +26,7 @@
             d="M12 4v16m8-8H4"
           />
         </svg>
-        Create course
+        Создать курс
       </a>
     }
   </div>
@@ -51,7 +51,7 @@
   }
 
   <!-- Filters -->
-  <div class="mb-6">
+  <div class="mb-4">
     <app-course-filters
       [selectedTag]="tag()"
       [selectedSort]="selectedSort()"
@@ -93,34 +93,34 @@
           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
         />
       </svg>
-      <h3 class="mt-4 text-lg font-medium text-gray-900">No courses found</h3>
+      <h3 class="mt-4 text-lg font-medium text-gray-900">Курсы не найдены</h3>
       <p class="mt-2 text-sm text-gray-500">
         @if (isMyCoursesScope()) {
           @if (isTeacher()) {
-            You haven't created any courses yet. Start by creating your first course!
+            Вы еще не создали ни одного курса. Начните с создания вашего первого курса!
           } @else {
-            You haven't enrolled in any courses yet. Explore available courses to get started.
+            Вы еще не записались ни на один курс. Изучите доступные курсы, чтобы начать.
           }
         } @else {
-          No courses available at the moment.
+          На данный момент курсы недоступны.
         }
       </p>
       @if (isMyCoursesScope() && isTeacher()) {
         <div class="mt-6">
           <a
             routerLink="/courses/create"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-400 hover:bg-emerald-500"
           >
-            Create your first course
+            Создать первый курс
           </a>
         </div>
       } @else if (isMyCoursesScope() && isStudent()) {
         <div class="mt-6">
           <a
             routerLink="/courses"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-violet-600 hover:bg-violet-700"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-400 hover:bg-emerald-500"
           >
-            Explore courses
+            Изучить курсы
           </a>
         </div>
       }

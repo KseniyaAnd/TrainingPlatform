@@ -1,0 +1,393 @@
+<div class="space-y-4">
+  <!-- Форма добавления нового assessment -->
+  @if (showAddForm()) {
+    <div>
+      <h3 class="text-xl font-semibold mb-4">Новый assessment</h3>
+      <form [formGroup]="assessmentForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Название *</label>
+          <input
+            type="text"
+            formControlName="title"
+            class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Введите название assessment"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+          <textarea
+            formControlName="description"
+            class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            rows="3"
+            placeholder="Введите описание"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Вопросы (каждый с новой строки)</label
+          >
+          <textarea
+            formControlName="questions"
+            class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            rows="4"
+            placeholder="Вопрос 1&#10;Вопрос 2&#10;Вопрос 3"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Ключи ответов (каждый с новой строки)</label
+          >
+          <textarea
+            formControlName="answerKey"
+            class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            rows="4"
+            placeholder="Ответ 1&#10;Ответ 2&#10;Ответ 3"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Критерии оценки (каждый с новой строки)</label
+          >
+          <textarea
+            formControlName="rubricCriteria"
+            class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            rows="3"
+            placeholder="Критерий 1&#10;Критерий 2&#10;Критерий 3"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="generateWithAI"
+            formControlName="generateWithAI"
+            class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500"
+            style="accent-color: #10b981"
+          />
+          <label for="generateWithAI" class="text-sm text-gray-700 whitespace-nowrap">
+            Генерировать с AI
+          </label>
+        </div>
+
+        <!-- Настройки генерации (показываем только если чекбокс включен) -->
+        @if (assessmentForm.controls.generateWithAI.value) {
+          <div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1"
+                >Количество вопросов</label
+              >
+              <input
+                type="number"
+                formControlName="questionCount"
+                min="1"
+                max="10"
+                class="w-32 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [disabled]="generatingWithAI()"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Сложность</label>
+              <select
+                formControlName="difficulty"
+                class="w-48 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                [disabled]="generatingWithAI()"
+              >
+                <option value="EASY">Легкая</option>
+                <option value="MEDIUM">Средняя</option>
+                <option value="HARD">Сложная</option>
+              </select>
+            </div>
+
+            <button
+              pButton
+              type="button"
+              [label]="generatingWithAI() ? 'Генерация...' : 'Сгенерировать'"
+              [style]="'background-color: #10b981; border-color: #10b981;'"
+              [disabled]="generatingWithAI()"
+              (click)="generateAssessmentWithAI()"
+            ></button>
+          </div>
+        }
+
+        <div class="flex gap-3 justify-end">
+          <button
+            pButton
+            type="button"
+            label="Сохранить"
+            [style]="'background-color: #10b981; border-color: #10b981;'"
+            [disabled]="assessmentForm.invalid || savingAssessment()"
+            (click)="saveAssessment()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Отмена"
+            severity="secondary"
+            [outlined]="true"
+            (click)="cancelAssessmentForm()"
+          ></button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (courseLevelAssessments().length === 0 && !showAddForm()) {
+    <p class="text-gray-600">Нет assessments на уровне курса</p>
+  }
+
+  @for (assessment of courseLevelAssessments(); track assessment.id) {
+    <div>
+      <!-- Заголовок с кнопкой сворачивания (всегда видим) -->
+      <div class="flex items-center gap-3 my-4">
+        <button
+          type="button"
+          class="p-2 hover:bg-gray-100 rounded"
+          (click)="toggleCollapsed(assessment.id)"
+        >
+          <i
+            class="pi"
+            [class.pi-chevron-down]="isCollapsed(assessment.id)"
+            [class.pi-chevron-up]="!isCollapsed(assessment.id)"
+          ></i>
+        </button>
+
+        @if (editingAssessmentId() === assessment.id) {
+          <!-- В режиме редактирования показываем поле ввода названия -->
+          <input
+            type="text"
+            [formControl]="assessmentForm.controls.title"
+            class="flex-1 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xl font-semibold"
+            placeholder="Введите название assessment"
+          />
+        } @else {
+          <h3 class="text-xl font-semibold flex-1">{{ assessment.title }}</h3>
+        }
+
+        @if (canEditCourse() && !isStudent()) {
+          @if (editMode()) {
+            @if (editingAssessmentId() !== assessment.id) {
+              <button
+                pButton
+                type="button"
+                label="Редактировать assessment"
+                [outlined]="true"
+                [style]="'color: #10b981; border-color: #10b981;'"
+                (click)="openEditAssessment(assessment)"
+              ></button>
+            }
+          } @else {
+            <button
+              pButton
+              type="button"
+              label="Оценить"
+              [outlined]="true"
+              [style]="'color: #10b981; border-color: #10b981;'"
+              (click)="gradeAssessment(assessment)"
+            ></button>
+          }
+        }
+      </div>
+
+      <!-- Содержимое (свертываемое) -->
+      @if (!isCollapsed(assessment.id)) {
+        <div class="space-y-4">
+          @if (editingAssessmentId() === assessment.id) {
+            <!-- Режим редактирования -->
+            <form [formGroup]="assessmentForm" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+                <textarea
+                  formControlName="description"
+                  class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  rows="3"
+                  placeholder="Введите описание"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Вопросы (каждый с новой строки)</label
+                >
+                <textarea
+                  formControlName="questions"
+                  class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  rows="4"
+                  placeholder="Вопрос 1&#10;Вопрос 2&#10;Вопрос 3"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Ключи ответов (каждый с новой строки)</label
+                >
+                <textarea
+                  formControlName="answerKey"
+                  class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  rows="4"
+                  placeholder="Ответ 1&#10;Ответ 2&#10;Ответ 3"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Критерии оценки (каждый с новой строки)</label
+                >
+                <textarea
+                  formControlName="rubricCriteria"
+                  class="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  rows="3"
+                  placeholder="Критерий 1&#10;Критерий 2&#10;Критерий 3"
+                ></textarea>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  [id]="'generateWithAI-' + assessment.id"
+                  formControlName="generateWithAI"
+                  class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500"
+                  style="accent-color: #10b981"
+                />
+                <label
+                  [for]="'generateWithAI-' + assessment.id"
+                  class="text-sm text-gray-700 whitespace-nowrap"
+                >
+                  Генерировать с AI
+                </label>
+              </div>
+
+              <!-- Настройки генерации (показываем только если чекбокс включен) -->
+              @if (assessmentForm.controls.generateWithAI.value) {
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                      >Количество вопросов</label
+                    >
+                    <input
+                      type="number"
+                      formControlName="questionCount"
+                      min="1"
+                      max="10"
+                      class="w-32 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      [disabled]="generatingWithAI()"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Сложность</label>
+                    <select
+                      formControlName="difficulty"
+                      class="w-48 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      [disabled]="generatingWithAI()"
+                    >
+                      <option value="EASY">Легкая</option>
+                      <option value="MEDIUM">Средняя</option>
+                      <option value="HARD">Сложная</option>
+                    </select>
+                  </div>
+
+                  <button
+                    pButton
+                    type="button"
+                    [label]="generatingWithAI() ? 'Генерация...' : 'Сгенерировать'"
+                    [style]="'background-color: #10b981; border-color: #10b981;'"
+                    [disabled]="generatingWithAI()"
+                    (click)="generateAssessmentWithAI()"
+                  ></button>
+                </div>
+              }
+
+              <!-- Кнопки управления формой -->
+              <div class="flex gap-3 justify-end">
+                <button
+                  pButton
+                  type="button"
+                  label="Сохранить assesment"
+                  [style]="'background-color: #10b981; border-color: #10b981;'"
+                  [disabled]="assessmentForm.invalid || savingAssessment()"
+                  (click)="saveAssessment()"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  label="Отмена"
+                  severity="secondary"
+                  [outlined]="true"
+                  (click)="cancelAssessmentForm()"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  label="Удалить"
+                  severity="danger"
+                  [outlined]="true"
+                  (click)="deleteAssessment(assessment.id)"
+                ></button>
+              </div>
+            </form>
+          } @else {
+            <!-- Режим просмотра -->
+            <p class="text-gray-700">{{ assessment.description }}</p>
+
+            <!-- Вопросы -->
+            <app-assessment-questions [questions]="assessment.questions ?? []" />
+
+            <!-- Критерии оценки -->
+            @if (assessment.rubricCriteria && assessment.rubricCriteria.length > 0) {
+              <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Критерии оценки:</h4>
+                <div class="space-y-1">
+                  @for (criterion of assessment.rubricCriteria; track $index) {
+                    <p class="text-sm text-gray-600">{{ criterion }}</p>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Для студентов: форма ответа или показ ответа -->
+            @if (isStudent()) {
+              <app-submission-form
+                [assessment]="assessment"
+                [submission]="getSubmission(assessment.id)"
+                [currentSubmissions]="submissions()"
+                (submissionsChange)="submissionsChange.emit($event)"
+              />
+            }
+
+            <!-- Для преподавателей: показ ключей ответов -->
+            @if (canEditCourse() && !isStudent()) {
+              @if (assessment.answerKey && assessment.answerKey.length > 0) {
+                <div>
+                  <h4 class="text-sm font-semibold text-gray-700 mb-2">Ключи ответов:</h4>
+                  <div class="space-y-1">
+                    @for (answer of assessment.answerKey; track $index) {
+                      <p class="text-sm text-gray-600">{{ answer }}</p>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Кнопка добавить assessment (только для преподавателей в режиме редактирования) -->
+  @if (canEditCourse() && editMode() && !showAddForm() && !editingAssessmentId()) {
+    <div class="flex justify-end mb-4">
+      <button
+        pButton
+        type="button"
+        label="Добавить assessment"
+        [style]="'background-color: #10b981; border-color: #10b981;'"
+        (click)="openAddAssessment()"
+      ></button>
+    </div>
+  }
+</div>

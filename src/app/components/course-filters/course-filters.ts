@@ -22,10 +22,10 @@ export class CourseFiltersComponent {
   filtersChange = output<CourseFilters>();
 
   readonly tags = [
-    'дизайн',
-    'фронтенд',
-    'бэкенд',
-    'машинное обучение',
+    'Дизайн',
+    'Фронтенд',
+    'Бэкенд',
+    'Машинное обучение',
     'DevOps',
     'Мобильная разработка',
   ];

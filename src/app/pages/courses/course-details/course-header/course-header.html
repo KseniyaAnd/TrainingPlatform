@@ -1,0 +1,128 @@
+<header class="py-2">
+  @if (showCourseForm()) {
+    <form [formGroup]="courseForm()">
+      <div class="grid gap-4 items-start">
+        <div class="flex flex-col gap-3 flex-1 min-w-0">
+          <input
+            class="text-4xl font-bold leading-tight border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            type="text"
+            formControlName="title"
+            placeholder="Название курса"
+          />
+          <textarea
+            class="text-base text-gray-700 border border-gray-300 rounded-lg px-4 py-2 w-full resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            style="height: 80px"
+            formControlName="description"
+            placeholder="Описание курса"
+          ></textarea>
+        </div>
+      </div>
+
+      @if (course().createdAt) {
+        <div class="mt-4 text-sm text-gray-700 text-right">
+          Дата публикации:
+          <time [attr.datetime]="course().createdAt">
+            {{ course().createdAt | date: 'mediumDate' }}
+          </time>
+        </div>
+      }
+    </form>
+  } @else {
+    <div class="flex gap-4 items-start justify-between">
+      <div class="flex-1 min-w-0">
+        <h1 class="text-4xl font-bold leading-tight">{{ course().title }}</h1>
+        @if (course().description) {
+          <p class="mt-2 text-gray-700">{{ course().description }}</p>
+        }
+        @if (course().tags && course().tags!.length > 0) {
+          <div class="mt-3 flex flex-wrap gap-2">
+            @for (tag of course().tags!; track tag) {
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800"
+              >
+                {{ tag }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-col gap-3 items-end text-sm text-gray-700 flex-shrink-0 ml-4">
+        @if (course().createdAt) {
+          <div class="inline-flex items-center gap-2 whitespace-nowrap">
+            Дата публикации:
+            <time [attr.datetime]="course().createdAt">
+              {{ course().createdAt | date: 'mediumDate' }}
+            </time>
+          </div>
+        }
+
+        @if (!isTeacher()) {
+          @if (subscribed()) {
+            <button
+              pButton
+              type="button"
+              class="whitespace-nowrap"
+              label="Отписаться"
+              [outlined]="true"
+              [disabled]="submitting()"
+              [style]="'color: #ef4444; border-color: #ef4444;'"
+              (click)="unsubscribe.emit()"
+            ></button>
+          } @else {
+            <button
+              pButton
+              type="button"
+              class="whitespace-nowrap"
+              label="Подписаться"
+              [disabled]="submitting()"
+              [style]="'background-color: #10b981; border-color: #10b981;'"
+              (click)="subscribe.emit()"
+            ></button>
+          }
+        }
+
+        @if (canEditCourse()) {
+          <button
+            pButton
+            type="button"
+            label="Редактировать"
+            class="whitespace-nowrap"
+            [outlined]="true"
+            [style]="'color: #10b981; border-color: #10b981;'"
+            (click)="editCourse.emit()"
+          ></button>
+        }
+      </div>
+    </div>
+  }
+</header>
+
+@if (canEditCourse()) {
+  <section>
+    <div class="flex border-b border-gray-200">
+      <button
+        type="button"
+        class="px-6 py-3 font-medium transition-colors"
+        [style.color]="activeTab() === 'content' ? '#10b981' : '#4b5563'"
+        [class.border-b-2]="activeTab() === 'content'"
+        [style.border-color]="activeTab() === 'content' ? '#10b981' : 'transparent'"
+        (click)="tabChange.emit('content')"
+      >
+        <i class="pi pi-book mr-2"></i>
+        Контент
+      </button>
+      <button
+        type="button"
+        class="px-6 py-3 font-medium transition-colors"
+        [style.color]="activeTab() === 'analytics' ? '#10b981' : '#4b5563'"
+        [class.border-b-2]="activeTab() === 'analytics'"
+        [style.border-color]="activeTab() === 'analytics' ? '#10b981' : 'transparent'"
+        (click)="tabChange.emit('analytics')"
+      >
+        <i class="pi pi-chart-line mr-2"></i>
+        Аналитика
+      </button>
+    </div>
+  </section>
+}

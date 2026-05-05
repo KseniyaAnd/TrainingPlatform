@@ -1,0 +1,29 @@
+<section>
+  <div class="flex items-start justify-between gap-4">
+    <h2 class="text-2xl font-bold leading-tight">Лекции</h2>
+    @if (canEditCourse() && editMode() && !formService.showForm()) {
+      <button
+        pButton
+        type="button"
+        label="Добавить лекцию"
+        [style]="'background-color: #10b981; border-color: #10b981;'"
+        (click)="openAdd()"
+      ></button>
+    }
+  </div>
+
+  @if (formService.error()) {
+    <div class="mt-4 text-red-600">{{ formService.error() }}</div>
+  }
+
+  @if (formService.showForm()) {
+    <app-lecture-form [lessons]="lessonsOnly()" (onSubmit)="submit()" />
+  }
+
+  <app-lectures-list
+    [lectures]="allLectures()"
+    [editMode]="editMode()"
+    (onEdit)="openEdit($event)"
+    (onDelete)="deleteLecture($event)"
+  />
+</section>

@@ -6,6 +6,7 @@ import {
   AssessmentsPageResponse,
   AssessmentStudentResponse,
   CreateSubmissionRequest,
+  parseAssessmentStudentJsonFields,
   SubmissionResponse,
   SubmissionsPageResponse,
 } from '../../models/submission.model';
@@ -21,7 +22,7 @@ export class SubmissionsService {
     return this.http
       .get<AssessmentsPageResponse>(`${environment.apiUrl}/courses/${courseId}/assessments`)
       .pipe(
-        map((response) => {
+        map((response): AssessmentStudentResponse[] => {
           console.log('getCourseAssessments response:', response);
           console.log('getCourseAssessments response type:', typeof response);
           console.log('getCourseAssessments response.items:', response.items);
@@ -34,7 +35,10 @@ export class SubmissionsService {
             return [];
           }
 
-          return response.items;
+          // Парсим JSON-поля в массивы
+          const parsed = response.items.map(parseAssessmentStudentJsonFields);
+          console.log('✅ Студенческие ассесменты после парсинга JSON-полей:', parsed);
+          return parsed;
         }),
       );
   }

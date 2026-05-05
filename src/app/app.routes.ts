@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { AssessmentGradingComponent } from './pages/courses/assessment-grading/assessment-grading';
 import { CourseDetailsPage } from './pages/courses/course-details/course-details';
-import { CourseStudentViewPage } from './pages/courses/course-student-view/course-student-view';
 import { CoursesPage } from './pages/courses/courses';
 import { CreateCoursePage } from './pages/courses/create-course/create-course';
 import { HomePageComponent } from './pages/home/home';
@@ -24,26 +23,8 @@ export const routes: Routes = [
         // Additional filters: ?tag=..., ?q=...
       },
       {
-        path: 'my-courses/teaching',
-        component: CoursesPage,
-        data: { redirectToScope: 'me' },
-      },
-      {
         path: 'courses/create',
         component: CreateCoursePage,
-      },
-      {
-        path: 'my-courses/teaching/create',
-        redirectTo: 'courses/create',
-      },
-      {
-        path: 'my-courses/learning',
-        component: CoursesPage,
-        data: { redirectToScope: 'me' },
-      },
-      {
-        path: 'courses/:courseId/student',
-        component: CourseStudentViewPage,
       },
       {
         path: 'courses/:courseId',

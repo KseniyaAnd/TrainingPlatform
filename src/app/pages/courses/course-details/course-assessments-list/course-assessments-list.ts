@@ -9,11 +9,19 @@ import { Assessment } from '../../../../models/assessment.model';
 import { AssessmentStudentResponse, SubmissionResponse } from '../../../../models/submission.model';
 import { AuthStateService } from '../../../../services/auth/auth-state.service';
 import { AssessmentDifficulty, CourseDetailsDataService } from '../course-details-data.service';
+import { AssessmentQuestionsComponent } from '../shared/components/assessment-questions/assessment-questions.component';
+import { SubmissionFormComponent } from '../shared/components/submission-form/submission-form.component';
 
 @Component({
   selector: 'app-course-assessments-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ButtonModule,
+    AssessmentQuestionsComponent,
+    SubmissionFormComponent,
+  ],
   templateUrl: './course-assessments-list.html',
 })
 export class CourseAssessmentsListComponent {
@@ -43,10 +51,6 @@ export class CourseAssessmentsListComponent {
   readonly showAddForm = signal(false);
   readonly savingAssessment = signal(false);
   readonly generatingWithAI = signal(false);
-
-  readonly submissionForm = this.fb.nonNullable.group({
-    answerText: ['', [Validators.required, Validators.minLength(10)]],
-  });
 
   readonly assessmentForm = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
@@ -81,26 +85,6 @@ export class CourseAssessmentsListComponent {
 
   getSubmission(assessmentId: string): SubmissionResponse | null {
     return this.submissions().find((s) => s.assessmentId === assessmentId) ?? null;
-  }
-
-  async submitAnswer(assessment: Assessment): Promise<void> {
-    if (this.submissionForm.invalid) return;
-
-    this.submittingAssessmentId.set(assessment.id);
-    try {
-      const submission = await firstValueFrom(
-        this.dataService.createSubmission(
-          assessment.id,
-          this.submissionForm.controls.answerText.value,
-        ),
-      );
-      this.submissionsChange.emit([...this.submissions(), submission]);
-      this.submissionForm.reset();
-    } catch (e) {
-      console.error('Failed to submit answer:', e);
-    } finally {
-      this.submittingAssessmentId.set(null);
-    }
   }
 
   gradeAssessment(assessment: Assessment): void {

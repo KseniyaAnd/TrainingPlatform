@@ -1,9 +1,22 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { CourseDetailsDataService } from '../../course-details-data.service';
 import { LessonWithLectures } from '../course-lessons-section';
+
+// Custom validator: either videoUrl or content must be provided, but not both
+function videoOrContentValidator(control: AbstractControl): ValidationErrors | null {
+  const videoUrl = control.get('videoUrl')?.value?.trim() || '';
+  const content = control.get('content')?.value?.trim() || '';
+  const hasVideo = Boolean(videoUrl);
+  const hasContent = Boolean(content);
+
+  if ((hasVideo && hasContent) || (!hasVideo && !hasContent)) {
+    return { videoOrContent: true };
+  }
+  return null;
+}
 
 @Injectable()
 export class LectureFormService {
@@ -16,11 +29,14 @@ export class LectureFormService {
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3)]],
-    videoUrl: [''],
-    content: [''],
-  });
+  readonly form = this.fb.nonNullable.group(
+    {
+      title: ['', [Validators.required, Validators.minLength(3)]],
+      videoUrl: [''],
+      content: [''],
+    },
+    { validators: videoOrContentValidator },
+  );
 
   openAdd(lessonId: string): void {
     this.showForm.set(true);
@@ -62,11 +78,6 @@ export class LectureFormService {
     const content = this.form.controls.content.value.trim();
     const hasVideo = Boolean(videoUrl);
     const hasContent = Boolean(content);
-
-    if ((hasVideo && hasContent) || (!hasVideo && !hasContent)) {
-      this.error.set('Укажите либо видео, либо текст');
-      return null;
-    }
 
     this.error.set(null);
     try {

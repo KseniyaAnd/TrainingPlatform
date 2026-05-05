@@ -82,7 +82,7 @@ export class LessonFormService {
           lectures: [],
         };
         this.cancel();
-        return [next, ...currentLessons];
+        return [...currentLessons, next];
       }
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Failed to save lesson');

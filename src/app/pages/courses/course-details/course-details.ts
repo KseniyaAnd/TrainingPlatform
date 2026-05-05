@@ -14,6 +14,7 @@ import { CourseProgressResponse } from '../../../models/progress.model';
 import { AssessmentStudentResponse, SubmissionResponse } from '../../../models/submission.model';
 import { AuthStateService } from '../../../services/auth/auth-state.service';
 import { CourseAnalyticsComponent } from './course-analytics/course-analytics';
+import { CourseAssessmentsListComponent } from './course-assessments-list/course-assessments-list';
 import { CourseDetailsDataService } from './course-details-data.service';
 import { CourseHeaderComponent } from './course-header/course-header';
 import { CourseLecturesSectionComponent } from './course-lectures-section/course-lectures-section';
@@ -35,6 +36,7 @@ import {
     CourseLessonsSectionComponent,
     CourseLecturesSectionComponent,
     CourseAnalyticsComponent,
+    CourseAssessmentsListComponent,
   ],
   templateUrl: './course-details.html',
 })
@@ -80,6 +82,9 @@ export class CourseDetailsPage {
 
   @ViewChild(CourseLessonsSectionComponent)
   lessonsSection?: CourseLessonsSectionComponent;
+
+  @ViewChild(CourseAssessmentsListComponent)
+  assessmentsListComponent?: CourseAssessmentsListComponent;
 
   constructor(route: ActivatedRoute) {
     this.courseId = route.snapshot.paramMap.get('courseId') ?? '';
@@ -218,6 +223,16 @@ export class CourseDetailsPage {
 
   cancelCourseForm(): void {
     this.showCourseForm.set(false);
+    // Отменяем редактирование assessments на уровне курса
+    this.assessmentsListComponent?.cancelAssessmentForm();
+    // Отменяем все редактирования в lessons section
+    if (this.lessonsSection) {
+      this.lessonsSection.cancelAssessmentForm();
+      this.lessonsSection.cancel(); // Отмена редактирования урока
+      this.lessonsSection.cancelLectureForm(); // Отмена формы лекции
+      this.lessonsSection.cancelLectureEdit(); // Отмена редактирования лекции
+      this.lessonsSection.cancelSectionEdit(); // Отмена редактирования секции
+    }
   }
 
   openAddLesson(): void {

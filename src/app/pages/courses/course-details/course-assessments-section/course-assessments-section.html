@@ -238,11 +238,11 @@
               }
               <div class="mb-4">
                 <h4 class="text-lg font-semibold mb-2">Вопросы:</h4>
-                <ol class="list-decimal list-inside space-y-2">
+                <div class="space-y-2">
                   @for (question of assessment.questions; track $index) {
-                    <li class="text-gray-700">{{ question }}</li>
+                    <p class="text-gray-700">{{ question }}</p>
                   }
-                </ol>
+                </div>
               </div>
 
               @if (getSubmission(assessment.id); as submission) {

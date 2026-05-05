@@ -12,7 +12,6 @@ import { CourseProgressResponse } from '../../../../models/progress.model';
 import { AssessmentStudentResponse, SubmissionResponse } from '../../../../models/submission.model';
 import { AuthStateService } from '../../../../services/auth/auth-state.service';
 import { CourseDetailsDataService } from '../course-details-data.service';
-import { AssessmentFormComponent } from './components/assessment-form/assessment-form.component';
 import { CourseProgressDisplayComponent } from './components/course-progress-display/course-progress-display.component';
 import { ErrorDisplayComponent } from './components/error-display/error-display.component';
 import { LectureFormComponent } from './components/lecture-form/lecture-form.component';
@@ -38,7 +37,6 @@ export type LessonWithLectures = Lesson & { lectures: Lecture[] };
     LessonFormComponent,
     LessonContentComponent,
     LectureFormComponent,
-    AssessmentFormComponent,
   ],
   providers: [
     LessonFormService,
@@ -312,6 +310,10 @@ export class CourseLessonsSectionComponent {
 
   cancelAssessmentForm(): void {
     this.assessmentFormService.cancel();
+  }
+
+  async generateAssessmentDraft(): Promise<void> {
+    await this.assessmentFormService.generateDraft(this.courseId());
   }
 
   async submitAssessment(): Promise<void> {

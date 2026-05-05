@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 
 import { AuthStateService } from '../../services/auth/auth-state.service';
@@ -14,6 +14,7 @@ import { AuthService } from '../../services/auth/auth.service';
 export class UserMenuComponent {
   private readonly authState = inject(AuthStateService);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly isAuthenticated = this.authState.isAuthenticated;
   readonly username = this.authState.username;
@@ -21,5 +22,6 @@ export class UserMenuComponent {
 
   logout(): void {
     this.authService.logout();
+    void this.router.navigate(['/']);
   }
 }

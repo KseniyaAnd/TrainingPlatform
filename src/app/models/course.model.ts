@@ -6,6 +6,7 @@ export interface Course {
   teacherId?: string;
   teacherName?: string;
   createdAt?: string;
+  enrollmentsCount?: number;
 }
 
 export interface CourseEnrollment {

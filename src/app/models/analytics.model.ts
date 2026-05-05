@@ -56,21 +56,24 @@ export interface UserDetails {
   email: string;
   role: string;
   createdAt: string;
-  enrollments?: Array<{
+  enrollments: Array<{
+    id: string;
     courseId: string;
-    courseName: string;
+    courseTitle: string;
     enrolledAt: string;
     progress: number;
   }>;
-  courses?: Array<{
+  courses: Array<{
     id: string;
     title: string;
     createdAt: string;
+    enrollmentsCount: number;
   }>;
-  submissions?: Array<{
+  submissions: Array<{
     id: string;
     assessmentId: string;
     assessmentTitle: string;
+    courseTitle: string;
     score: number | null;
     submittedAt: string;
   }>;

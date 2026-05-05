@@ -28,7 +28,6 @@ import { SubmissionsService } from '../../../services/submissions/submissions.se
   ],
   providers: [MessageService],
   templateUrl: './assessment-grading.html',
-  styleUrls: ['./assessment-grading.css'],
 })
 export class AssessmentGradingComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -124,8 +123,8 @@ export class AssessmentGradingComponent implements OnInit {
     if (score === null || score === undefined) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Please enter a valid score',
+        summary: 'Предупреждение',
+        detail: 'Пожалуйста, введите корректную оценку',
       });
       return;
     }
@@ -133,8 +132,8 @@ export class AssessmentGradingComponent implements OnInit {
     if (score < 0 || score > 100) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Score must be between 0 and 100',
+        summary: 'Предупреждение',
+        detail: 'Оценка должна быть от 0 до 100',
       });
       return;
     }
@@ -155,8 +154,8 @@ export class AssessmentGradingComponent implements OnInit {
 
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: 'Grade saved successfully',
+          summary: 'Успешно',
+          detail: 'Оценка успешно сохранена',
         });
 
         this.loading.set(false);
@@ -164,7 +163,7 @@ export class AssessmentGradingComponent implements OnInit {
       error: (err: any) => {
         console.error('Error saving grade:', err);
 
-        let errorMessage = 'Failed to save grade. Please try again.';
+        let errorMessage = 'Не удалось сохранить оценку. Попробуйте снова.';
         if (err.error?.detail) {
           errorMessage = err.error.detail;
         } else if (err.message) {
@@ -173,7 +172,7 @@ export class AssessmentGradingComponent implements OnInit {
 
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: 'Ошибка',
           detail: errorMessage,
         });
         this.loading.set(false);
@@ -190,7 +189,11 @@ export class AssessmentGradingComponent implements OnInit {
   }
 
   formatDate(dateString: string | null): string {
-    if (!dateString) return 'Not graded';
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return 'Не оценено';
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   }
 }

@@ -100,258 +100,122 @@
         </h3>
 
         @for (student of analyticsData()!.students; track student.studentId) {
-          <p-card styleClass="border-2 border-gray-200 shadow-sm">
-            <ng-template pTemplate="header">
-              <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <i class="pi pi-user text-gray-600 text-xl"></i>
-                  <div>
-                    <div class="font-semibold text-gray-900">
-                      Студент ID: {{ student.studentId }}
-                    </div>
-                    <div class="text-sm text-gray-600">
-                      {{ student.gradedSubmissions }} / {{ student.totalSubmissions }} работ
-                      проверено
-                    </div>
-                  </div>
+          <div class="overflow-hidden">
+            <div class="py-3 flex items-center gap-4">
+              <button
+                type="button"
+                class="text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
+                (click)="toggleStudentExpanded(student.studentId)"
+              >
+                <i
+                  class="pi text-xl transition-transform"
+                  [class.pi-chevron-down]="!isStudentExpanded(student.studentId)"
+                  [class.pi-chevron-up]="isStudentExpanded(student.studentId)"
+                ></i>
+              </button>
+
+              <i class="pi pi-user text-gray-600 text-xl flex-shrink-0"></i>
+
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-gray-900 truncate">
+                  {{ student.studentId }}
                 </div>
-
-                <div class="flex items-center gap-4">
-                  <button
-                    pButton
-                    type="button"
-                    label="Учебный план"
-                    severity="info"
-                    [outlined]="true"
-                    (click)="viewStudentPlan(student.studentId)"
-                  >
-                    <i class="pi pi-book mr-2"></i>
-                  </button>
-
-                  <div class="text-right">
-                    <div class="text-sm text-gray-600">Средний балл</div>
-                    <div class="text-2xl font-bold text-blue-600">
-                      {{ student.averageScore !== null ? student.averageScore.toFixed(1) : 'N/A' }}
-                    </div>
-                  </div>
-
-                  <div
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg"
-                    [ngClass]="getTrendColor(student.trend)"
-                  >
-                    <i class="pi text-lg" [ngClass]="getTrendIcon(student.trend)"></i>
-                    <span class="font-medium">{{ getTrendLabel(student.trend) }}</span>
-                  </div>
-                </div>
-              </div>
-            </ng-template>
-
-            <div class="px-4 py-3">
-              @if (student.improvementFocus) {
-                <div class="mb-4">
-                  <div class="flex items-center gap-2 mb-2">
-                    <i class="pi pi-lightbulb text-amber-600"></i>
-                    <h4 class="font-semibold text-gray-900">Фокус для улучшения</h4>
-                  </div>
-                  <p class="text-gray-700 pl-6">{{ student.improvementFocus }}</p>
-                </div>
-              }
-
-              <div class="mb-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <i class="pi pi-chart-bar text-blue-600"></i>
-                  <h4 class="font-semibold text-gray-900">Уровень уверенности</h4>
-                </div>
-                <div class="pl-6">
-                  <div class="flex items-center gap-3">
-                    <div class="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
-                      <div
-                        class="h-full rounded-full transition-all"
-                        [class.bg-emerald-500]="(student.confidence ?? 0) >= 0.7"
-                        [class.bg-amber-500]="
-                          (student.confidence ?? 0) >= 0.4 && (student.confidence ?? 0) < 0.7
-                        "
-                        [class.bg-red-500]="(student.confidence ?? 0) < 0.4"
-                        [style.width.%]="(student.confidence ?? 0) * 100"
-                      ></div>
-                    </div>
-                    <span class="text-sm font-medium text-gray-700">
-                      {{ ((student.confidence ?? 0) * 100).toFixed(0) }}%
-                    </span>
-                  </div>
+                <div class="text-sm text-gray-600">
+                  {{ student.gradedSubmissions }} / {{ student.totalSubmissions }} работ проверено
                 </div>
               </div>
 
-              @if (student.actions && student.actions.length > 0) {
-                <div>
-                  <div class="flex items-center gap-2 mb-2">
-                    <i class="pi pi-list text-emerald-600"></i>
-                    <h4 class="font-semibold text-gray-900">Рекомендуемые действия</h4>
-                  </div>
-                  <ul class="pl-6 space-y-2">
-                    @for (action of student.actions; track $index) {
-                      <li class="flex items-start gap-2">
-                        <i class="pi pi-check-circle text-emerald-600 mt-1"></i>
-                        <span class="text-gray-700">{{ action }}</span>
-                      </li>
-                    }
-                  </ul>
+              <button
+                pButton
+                type="button"
+                label="Скачать план"
+                [outlined]="true"
+                [style]="'color: #10b981; border-color: #10b981;'"
+                [disabled]="loadingStudyPlan()"
+                (click)="viewStudentPlan(student.studentId)"
+              >
+                <i
+                  class="pi"
+                  [class.pi-download]="!loadingStudyPlan()"
+                  [class.pi-spin]="loadingStudyPlan()"
+                  [class.pi-spinner]="loadingStudyPlan()"
+                ></i>
+              </button>
+
+              <div class="text-right flex-shrink-0">
+                <div class="text-sm text-gray-600">Средний балл</div>
+                <div class="text-2xl font-bold text-emerald-400">
+                  {{ student.averageScore !== null ? student.averageScore.toFixed(1) : 'N/A' }}
                 </div>
-              }
+              </div>
+
+              <div
+                class="flex items-center gap-2 px-3 py-2 rounded-lg flex-shrink-0"
+                [ngClass]="getTrendColor(student.trend)"
+              >
+                <i class="pi text-lg" [ngClass]="getTrendIcon(student.trend)"></i>
+                <span class="font-medium">{{ getTrendLabel(student.trend) }}</span>
+              </div>
             </div>
-          </p-card>
+
+            @if (isStudentExpanded(student.studentId)) {
+              <div>
+                @if (student.improvementFocus) {
+                  <div class="mb-3">
+                    <div class="flex items-center gap-2 mb-2">
+                      <i class="pi pi-lightbulb text-emerald-400"></i>
+                      <h4 class="font-semibold text-gray-900">Фокус для улучшения</h4>
+                    </div>
+                    <p>{{ student.improvementFocus }}</p>
+                  </div>
+                }
+
+                <div class="mb-3">
+                  <div class="flex items-center gap-2 mb-2">
+                    <i class="pi pi-chart-bar text-emerald-400"></i>
+                    <h4 class="font-semibold text-gray-900">Уровень уверенности</h4>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          class="h-full rounded-full transition-all"
+                          [class.bg-emerald-500]="(student.confidence ?? 0) >= 0.7"
+                          [class.bg-amber-500]="
+                            (student.confidence ?? 0) >= 0.4 && (student.confidence ?? 0) < 0.7
+                          "
+                          [class.bg-red-500]="(student.confidence ?? 0) < 0.4"
+                          [style.width.%]="(student.confidence ?? 0) * 100"
+                        ></div>
+                      </div>
+                      <span class="text-sm font-medium text-gray-700">
+                        {{ ((student.confidence ?? 0) * 100).toFixed(0) }}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                @if (student.actions && student.actions.length > 0) {
+                  <div>
+                    <div class="flex items-center gap-2 mb-2">
+                      <i class="pi pi-list text-emerald-400"></i>
+                      <h4 class="font-semibold text-gray-900">Рекомендуемые действия</h4>
+                    </div>
+                    <ul class="space-y-2">
+                      @for (action of student.actions; track $index) {
+                        <li class="flex items-start gap-2">
+                          -
+                          <span class="text-gray-700">{{ action }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+          </div>
         }
       </div>
     }
   }
 </section>
-
-<!-- Study Plan Modal -->
-@if (selectedStudentId()) {
-  <section
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    (click)="closeStudentPlan()"
-  >
-    <div
-      class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-      (click)="$event.stopPropagation()"
-    >
-      <div
-        class="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 flex items-center justify-between rounded-t-2xl"
-      >
-        <div class="flex items-center gap-3">
-          <i class="pi pi-book text-2xl"></i>
-          <div>
-            <h2 class="text-2xl font-bold">Персональный учебный план</h2>
-            <p class="text-sm text-blue-100">Студент ID: {{ selectedStudentId() }}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
-          (click)="closeStudentPlan()"
-        >
-          <i class="pi pi-times text-xl"></i>
-        </button>
-      </div>
-
-      <div class="p-6">
-        @if (studyPlanError()) {
-          <p-message severity="error" styleClass="w-full mb-4" [text]="studyPlanError()!" />
-        }
-
-        @if (loadingStudyPlan()) {
-          <div class="text-center py-12 text-gray-600">
-            <i class="pi pi-spin pi-spinner text-4xl mb-4"></i>
-            <p class="text-lg">Генерация учебного плана...</p>
-          </div>
-        }
-
-        @if (studyPlanData() && !loadingStudyPlan()) {
-          <div class="space-y-6">
-            @if (studyPlanData()!.rationale) {
-              <div
-                class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-5 border border-amber-200"
-              >
-                <div class="flex items-start gap-3">
-                  <i class="pi pi-info-circle text-2xl text-amber-600 mt-1"></i>
-                  <div class="flex-1">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Обоснование плана</h3>
-                    <p class="text-gray-700 leading-relaxed">{{ studyPlanData()!.rationale }}</p>
-                  </div>
-                </div>
-              </div>
-            }
-
-            @if (
-              studyPlanData()!.prioritizedGoals && studyPlanData()!.prioritizedGoals!.length > 0
-            ) {
-              <div class="bg-blue-50 rounded-lg p-5 border border-blue-200">
-                <div class="flex items-center gap-3 mb-4">
-                  <i class="pi pi-flag text-2xl text-blue-600"></i>
-                  <h3 class="text-lg font-semibold text-gray-900">Приоритетные цели</h3>
-                </div>
-                <ul class="space-y-3">
-                  @for (goal of studyPlanData()!.prioritizedGoals; track $index) {
-                    <li class="flex items-start gap-3">
-                      <div
-                        class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold"
-                      >
-                        {{ $index + 1 }}
-                      </div>
-                      <p class="text-gray-700 pt-1">{{ goal }}</p>
-                    </li>
-                  }
-                </ul>
-              </div>
-            }
-
-            @if (studyPlanData()!.weeklyTargets && studyPlanData()!.weeklyTargets!.length > 0) {
-              <div class="bg-emerald-50 rounded-lg p-5 border border-emerald-200">
-                <div class="flex items-center gap-3 mb-4">
-                  <i class="pi pi-calendar text-2xl text-emerald-600"></i>
-                  <h3 class="text-lg font-semibold text-gray-900">Еженедельные задачи</h3>
-                </div>
-                <ul class="space-y-2">
-                  @for (target of studyPlanData()!.weeklyTargets; track $index) {
-                    <li class="flex items-start gap-3">
-                      <i class="pi pi-check-circle text-emerald-600 text-lg mt-0.5"></i>
-                      <p class="text-gray-700">{{ target }}</p>
-                    </li>
-                  }
-                </ul>
-              </div>
-            }
-
-            @if (
-              studyPlanData()!.recommendedLessons && studyPlanData()!.recommendedLessons!.length > 0
-            ) {
-              <div class="bg-purple-50 rounded-lg p-5 border border-purple-200">
-                <div class="flex items-center gap-3 mb-4">
-                  <i class="pi pi-book text-2xl text-purple-600"></i>
-                  <h3 class="text-lg font-semibold text-gray-900">Рекомендованные уроки</h3>
-                </div>
-                <div class="space-y-2">
-                  @for (lesson of studyPlanData()!.recommendedLessons; track $index) {
-                    <div
-                      class="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200"
-                    >
-                      <div
-                        class="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold"
-                      >
-                        {{ $index + 1 }}
-                      </div>
-                      <p class="text-gray-700 font-medium">{{ lesson }}</p>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            @if (
-              studyPlanData()!.recommendedLectures &&
-              studyPlanData()!.recommendedLectures!.length > 0
-            ) {
-              <div class="bg-indigo-50 rounded-lg p-5 border border-indigo-200">
-                <div class="flex items-center gap-3 mb-4">
-                  <i class="pi pi-video text-2xl text-indigo-600"></i>
-                  <h3 class="text-lg font-semibold text-gray-900">Рекомендованные лекции</h3>
-                </div>
-                <div class="space-y-2">
-                  @for (lecture of studyPlanData()!.recommendedLectures; track $index) {
-                    <div
-                      class="flex items-center gap-3 p-3 bg-white rounded-lg border border-indigo-200"
-                    >
-                      <i class="pi pi-play-circle text-indigo-600 text-xl"></i>
-                      <p class="text-gray-700">{{ lecture }}</p>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  </section>
-}

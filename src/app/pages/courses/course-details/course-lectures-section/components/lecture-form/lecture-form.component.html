@@ -1,0 +1,41 @@
+<form class="mt-4 grid gap-3" [formGroup]="formService.form" (ngSubmit)="onSubmit.emit()">
+  <label class="grid gap-1">
+    <span class="text-sm text-gray-700">Урок</span>
+    <select class="border rounded px-3 py-2" formControlName="lessonId">
+      @for (l of lessons(); track l.id) {
+        <option [value]="l.id">{{ l.title }}</option>
+      }
+    </select>
+  </label>
+  <label class="grid gap-1">
+    <span class="text-sm text-gray-700">Название лекции</span>
+    <input class="border rounded px-3 py-2" type="text" formControlName="title" />
+  </label>
+  <label class="grid gap-1">
+    <span class="text-sm text-gray-700">Видео URL (если заполняешь, текст должен быть пустым)</span>
+    <input class="border rounded px-3 py-2" type="text" formControlName="videoUrl" />
+  </label>
+  <label class="grid gap-1">
+    <span class="text-sm text-gray-700"
+      >Текст лекции (если заполняешь, видео должно быть пустым)</span
+    >
+    <textarea class="border rounded px-3 py-2" rows="4" formControlName="content"></textarea>
+  </label>
+  <div class="flex gap-2">
+    <button
+      pButton
+      type="submit"
+      label="Сохранить лекцию"
+      severity="success"
+      [disabled]="formService.submitting()"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="Отмена"
+      severity="secondary"
+      [outlined]="true"
+      (click)="formService.cancel()"
+    ></button>
+  </div>
+</form>

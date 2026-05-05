@@ -4,16 +4,11 @@
     [class.border-emerald-500]="isEnrolled"
     [class.border-accent]="!isEnrolled"
     [class.bg-emerald-50]="isEnrolled"
-    [routerLink]="
-      isStudent() && isEnrolled ? ['/courses', course.id, 'student'] : ['/courses', course.id]
-    "
+    [routerLink]="['/courses', course.id]"
   >
     <div class="course-card-header">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <h2 class="course-title text-lg font-semibold">{{ course.title }}</h2>
-        @if (isEnrolled) {
-          <p-tag value="Вы записаны" severity="success" class="flex-shrink-0" />
-        }
       </div>
       <div class="text-xs text-gray-500 pl-2 flex-shrink-0">
         {{ course.createdAt | date: 'mediumDate' }}
@@ -22,43 +17,20 @@
 
     <p class="course-description mt-1 text-sm text-gray-700">{{ course.description }}</p>
 
-    @if (course.tags && course.tags.length > 0) {
-      <div class="course-tags mt-2 flex flex-wrap gap-1">
-        @for (tag of course.tags; track tag) {
-          <p-tag [value]="tag" severity="info" />
-        }
-      </div>
-    }
-
-    @if (course.teacherName) {
-      <div class="course-teacher mt-2 text-xs text-gray-600">
-        Teacher: <span class="font-medium">{{ course.teacherName }}</span>
-      </div>
-    }
-
-    @if (showEnrollButton && isStudent()) {
-      <div class="course-actions mt-2 flex gap-2">
-        @if (isEnrolled) {
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-red-600 text-red-700 hover:bg-red-50 disabled:opacity-60"
-            [disabled]="enrolling()"
-            (click)="handleUnenroll($event)"
-          >
-            {{ enrolling() ? 'Отписка...' : 'Отписаться' }}
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-emerald-600 text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
-            [disabled]="enrolling()"
-            (click)="handleEnroll($event)"
-          >
-            {{ enrolling() ? 'Подписка...' : 'Записаться' }}
-          </button>
-        }
-      </div>
-    }
+    <div class="mt-2 flex items-center justify-between gap-2">
+      @if (course.tags && course.tags.length > 0) {
+        <div class="course-tags flex flex-wrap gap-1">
+          @if (course.tags.length <= 2) {
+            @for (tag of course.tags; track tag) {
+              <p-tag [value]="tag" severity="info" />
+            }
+          } @else {
+            <p-tag [value]="course.tags[0]" severity="info" />
+            <p-tag [value]="'+' + (course.tags.length - 1)" severity="secondary" />
+          }
+        </div>
+      }
+    </div>
   </a>
 } @else {
   <div
@@ -70,9 +42,6 @@
     <div class="course-card-header">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <h2 class="course-title text-lg font-semibold">{{ course.title }}</h2>
-        @if (isEnrolled) {
-          <p-tag value="Вы записаны" severity="success" class="flex-shrink-0" />
-        }
       </div>
       <div class="text-xs text-gray-500 pl-2 flex-shrink-0">
         {{ course.createdAt | date: 'mediumDate' }}
@@ -81,42 +50,19 @@
 
     <p class="course-description mt-1 text-sm text-gray-700">{{ course.description }}</p>
 
-    @if (course.tags && course.tags.length > 0) {
-      <div class="course-tags mt-2 flex flex-wrap gap-1">
-        @for (tag of course.tags; track tag) {
-          <p-tag [value]="tag" severity="info" />
-        }
-      </div>
-    }
-
-    @if (course.teacherName) {
-      <div class="course-teacher mt-2 text-xs text-gray-600">
-        Teacher: <span class="font-medium">{{ course.teacherName }}</span>
-      </div>
-    }
-
-    @if (showEnrollButton && isStudent()) {
-      <div class="course-actions mt-2 flex gap-2">
-        @if (isEnrolled) {
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-red-600 text-red-700 hover:bg-red-50 disabled:opacity-60"
-            [disabled]="enrolling()"
-            (click)="handleUnenroll($event)"
-          >
-            {{ enrolling() ? 'Отписка...' : 'Отписаться' }}
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-emerald-600 text-emerald-700 hover:bg-emerald-50 disabled:opacity-60"
-            [disabled]="enrolling()"
-            (click)="handleEnroll($event)"
-          >
-            {{ enrolling() ? 'Подписка...' : 'Записаться' }}
-          </button>
-        }
-      </div>
-    }
+    <div class="mt-2 flex items-center justify-between gap-2">
+      @if (course.tags && course.tags.length > 0) {
+        <div class="course-tags flex flex-wrap gap-1">
+          @if (course.tags.length <= 2) {
+            @for (tag of course.tags; track tag) {
+              <p-tag [value]="tag" severity="info" />
+            }
+          } @else {
+            <p-tag [value]="course.tags[0]" severity="info" />
+            <p-tag [value]="'+' + (course.tags.length - 1)" severity="secondary" />
+          }
+        </div>
+      }
+    </div>
   </div>
 }

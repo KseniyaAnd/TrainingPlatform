@@ -1,6 +1,7 @@
 :host {
   display: block;
   height: 100%;
+  width: 100%;
 }
 
 /* Карточка курса с фиксированной высотой */
@@ -8,7 +9,7 @@
   display: flex;
   flex-direction: column;
   height: 120px;
-  min-width: 350px;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -87,6 +88,24 @@
 .course-actions {
   margin-top: auto;
   padding-top: 0.5rem;
+}
+
+/* Кастомные стили для кнопок записи/отписки */
+.course-actions button {
+  background-color: transparent !important; /* Прозрачный фон */
+  color: #34d399 !important; /* Мятный текст */
+  border: 1px solid #34d399 !important; /* Мятная граница */
+}
+
+.course-actions button:hover:not(:disabled) {
+  background-color: #f0fdfa !important; /* Светло-мятный hover */
+  color: #34d399 !important; /* Мятный текст при hover */
+  border-color: #34d399 !important;
+}
+
+.course-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Fallback explicit border class to avoid relying on Tailwind arbitrary colors

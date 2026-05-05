@@ -27,7 +27,7 @@ interface CourseSection {
 })
 export class HomePageComponent {
   private readonly coursesService = inject(CoursesService);
-  private readonly designTag = 'дизайн';
+  private readonly designTag = 'Дизайн';
   private readonly coursesLimit = 50;
   private readonly sectionLimit = 4;
 
@@ -47,11 +47,12 @@ export class HomePageComponent {
   readonly error = computed(() => this.coursesResponse().error);
 
   // Курсы по дизайну
-  readonly designCourses = computed(() =>
-    this.coursesResponse()
-      .items.filter((course) => course.tags?.includes(this.designTag))
-      .slice(0, this.sectionLimit),
-  );
+  readonly designCourses = computed(() => {
+    const tagLower = this.designTag.toLowerCase();
+    return this.coursesResponse()
+      .items.filter((course) => course.tags?.some((tag) => tag.toLowerCase() === tagLower))
+      .slice(0, this.sectionLimit);
+  });
 
   // Недавние курсы
   readonly recentCourses = computed(() =>

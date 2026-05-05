@@ -33,10 +33,10 @@ export class CreateCoursePage {
   readonly submitError = signal<string | null>(null);
 
   readonly tagOptions: Array<{ label: string; value: string }> = [
-    { label: 'дизайн', value: 'дизайн' },
-    { label: 'фронтенд', value: 'фронтенд' },
-    { label: 'бэкенд', value: 'бэкенд' },
-    { label: 'машинное обучение', value: 'машинное обучение' },
+    { label: 'Дизайн', value: 'дизайн' },
+    { label: 'Фронтенд', value: 'фронтенд' },
+    { label: 'Бэкенд', value: 'бэкенд' },
+    { label: 'Машинное обучение', value: 'машинное обучение' },
     { label: 'DevOps', value: 'DevOps' },
     { label: 'Мобильная разработка', value: 'Мобильная разработка' },
   ];

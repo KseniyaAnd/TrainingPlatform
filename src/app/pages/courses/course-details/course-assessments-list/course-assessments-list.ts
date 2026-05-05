@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { Assessment } from '../../../../models/assessment.model';
 import { AssessmentStudentResponse, SubmissionResponse } from '../../../../models/submission.model';
 import { AuthStateService } from '../../../../services/auth/auth-state.service';
-import { CourseDetailsDataService } from '../course-details-data.service';
+import { AssessmentDifficulty, CourseDetailsDataService } from '../course-details-data.service';
 
 @Component({
   selector: 'app-course-assessments-list',
@@ -42,6 +42,7 @@ export class CourseAssessmentsListComponent {
   readonly editingAssessmentId = signal<string | null>(null);
   readonly showAddForm = signal(false);
   readonly savingAssessment = signal(false);
+  readonly generatingWithAI = signal(false);
 
   readonly submissionForm = this.fb.nonNullable.group({
     answerText: ['', [Validators.required, Validators.minLength(10)]],
@@ -54,6 +55,8 @@ export class CourseAssessmentsListComponent {
     answerKey: [''],
     rubricCriteria: [''],
     generateWithAI: [false],
+    questionCount: [3, [Validators.required, Validators.min(1), Validators.max(10)]],
+    difficulty: ['MEDIUM' as AssessmentDifficulty, Validators.required],
   });
 
   // Фильтруем assessments только для уровня курса (без lectureId)
@@ -113,6 +116,8 @@ export class CourseAssessmentsListComponent {
       answerKey: '',
       rubricCriteria: '',
       generateWithAI: false,
+      questionCount: 3,
+      difficulty: 'MEDIUM',
     });
     this.editingAssessmentId.set(null);
     this.showAddForm.set(true);
@@ -126,6 +131,8 @@ export class CourseAssessmentsListComponent {
       answerKey: (assessment.answerKey ?? []).join('\n'),
       rubricCriteria: (assessment.rubricCriteria ?? []).join('\n'),
       generateWithAI: false,
+      questionCount: 3,
+      difficulty: 'MEDIUM',
     });
     this.editingAssessmentId.set(assessment.id);
     this.showAddForm.set(false);
@@ -188,6 +195,46 @@ export class CourseAssessmentsListComponent {
       this.cancelAssessmentForm();
     } catch (e) {
       console.error('Failed to delete assessment:', e);
+    }
+  }
+
+  async generateAssessmentWithAI(): Promise<void> {
+    const title = this.assessmentForm.controls.title.value.trim();
+
+    if (!title) {
+      alert('Пожалуйста, введите название assessment перед генерацией');
+      return;
+    }
+
+    this.generatingWithAI.set(true);
+    try {
+      const questionCount = this.assessmentForm.controls.questionCount.value;
+      const difficulty = this.assessmentForm.controls.difficulty.value;
+
+      const draft = await firstValueFrom(
+        this.dataService.generateAssessmentDraft({
+          courseId: this.courseId(),
+          questionCount,
+          difficulty,
+        }),
+      );
+
+      // Заполняем форму сгенерированными данными
+      this.assessmentForm.patchValue(
+        {
+          title: draft.title || title,
+          description: draft.description,
+          questions: (draft.questions ?? []).join('\n'),
+          answerKey: (draft.answerKey ?? []).join('\n'),
+          rubricCriteria: (draft.rubricCriteria ?? []).join('\n'),
+        },
+        { emitEvent: false },
+      );
+    } catch (e) {
+      console.error('Failed to generate assessment with AI:', e);
+      alert('Не удалось сгенерировать assessment с помощью AI');
+    } finally {
+      this.generatingWithAI.set(false);
     }
   }
 }

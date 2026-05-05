@@ -58,16 +58,28 @@
         }
 
         @if (!isTeacher()) {
-          <button
-            pButton
-            type="button"
-            class="whitespace-nowrap"
-            [label]="subscribed() ? 'Вы подписаны' : 'Подписаться'"
-            [outlined]="subscribed()"
-            [disabled]="subscribed()"
-            [style]="subscribed() ? '' : 'background-color: #10b981; border-color: #10b981;'"
-            (click)="subscribe.emit()"
-          ></button>
+          @if (subscribed()) {
+            <button
+              pButton
+              type="button"
+              class="whitespace-nowrap"
+              label="Отписаться"
+              [outlined]="true"
+              [disabled]="submitting()"
+              [style]="'color: #ef4444; border-color: #ef4444;'"
+              (click)="unsubscribe.emit()"
+            ></button>
+          } @else {
+            <button
+              pButton
+              type="button"
+              class="whitespace-nowrap"
+              label="Подписаться"
+              [disabled]="submitting()"
+              [style]="'background-color: #10b981; border-color: #10b981;'"
+              (click)="subscribe.emit()"
+            ></button>
+          }
         }
 
         @if (canEditCourse()) {

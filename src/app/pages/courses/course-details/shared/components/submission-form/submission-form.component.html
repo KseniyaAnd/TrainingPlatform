@@ -1,8 +1,6 @@
 @if (submission(); as sub) {
-  <div class="mt-4 border-t pt-4">
-    <div
-      class="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg border border-emerald-200"
-    >
+  <div class="mt-4">
+    <div class="mb-4 p-3 rounded-lg border border-emerald-200">
       <div class="flex flex-wrap items-center gap-4 text-sm">
         <div class="flex items-center gap-2 text-gray-700">
           <i class="pi pi-check-circle text-emerald-600"></i>
@@ -31,23 +29,23 @@
         }
       </div>
     </div>
-    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+    <div class="p-4 rounded-lg border border-gray-200">
       <h4 class="text-lg font-semibold mb-3 flex items-center gap-2">
-        <i class="pi pi-file-edit text-blue-600"></i>
+        <i class="pi pi-file-edit text-emerald-400"></i>
         Ваш ответ:
       </h4>
       <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">{{ sub.answerText }}</p>
     </div>
   </div>
 } @else {
-  <form class="mt-4 grid gap-3" [formGroup]="formService.form" (ngSubmit)="onSubmit()">
+  <form class="mt-4 flex flex-col gap-3" [formGroup]="formService.form" (ngSubmit)="onSubmit()">
     @if (formService.error()) {
       <div class="text-red-600 text-sm">{{ formService.error() }}</div>
     }
-    <label class="grid gap-1">
-      <span class="text-sm text-gray-700 font-medium">Ваш ответ:</span>
+    <label class="flex flex-col gap-1">
+      <span class="font-medium">Ваш ответ:</span>
       <textarea
-        class="border rounded px-3 py-2"
+        class="border border-gray-300 rounded px-3 py-2"
         rows="6"
         formControlName="answerText"
         placeholder="Введите ваш ответ здесь..."
@@ -58,6 +56,7 @@
         pButton
         type="submit"
         label="Отправить ответ"
+        [style]="'background-color: #10b981; border-color: #10b981;'"
         severity="success"
         [disabled]="formService.submittingAssessmentId() === assessment().id"
       ></button>

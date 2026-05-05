@@ -125,6 +125,22 @@ export class CourseLessonsSectionComponent {
     );
   }
 
+  toggleLessonAndExpanded(lessonId: string): void {
+    this.uiStateService.toggleLessonCollapsed(lessonId);
+    // Если урок разворачивается и это студент, также разворачиваем список лекций
+    if (!this.uiStateService.isLessonCollapsed(lessonId) && this.isStudent()) {
+      this.uiStateService.setExpanded(lessonId, true);
+    }
+  }
+
+  toggleSectionAndExpanded(sectionId: string): void {
+    this.uiStateService.toggleLessonCollapsed(sectionId);
+    // Если секция разворачивается и это студент, также разворачиваем список лекций
+    if (!this.uiStateService.isLessonCollapsed(sectionId) && this.isStudent()) {
+      this.uiStateService.setExpanded(sectionId, true);
+    }
+  }
+
   getLessonProgress(lesson: LessonWithLectures): { completed: number; total: number } {
     const progress = this.courseProgress();
     if (!progress) return { completed: 0, total: 0 };

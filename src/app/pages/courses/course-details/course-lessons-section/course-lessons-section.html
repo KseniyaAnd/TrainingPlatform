@@ -24,7 +24,7 @@
                 <button
                   type="button"
                   class="p-2 hover:bg-gray-100 rounded"
-                  (click)="uiStateService.toggleLessonCollapsed(lesson.id)"
+                  (click)="toggleLessonAndExpanded(lesson.id)"
                 >
                   <i
                     class="pi"
@@ -54,20 +54,6 @@
                     {{ getLessonProgress(lesson).completed }} /
                     {{ getLessonProgress(lesson).total }} лекций
                   </div>
-                }
-
-                @if (isStudent() && lesson.lectures && lesson.lectures.length > 0) {
-                  <button
-                    type="button"
-                    class="ml-2 p-2 hover:bg-gray-100 rounded"
-                    (click)="uiStateService.toggleExpanded(lesson.id)"
-                  >
-                    <i
-                      class="pi"
-                      [class.pi-chevron-down]="!uiStateService.isExpanded(lesson.id)"
-                      [class.pi-chevron-up]="uiStateService.isExpanded(lesson.id)"
-                    ></i>
-                  </button>
                 }
               </div>
 
@@ -355,7 +341,7 @@
                   <button
                     type="button"
                     class="p-2 hover:bg-indigo-200 rounded"
-                    (click)="uiStateService.toggleLessonCollapsed(section.id)"
+                    (click)="toggleSectionAndExpanded(section.id)"
                   >
                     <i
                       class="pi"
@@ -379,20 +365,6 @@
                     <h3 class="text-xl font-bold leading-snug" style="color: #111827">
                       📚 Отдел: {{ section.title }}
                     </h3>
-                  }
-
-                  @if (isStudent() && section.lectures && section.lectures.length > 0) {
-                    <button
-                      type="button"
-                      class="ml-2 p-2 hover:bg-indigo-200 rounded"
-                      (click)="uiStateService.toggleExpanded(section.id)"
-                    >
-                      <i
-                        class="pi"
-                        [class.pi-chevron-down]="!uiStateService.isExpanded(section.id)"
-                        [class.pi-chevron-up]="uiStateService.isExpanded(section.id)"
-                      ></i>
-                    </button>
                   }
                 </div>
 

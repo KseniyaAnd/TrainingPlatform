@@ -17,6 +17,16 @@ export class LessonUiStateService {
     this.expandedLessons.set(s);
   }
 
+  setExpanded(lessonId: string, expanded: boolean): void {
+    const s = new Set(this.expandedLessons());
+    if (expanded) {
+      s.add(lessonId);
+    } else {
+      s.delete(lessonId);
+    }
+    this.expandedLessons.set(s);
+  }
+
   isExpanded(lessonId: string): boolean {
     return this.expandedLessons().has(lessonId);
   }

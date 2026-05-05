@@ -64,8 +64,14 @@ export class CourseAssessmentsListComponent {
   });
 
   // Фильтруем assessments только для уровня курса (без lectureId)
-  readonly courseLevelAssessments = computed(() => {
-    return this.assessments().filter((a) => !a.sourceId || a.sourceType === 'COURSE');
+  readonly courseLevelAssessments = computed<(Assessment | AssessmentStudentResponse)[]>(() => {
+    if (this.isStudent()) {
+      // Для студентов используем studentAssessments
+      return this.studentAssessments().filter((a) => !a.sourceId || a.sourceType === 'COURSE');
+    } else {
+      // Для преподавателей используем assessments
+      return this.assessments().filter((a) => !a.sourceId || a.sourceType === 'COURSE');
+    }
   });
 
   toggleCollapsed(assessmentId: string): void {

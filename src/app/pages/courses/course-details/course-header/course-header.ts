@@ -21,6 +21,7 @@ export class CourseHeaderComponent {
   readonly activeTab = input.required<'content' | 'analytics'>();
 
   readonly subscribe = output<void>();
+  readonly unsubscribe = output<void>();
   readonly editCourse = output<void>();
   readonly deleteCourse = output<void>();
   readonly submitCourse = output<void>();

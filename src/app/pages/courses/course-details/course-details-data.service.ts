@@ -133,6 +133,10 @@ export class CourseDetailsDataService {
     return this.coursesService.enroll(courseId);
   }
 
+  unenroll(enrollmentId: string) {
+    return this.coursesService.unenroll(enrollmentId);
+  }
+
   checkEnrollmentStatus(courseId: string) {
     return this.coursesService.getEnrolledCourses({ limit: 200 }).pipe(
       map((response) => {

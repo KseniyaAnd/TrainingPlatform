@@ -55,6 +55,7 @@ export class CourseDetailsPage {
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
   readonly subscribed = signal(false);
+  readonly enrollmentId = signal<string | null>(null);
 
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
   readonly canEditCourse = computed(() => {
@@ -124,6 +125,7 @@ export class CourseDetailsPage {
   private async loadStudentData(): Promise<void> {
     const enrollment = await firstValueFrom(this.dataService.checkEnrollmentStatus(this.courseId));
     this.subscribed.set(enrollment.isEnrolled);
+    this.enrollmentId.set(enrollment.enrollmentId);
 
     if (!enrollment.isEnrolled) return;
 
@@ -208,6 +210,33 @@ export class CourseDetailsPage {
       } else {
         this.submitError.set(e instanceof Error ? e.message : 'Failed to enroll');
       }
+    } finally {
+      this.submitting.set(false);
+    }
+  }
+
+  async unsubscribe(): Promise<void> {
+    if (!this.isStudent() || !this.subscribed() || this.submitting()) return;
+
+    const enrollmentId = this.enrollmentId();
+    if (!enrollmentId) {
+      this.submitError.set('Enrollment ID not found');
+      return;
+    }
+
+    if (!confirm('Вы уверены, что хотите отписаться от курса? Ваш прогресс будет сохранен.')) {
+      return;
+    }
+
+    this.submitting.set(true);
+    this.submitError.set(null);
+    try {
+      await firstValueFrom(this.dataService.unenroll(enrollmentId));
+      this.subscribed.set(false);
+      this.enrollmentId.set(null);
+      await this.loadCourse();
+    } catch (e: any) {
+      this.submitError.set(e instanceof Error ? e.message : 'Failed to unenroll');
     } finally {
       this.submitting.set(false);
     }

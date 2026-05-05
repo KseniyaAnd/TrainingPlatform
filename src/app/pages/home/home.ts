@@ -22,7 +22,6 @@ interface CourseSection {
   standalone: true,
   imports: [Banner, AiFeaturesComponent, CourseSectionComponent, LoadingStateComponent],
   templateUrl: './home.html',
-  styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent {

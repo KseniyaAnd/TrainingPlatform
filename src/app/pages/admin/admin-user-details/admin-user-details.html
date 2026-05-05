@@ -1,0 +1,162 @@
+<div class="p-8 max-w-[1200px] mx-auto">
+  <div class="flex items-center gap-4 mb-8">
+    <p-button icon="pi pi-arrow-left" [text]="true" label="Назад" (onClick)="goBack()" />
+    <h1 class="text-3xl font-bold text-gray-900">Детали пользователя</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="flex flex-col items-center justify-center py-16 gap-4">
+      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+      <p class="text-gray-600">Загрузка данных пользователя...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <p-message severity="error" [text]="error()!" styleClass="mb-4" />
+    <div class="flex justify-center">
+      <p-button label="Повторить" icon="pi pi-refresh" (onClick)="loadUserDetails()" />
+    </div>
+  }
+
+  @if (userDetails() && !loading()) {
+    <!-- User Info Card -->
+    <p-card styleClass="mb-6">
+      <div class="flex items-center gap-6">
+        <div
+          class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 text-white flex items-center justify-center font-bold text-4xl flex-shrink-0"
+        >
+          {{ userDetails()!.username.charAt(0).toUpperCase() }}
+        </div>
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ userDetails()!.username }}</h2>
+          <p class="text-gray-600 mb-3">{{ userDetails()!.email }}</p>
+          <div class="flex items-center gap-3">
+            <p-tag
+              [value]="getRoleLabel(userDetails()!.role)"
+              [severity]="getRoleSeverity(userDetails()!.role)"
+            />
+            <span class="text-sm text-gray-500">
+              Зарегистрирован: {{ formatDate(userDetails()!.createdAt) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Enrollments Section -->
+    <p-card styleClass="mb-6">
+      <ng-template pTemplate="header">
+        <div class="flex items-center gap-3 p-4">
+          <i class="pi pi-book text-xl text-blue-600"></i>
+          <h3 class="text-xl font-semibold text-gray-900">
+            Записи на курсы ({{ userDetails()!.enrollments.length }})
+          </h3>
+        </div>
+      </ng-template>
+
+      @if (userDetails()!.enrollments.length === 0) {
+        <p class="text-gray-500 text-sm">Пользователь не записан ни на один курс</p>
+      } @else {
+        <div class="space-y-4">
+          @for (enrollment of userDetails()!.enrollments; track enrollment.id) {
+            <div class="border border-gray-200 rounded-lg p-4">
+              <div class="flex justify-between items-start mb-3">
+                <div>
+                  <h4 class="font-semibold text-gray-900">{{ enrollment.courseTitle }}</h4>
+                  <p class="text-sm text-gray-500">{{ formatDate(enrollment.enrolledAt) }}</p>
+                </div>
+                <span class="text-sm font-medium text-blue-600">{{ enrollment.progress }}%</span>
+              </div>
+              <p-progressBar [value]="enrollment.progress" [showValue]="false" />
+            </div>
+          }
+        </div>
+      }
+    </p-card>
+
+    <!-- Submissions Section -->
+    <p-card styleClass="mb-6">
+      <ng-template pTemplate="header">
+        <div class="flex items-center gap-3 p-4">
+          <i class="pi pi-file text-xl text-green-600"></i>
+          <h3 class="text-xl font-semibold text-gray-900">
+            Ответы на задания ({{ userDetails()!.submissions.length }})
+          </h3>
+        </div>
+      </ng-template>
+
+      @if (userDetails()!.submissions.length === 0) {
+        <p class="text-gray-500 text-sm">Пользователь еще не отправлял ответы</p>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Задание</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Курс</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Дата отправки</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Оценка</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (submission of userDetails()!.submissions; track submission.id) {
+                <tr class="border-t border-gray-200">
+                  <td class="p-3 text-sm">{{ submission.assessmentTitle }}</td>
+                  <td class="p-3 text-sm text-gray-600">{{ submission.courseTitle }}</td>
+                  <td class="p-3 text-sm text-gray-600">
+                    {{ formatDate(submission.submittedAt) }}
+                  </td>
+                  <td class="p-3">
+                    @if (submission.score !== null) {
+                      <p-tag
+                        [value]="submission.score.toString()"
+                        [severity]="getScoreSeverity(submission.score)"
+                      />
+                    } @else {
+                      <span class="text-sm text-gray-400 italic">Не оценено</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </p-card>
+
+    <!-- Courses Section (for teachers) -->
+    @if (userDetails()!.courses.length > 0) {
+      <p-card>
+        <ng-template pTemplate="header">
+          <div class="flex items-center gap-3 p-4">
+            <i class="pi pi-graduation-cap text-xl text-purple-600"></i>
+            <h3 class="text-xl font-semibold text-gray-900">
+              Созданные курсы ({{ userDetails()!.courses.length }})
+            </h3>
+          </div>
+        </ng-template>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Название курса</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Дата создания</th>
+                <th class="text-left p-3 text-sm font-semibold text-gray-700">Записей</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (course of userDetails()!.courses; track course.id) {
+                <tr class="border-t border-gray-200">
+                  <td class="p-3 text-sm font-medium">{{ course.title }}</td>
+                  <td class="p-3 text-sm text-gray-600">{{ formatDate(course.createdAt) }}</td>
+                  <td class="p-3 text-sm text-gray-600">{{ course.enrollmentsCount }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </p-card>
+    }
+  }
+</div>

@@ -1,54 +1,250 @@
-# LearningPlatform
+# Learning Platform
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.7.
+Современная образовательная платформа на Angular с поддержкой AI-аналитики для студентов и преподавателей.
 
-## Development server
+## 🚀 Технологии
 
-To start a local development server, run:
+- **Angular 21** - современный фреймворк для создания веб-приложений
+- **TypeScript** - типизированный JavaScript
+- **PrimeNG** - UI компоненты
+- **RxJS** - реактивное программирование
+- **Vitest** - быстрый фреймворк для тестирования
+- **Tailwind CSS** - утилитарный CSS фреймворк
 
-```bash
-ng serve
+## 📋 Основные возможности
+
+### Для студентов
+
+- 📚 Просмотр и запись на курсы
+- 📖 Изучение материалов (уроки, лекции)
+- ✍️ Выполнение заданий и тестов
+- 📊 Отслеживание прогресса обучения
+- 🤖 AI-рекомендации по обучению
+- 📈 Персональная аналитика успеваемости
+
+### Для преподавателей
+
+- ➕ Создание и управление курсами
+- 📝 Добавление уроков, лекций и заданий
+- ✅ Проверка и оценка работ студентов
+- 📊 Аналитика по курсам и студентам
+- 🤖 AI-инсайты о прогрессе студентов
+- 👥 Управление записями на курсы
+
+### Для администраторов
+
+- 👤 Управление пользователями
+- 📚 Управление всеми курсами
+- 📊 Статистика платформы
+- 🔐 Управление ролями и доступом
+
+## 🏗️ Архитектура
+
+### Структура проекта
+
+```
+src/
+├── app/
+│   ├── components/          # Переиспользуемые компоненты
+│   │   ├── banner/
+│   │   ├── course-card/
+│   │   ├── course-filters/
+│   │   ├── search-bar/
+│   │   └── ...
+│   ├── pages/              # Страницы приложения
+│   │   ├── home/
+│   │   ├── courses/
+│   │   ├── admin/
+│   │   └── auth/
+│   ├── services/           # Бизнес-логика
+│   │   ├── auth/
+│   │   ├── courses/
+│   │   ├── progress/
+│   │   ├── submissions/
+│   │   └── admin/
+│   ├── models/             # TypeScript интерфейсы
+│   ├── interceptors/       # HTTP interceptors
+│   ├── guards/             # Route guards
+│   ├── shared/             # Общие модули
+│   │   ├── components/     # UI компоненты
+│   │   ├── pipes/          # Pipes
+│   │   └── utils/          # Утилиты
+│   └── layout/             # Компоненты layout
+└── environments/           # Конфигурация окружений
 ```
 
-# LearningPlatform
+### Ключевые сервисы
 
-Angular (21+) standalone sample app with Signals, TailwindCSS (v4+), PrimeNG (v21+), ESLint and Prettier.
+- **AuthService** - аутентификация и авторизация
+- **CoursesService** - управление курсами
+- **CourseContentService** - управление контентом курсов
+- **ProgressService** - отслеживание прогресса
+- **SubmissionsService** - работа с заданиями
+- **AdminService** - административные функции
+- **AnalyticsFormatterService** - форматирование аналитики
 
-Prerequisites:
-- Node.js (>=18 recommended)
-- npm
-- (optional) Angular CLI global: `npm install -g @angular/cli@latest`
+## 🔐 Роли пользователей
 
-Quick start (PowerShell):
+- **STUDENT** - студент (просмотр курсов, выполнение заданий)
+- **TEACHER** - преподаватель (создание курсов, проверка работ)
+- **ADMIN** - администратор (полный доступ к платформе)
 
-1. Install dependencies
-```powershell
+## 🎨 UI/UX
+
+- Адаптивный дизайн для всех устройств
+- Темная и светлая темы
+- Интуитивная навигация
+- Современный Material Design
+- Анимации и переходы
+
+## 🧪 Тестирование
+
+Проект покрыт комплексными unit-тестами:
+
+- **213 тестов** ✅
+- **17 тестовых файлов**
+- Покрытие всех основных сервисов
+- Тестирование утилит и pipes
+- Обработка ошибок
+
+### Запуск тестов
+
+```bash
+npm test                # Запуск всех тестов
+npm run test:watch      # Режим watch
+npm run test:coverage   # С покрытием кода
+```
+
+## 🚀 Установка и запуск
+
+### Требования
+
+- Node.js 18+
+- npm или yarn
+
+### Установка
+
+```bash
+# Клонирование репозитория
+git clone <repository-url>
+
+# Установка зависимостей
 npm install
 ```
 
-2. Serve in development
-```powershell
+### Разработка
+
+```bash
+# Запуск dev сервера
 npm start
-# opens at http://localhost:4200
+
+# Приложение будет доступно по адресу http://localhost:4200
 ```
 
-3. Build production
-```powershell
+### Сборка
+
+```bash
+# Production сборка
 npm run build
+
+# Файлы будут в папке dist/
 ```
 
-4. Lint
-```powershell
+### Линтинг и форматирование
+
+```bash
+# ESLint
 npm run lint
-```
 
-5. Format
-```powershell
+# Prettier
 npm run format
+
+# Stylelint
+npm run lint:styles
 ```
 
-Notes:
-- Tailwind is configured in `tailwind.config.js` and integrated via `postcss.config.js`.
-- PrimeNG theme and core CSS are imported from `src/styles.css`.
-- `App` component is standalone and demonstrates Angular signals with PrimeNG components.
+## 📦 Основные зависимости
 
+```json
+{
+  "@angular/core": "^21.2.7",
+  "@angular/common": "^21.2.7",
+  "@angular/router": "^21.2.7",
+  "@angular/forms": "^21.2.7",
+  "primeng": "^19.0.0",
+  "rxjs": "^7.8.1",
+  "tailwindcss": "^3.4.17"
+}
+```
+
+## 🔧 Конфигурация
+
+### Environment файлы
+
+- `environment.ts` - development окружение
+- `environment.prod.ts` - production окружение
+
+### API
+
+Приложение работает с REST API. Базовый URL настраивается в environment файлах:
+
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8080/api',
+};
+```
+
+## 📱 Основные маршруты
+
+- `/` - Главная страница
+- `/courses` - Каталог курсов
+- `/courses/:id` - Детали курса
+- `/courses/:id/lessons/:lessonId` - Урок
+- `/courses/:id/assessments/:assessmentId` - Задание
+- `/admin` - Панель администратора
+- `/login` - Вход
+- `/register` - Регистрация
+
+## 🤖 AI Функции
+
+- **AI-аналитика студентов** - анализ прогресса и рекомендации
+- **AI-план обучения** - персонализированные планы
+- **Генерация заданий** - автоматическое создание тестов
+- **Инсайты для преподавателей** - аналитика эффективности курсов
+
+## 🔒 Безопасность
+
+- JWT аутентификация
+- HTTP interceptors для добавления токенов
+- Route guards для защиты маршрутов
+- Валидация на клиенте и сервере
+- Безопасное хранение токенов
+
+## 📈 Производительность
+
+- Lazy loading модулей
+- OnPush change detection
+- Оптимизация изображений
+- Code splitting
+- Tree shaking
+
+## 🌐 Интернационализация
+
+- Поддержка русского языка
+- Форматирование дат по локали
+- Локализованные сообщения об ошибках
+
+## 📝 Лицензия
+
+MIT
+
+## 👥 Команда
+
+Разработано с ❤️ для современного образования
+
+---
+
+**Версия**: 0.0.0  
+**Angular**: 21.2.7  
+**Node**: 18+

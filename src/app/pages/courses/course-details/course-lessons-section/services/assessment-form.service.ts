@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { Assessment } from '../../../../../models/assessment.model';
@@ -8,21 +8,17 @@ import {
   AssessmentDraftResponse,
   GenerateAssessmentDraftRequest,
 } from '../../../../../services/courses/course-content.service';
-import { CourseDetailsDataService } from '../../course-details-data.service';
+import { CourseDataService } from '../../../../../services/courses/course-data.service';
+import { BaseFormService } from '../../../../../shared/services/base-form.service';
 
 /**
  * Сервис для управления формой assessment с AI генерацией
  */
 @Injectable()
-export class AssessmentFormService {
-  private readonly dataService = inject(CourseDetailsDataService);
-  private readonly fb = inject(FormBuilder);
+export class AssessmentFormService extends BaseFormService<Assessment> {
+  private readonly dataService = inject(CourseDataService);
 
-  readonly showForm = signal(false);
   readonly lectureId = signal<string | null>(null);
-  readonly editingId = signal<string | null>(null);
-  readonly submitting = signal(false);
-  readonly error = signal<string | null>(null);
 
   // AI generation state
   readonly useAi = signal(false);
@@ -32,19 +28,21 @@ export class AssessmentFormService {
   readonly aiQuestionCount = signal(5);
   readonly aiDifficulty = signal<AssessmentDifficulty>('MEDIUM');
 
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3)]],
-    description: ['', [Validators.required, Validators.minLength(3)]],
-    questionsText: ['', [Validators.required]],
-    answerKeyText: ['', [Validators.required]],
-    rubricCriteriaText: ['', [Validators.required]],
-  });
+  createForm(data?: Assessment): FormGroup {
+    return this.fb.nonNullable.group({
+      title: [data?.title ?? '', [Validators.required, Validators.minLength(3)]],
+      description: [data?.description ?? '', [Validators.required, Validators.minLength(3)]],
+      questionsText: [this.joinLines(data?.questions ?? []), [Validators.required]],
+      answerKeyText: [this.joinLines(data?.answerKey ?? []), [Validators.required]],
+      rubricCriteriaText: [this.joinLines(data?.rubricCriteria ?? []), [Validators.required]],
+    });
+  }
 
-  openAdd(lectureId: string): void {
-    this.showForm.set(true);
+  readonly form = this.createForm();
+
+  openAddAssessment(lectureId: string): void {
+    super.openAdd();
     this.lectureId.set(lectureId);
-    this.editingId.set(null);
-    this.error.set(null);
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
@@ -59,11 +57,9 @@ export class AssessmentFormService {
     });
   }
 
-  openEdit(assessment: Assessment): void {
-    this.showForm.set(true);
+  openEditAssessment(assessment: Assessment): void {
+    super.openEdit(assessment.id);
     this.lectureId.set(assessment.lectureId ?? assessment.sourceId ?? null);
-    this.editingId.set(assessment.id);
-    this.error.set(null);
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
@@ -94,11 +90,9 @@ export class AssessmentFormService {
       });
   }
 
-  cancel(): void {
-    this.showForm.set(false);
+  override cancel(): void {
+    super.cancel();
     this.lectureId.set(null);
-    this.editingId.set(null);
-    this.error.set(null);
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
@@ -121,7 +115,7 @@ export class AssessmentFormService {
       console.warn('⚠️ Генерация ассесмента без привязки к лекции');
     }
 
-    this.error.set(null);
+    this.setError(null);
     try {
       this.generatingDraft.set(true);
       const payload: GenerateAssessmentDraftRequest = {
@@ -144,7 +138,7 @@ export class AssessmentFormService {
       });
     } catch (e) {
       console.error('❌ Ошибка при генерации assessment:', e);
-      this.error.set(e instanceof Error ? e.message : 'Не удалось сгенерировать черновик');
+      this.setError(this.handleError(e));
     } finally {
       this.generatingDraft.set(false);
     }
@@ -159,16 +153,16 @@ export class AssessmentFormService {
     // При создании нового ассесмента lectureId обязателен
     // При редактировании - необязателен (ассесмент может быть привязан к уроку)
     if (!editingId && !lectureId) {
-      this.error.set('Lecture ID не найден. Невозможно создать ассесмент без привязки к лекции.');
+      this.setError('Lecture ID не найден. Невозможно создать ассесмент без привязки к лекции.');
       return null;
     }
 
-    let questions = this.parseLines(this.form.controls.questionsText.value);
-    let answerKey = this.parseLines(this.form.controls.answerKeyText.value);
-    let rubricCriteria = this.parseLines(this.form.controls.rubricCriteriaText.value);
+    let questions = this.parseLines(this.form.controls['questionsText'].value);
+    let answerKey = this.parseLines(this.form.controls['answerKeyText'].value);
+    let rubricCriteria = this.parseLines(this.form.controls['rubricCriteriaText'].value);
 
     if (!questions.length || !answerKey.length || !rubricCriteria.length) {
-      this.error.set('Вопросы, ответы и критерии обязательны');
+      this.setError('Вопросы, ответы и критерии обязательны');
       return null;
     }
 
@@ -186,12 +180,12 @@ export class AssessmentFormService {
       rubricCriteria = rubricCriteria.slice(0, minLength);
     }
 
-    this.error.set(null);
+    this.setError(null);
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       const payload = {
-        title: this.form.controls.title.value,
-        description: this.form.controls.description.value,
+        title: this.form.controls['title'].value,
+        description: this.form.controls['description'].value,
         questions,
         answerKey,
         rubricCriteria,
@@ -220,10 +214,10 @@ export class AssessmentFormService {
       }
     } catch (e) {
       console.error('❌ Ошибка при сохранении assessment:', e);
-      this.error.set(e instanceof Error ? e.message : 'Не удалось сохранить assessment');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 

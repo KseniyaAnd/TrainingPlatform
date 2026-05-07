@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
@@ -8,7 +7,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -16,19 +14,21 @@ import { SelectModule } from 'primeng/select';
 
 import { Role } from '../../models/auth/user-registration.model';
 import { UserRegistrationService } from '../../services/auth/user-registration.service';
+import { FormFieldComponent } from '../../shared/components/ui';
+import { ButtonComponent } from '../../shared/components/ui/button/button';
 
 @Component({
   selector: 'app-register-page',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     CardModule,
     InputTextModule,
     PasswordModule,
     SelectModule,
-    ButtonModule,
+    FormFieldComponent,
+    ButtonComponent,
   ],
   templateUrl: './register.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

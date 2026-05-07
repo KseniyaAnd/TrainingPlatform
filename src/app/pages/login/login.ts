@@ -1,25 +1,25 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 
 import { AuthService } from '../../services/auth/auth.service';
+import { FormFieldComponent } from '../../shared/components/ui';
+import { ButtonComponent } from '../../shared/components/ui/button/button';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     CardModule,
     InputTextModule,
     PasswordModule,
-    ButtonModule,
+    FormFieldComponent,
+    ButtonComponent,
   ],
   templateUrl: './login.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +28,7 @@ export class LoginPage {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly loading = signal(false);
   readonly submitError = signal<string | null>(null);
@@ -53,7 +54,9 @@ export class LoginPage {
     this.authService.login(username, password).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigateByUrl('/');
+        // Redirect to returnUrl if present, otherwise to home
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+        void this.router.navigateByUrl(returnUrl ? `/${returnUrl}` : '/');
       },
       error: (err) => {
         this.loading.set(false);

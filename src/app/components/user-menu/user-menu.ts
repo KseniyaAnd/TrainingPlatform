@@ -1,14 +1,14 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
 
 import { AuthStateService } from '../../services/auth/auth-state.service';
 import { AuthService } from '../../services/auth/auth.service';
+import { ButtonComponent } from '../../shared/components/ui/button/button';
 
 @Component({
   selector: 'app-user-menu',
   standalone: true,
-  imports: [RouterLink, ButtonModule],
+  imports: [RouterLink, ButtonComponent],
   templateUrl: './user-menu.html',
 })
 export class UserMenuComponent {

@@ -1,17 +1,21 @@
-<div class="flex items-center justify-center bg-white px-4 py-10">
-  <p-card styleClass="w-full max-w-md shadow-lg rounded-2xl px-2">
-    <div class="flex gap-1 mb-4" style="flex-direction: column !important">
+<div class="flex items-center justify-center bg-white px-4 py-8 min-h-screen">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col gap-1 mb-6">
       <h1 class="text-2xl font-semibold text-gray-900">Добро пожаловать!</h1>
       <p class="text-sm text-gray-400">Зарегистрируйте свой аккаунт</p>
     </div>
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      class="flex gap-2"
-      style="flex-direction: column !important"
-    >
-      <div class="flex gap-1" style="flex-direction: column !important">
-        <label class="text-sm font-medium text-gray-800" for="username">Имя пользователя</label>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+      <app-form-field
+        id="username"
+        label="Имя пользователя"
+        [required]="true"
+        [error]="
+          (submitted() || form.controls.username.touched) && form.controls.username.invalid
+            ? 'Имя пользователя: минимум 3 символа, только латинские буквы/цифры, без пробелов'
+            : null
+        "
+      >
         <input
           id="username"
           pInputText
@@ -20,15 +24,18 @@
           autocomplete="username"
           placeholder="Введите имя пользователя"
         />
-        @if ((submitted() || form.controls.username.touched) && form.controls.username.invalid) {
-          <div class="text-xs text-red-600">
-            Имя пользователя: минимум 3 символа, только латинские буквы/цифры, без пробелов
-          </div>
-        }
-      </div>
+      </app-form-field>
 
-      <div class="flex gap-1" style="flex-direction: column !important">
-        <label class="text-sm font-medium text-gray-800" for="email">Электронная почта</label>
+      <app-form-field
+        id="email"
+        label="Электронная почта"
+        [required]="true"
+        [error]="
+          (submitted() || form.controls.email.touched) && form.controls.email.invalid
+            ? 'Введите корректный email'
+            : null
+        "
+      >
         <input
           id="email"
           pInputText
@@ -37,13 +44,18 @@
           autocomplete="email"
           placeholder="имя@example.com"
         />
-        @if ((submitted() || form.controls.email.touched) && form.controls.email.invalid) {
-          <div class="text-xs text-red-600">Введите корректный email</div>
-        }
-      </div>
+      </app-form-field>
 
-      <div class="flex gap-1" style="flex-direction: column !important">
-        <label class="text-sm font-medium text-gray-800" for="password">Пароль</label>
+      <app-form-field
+        id="password"
+        label="Пароль"
+        [required]="true"
+        [error]="
+          (submitted() || form.controls.password.touched) && form.controls.password.invalid
+            ? 'Пароль обязателен (минимум 8 символов)'
+            : null
+        "
+      >
         <p-password
           inputId="password"
           formControlName="password"
@@ -54,15 +66,21 @@
           autocomplete="new-password"
           placeholder="Создайте пароль"
         ></p-password>
-        @if ((submitted() || form.controls.password.touched) && form.controls.password.invalid) {
-          <div class="text-xs text-red-600">Пароль обязателен (минимум 8 символов)</div>
-        }
-      </div>
+      </app-form-field>
 
-      <div class="flex gap-1" style="flex-direction: column !important">
-        <label class="text-sm font-medium text-gray-800" for="confirmPassword"
-          >Повторите пароль</label
-        >
+      <app-form-field
+        id="confirmPassword"
+        label="Повторите пароль"
+        [required]="true"
+        [error]="
+          (submitted() || form.controls.confirmPassword.touched) &&
+          (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
+            ? form.hasError('passwordMismatch')
+              ? 'Пароли не совпадают'
+              : 'Повторите пароль (минимум 8 символов)'
+            : null
+        "
+      >
         <p-password
           inputId="confirmPassword"
           formControlName="confirmPassword"
@@ -73,22 +91,18 @@
           autocomplete="new-password"
           placeholder="Повторите пароль"
         ></p-password>
-        @if (
-          (submitted() || form.controls.confirmPassword.touched) &&
-          (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch'))
-        ) {
-          <div class="text-xs text-red-600">
-            @if (form.hasError('passwordMismatch')) {
-              Пароли не совпадают
-            } @else {
-              Повторите пароль (минимум 8 символов)
-            }
-          </div>
-        }
-      </div>
+      </app-form-field>
 
-      <div class="flex gap-1" style="flex-direction: column !important">
-        <label class="text-sm font-medium text-gray-800" for="role">Роль</label>
+      <app-form-field
+        id="role"
+        label="Роль"
+        [required]="true"
+        [error]="
+          (submitted() || form.controls.role.touched) && form.controls.role.invalid
+            ? 'Роль обязательна'
+            : null
+        "
+      >
         <p-select
           inputId="role"
           formControlName="role"
@@ -98,30 +112,31 @@
           placeholder="Выберите роль"
           styleClass="w-full"
         ></p-select>
-        @if ((submitted() || form.controls.role.touched) && form.controls.role.invalid) {
-          <div class="text-xs text-red-600">Роль обязательна</div>
-        }
-      </div>
+      </app-form-field>
 
       @if (submitError()) {
         <div class="text-xs text-red-600">{{ submitError() }}</div>
       }
 
-      <div class="flex flex-col gap-2 mt-4">
-        <button
-          pButton
+      <div class="flex flex-col gap-2 mt-2">
+        <app-button
           type="submit"
-          class="w-full !h-10 !bg-emerald-500 !border-emerald-500 hover:!bg-emerald-600 hover:!border-emerald-600 !rounded-lg !text-white"
-          label="Зарегистрироваться"
+          variant="primary"
+          size="md"
+          [fullWidth]="true"
           [disabled]="loading()"
-        ></button>
-        <a
-          routerLink="/login"
-          class="w-full p-button p-component p-button-outlined !h-10 !rounded-lg text-center !border-emerald-500 !text-emerald-500 hover:!bg-cyan-50 flex items-center justify-center"
+          label="Зарегистрироваться"
         >
-          Войти
-        </a>
+        </app-button>
+        <app-button
+          variant="outlined"
+          size="md"
+          [fullWidth]="true"
+          routerLink="/login"
+          label="Войти"
+        >
+        </app-button>
       </div>
     </form>
-  </p-card>
+  </div>
 </div>

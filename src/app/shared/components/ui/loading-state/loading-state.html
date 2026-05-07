@@ -1,0 +1,32 @@
+@if (loading()) {
+  <div class="flex flex-col items-center justify-center gap-4 py-16">
+    <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+    <p class="text-gray-600">{{ loadingText() }}</p>
+  </div>
+}
+
+@if (error() && !loading()) {
+  <div class="mb-4">
+    <p-message severity="error" [text]="error()!" styleClass="w-full" />
+  </div>
+  @if (showRetry()) {
+    <div class="flex justify-center">
+      <app-button
+        type="button"
+        variant="primary"
+        size="sm"
+        [icon]="'refresh'"
+        (clicked)="retry.emit()"
+      >
+        Повторить
+      </app-button>
+    </div>
+  }
+}
+
+@if (isEmpty() && !loading() && !error()) {
+  <div class="flex flex-col items-center justify-center gap-4 py-16">
+    <i [class]="'text-6xl text-gray-400 ' + emptyIcon()"></i>
+    <p class="text-gray-600">{{ emptyText() }}</p>
+  </div>
+}

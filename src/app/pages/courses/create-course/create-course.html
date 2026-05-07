@@ -1,17 +1,12 @@
-<div class="flex items-center justify-center bg-white px-4 py-10">
+<div class="flex items-center justify-center bg-white px-4 py-8 min-h-screen">
   <p-card styleClass="w-full max-w-lg shadow-lg rounded-xl px-2">
-    <div class="flex gap-1 mb-4" style="flex-direction: column !important">
+    <div class="flex flex-col gap-1 mb-6">
       <h1 class="text-2xl font-semibold text-gray-900">Создать курс</h1>
       <p class="text-sm text-gray-400">Заполните данные ниже</p>
     </div>
 
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      class="flex gap-2"
-      style="flex-direction: column !important"
-    >
-      <div class="flex gap-1" style="flex-direction: column !important">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-gray-800" for="title">Название</label>
         <input
           id="title"
@@ -20,34 +15,26 @@
           class="w-full"
           placeholder="Название курса"
         />
-        @if (form.controls.title.touched && form.controls.title.invalid) {
+        @if (form.controls.title.touched) {
           <div class="text-xs text-red-600">Название обязательно (минимум 3 символа)</div>
         }
       </div>
 
-      <div class="flex gap-1" style="flex-direction: column !important">
+      <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-gray-800" for="description">Описание</label>
         <textarea
           id="description"
           formControlName="description"
-          class="w-full"
+          class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2.5 outline-none text-sm resize-vertical"
           rows="5"
-          style="
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 10px 12px;
-            outline: none;
-            font-size: 14px;
-            resize: vertical;
-          "
           placeholder="Описание курса"
         ></textarea>
-        @if (form.controls.description.touched && form.controls.description.invalid) {
+        @if (form.controls.description.touched) {
           <div class="text-xs text-red-600">Описание обязательно (минимум 3 символа)</div>
         }
       </div>
 
-      <div class="flex gap-1" style="flex-direction: column !important">
+      <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-gray-800" for="tags">Теги</label>
         <p-multiSelect
           inputId="tags"
@@ -65,23 +52,25 @@
         <div class="text-xs text-red-600">{{ submitError() }}</div>
       }
 
-      <div class="flex flex-col gap-2 mt-4">
-        <button
-          pButton
+      <div class="flex flex-col gap-2 mt-2">
+        <app-button
           type="submit"
-          class="w-full !rounded-xl"
-          style="background-color: #10b981; border-color: #10b981; height: 40px"
-          label="Создать"
+          variant="primary"
+          size="md"
+          [fullWidth]="true"
           [disabled]="loading()"
-        ></button>
-        <a
-          [routerLink]="['/courses']"
-          [queryParams]="{ scope: 'me' }"
-          class="w-full p-button p-component p-button-outlined !rounded-xl text-center"
-          style="border-color: #10b981; color: #10b981; height: 40px; line-height: 40px"
+          label="Создать"
         >
-          Отмена
-        </a>
+        </app-button>
+        <app-button
+          variant="outlined"
+          size="md"
+          [fullWidth]="true"
+          routerLink="/courses"
+          [queryParams]="{ scope: 'me' }"
+          label="Отмена"
+        >
+        </app-button>
       </div>
     </form>
   </p-card>

@@ -1,11 +1,13 @@
-<div [class]="showArrows() ? 'relative px-12 md:px-14' : 'relative'">
+<div class="relative" [class.px-12]="showArrows()" [class.md:px-14]="showArrows()">
   @if (showArrows()) {
-    <button
-      class="glider-prev absolute left-0 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-teal-500 bg-teal-50 text-teal-600 transition-all hover:bg-teal-100 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-30"
-      aria-label="Previous"
-    >
-      <i class="pi pi-chevron-left"></i>
-    </button>
+    <app-button
+      [icon]="'chevron-left'"
+      variant="ghost"
+      size="md"
+      [iconOnly]="true"
+      class="glider-prev absolute left-0 top-1/2 z-10 -translate-y-1/2"
+      [ariaLabel]="'Previous'"
+    />
   }
 
   <div class="glider overflow-hidden" #gliderElement>
@@ -13,6 +15,7 @@
       <div>
         @if (isCourse(item)) {
           <div
+            class="w-[350px]"
             (click)="clickable() ? onCourseClick(item, $event) : null"
             [class.cursor-pointer]="clickable()"
           >
@@ -21,10 +24,10 @@
         } @else {
           <div
             (click)="onMoreLinkClick($event)"
-            class="more-link-card flex h-[120px] w-[350px] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-3 transition-all"
+            class="flex h-[120px] w-[350px] cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-primary-400 bg-primary-100 p-3 transition-all hover:border-primary-500 hover:bg-primary-200"
           >
-            <i class="more-link-icon pi pi-arrow-right text-3xl"></i>
-            <span class="more-link-text text-center text-sm font-semibold">
+            <i class="pi pi-arrow-right text-3xl text-primary-400"></i>
+            <span class="text-center text-sm font-semibold text-primary-700">
               {{ moreLinkText() }}
             </span>
           </div>
@@ -34,12 +37,14 @@
   </div>
 
   @if (showArrows()) {
-    <button
-      class="glider-next absolute right-0 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border-2 border-teal-500 bg-teal-50 text-teal-600 transition-all hover:bg-teal-100 hover:text-teal-700 disabled:cursor-not-allowed disabled:opacity-30"
-      aria-label="Next"
-    >
-      <i class="pi pi-chevron-right"></i>
-    </button>
+    <app-button
+      [icon]="'chevron-right'"
+      variant="ghost"
+      size="md"
+      [iconOnly]="true"
+      class="glider-next absolute right-0 top-1/2 z-10 -translate-y-1/2"
+      [ariaLabel]="'Next'"
+    />
   }
 
   @if (showDots()) {

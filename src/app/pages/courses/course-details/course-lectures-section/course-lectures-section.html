@@ -1,14 +1,16 @@
 <section>
   <div class="flex items-start justify-between gap-4">
     <h2 class="text-2xl font-bold leading-tight">Лекции</h2>
-    @if (canEditCourse() && editMode() && !formService.showForm()) {
-      <button
-        pButton
+    @if (canEditCourse() && editMode()) {
+      <app-button
         type="button"
-        label="Добавить лекцию"
+        variant="primary"
+        size="sm"
+        (clicked)="openAdd()"
         [style]="'background-color: #10b981; border-color: #10b981;'"
-        (click)="openAdd()"
-      ></button>
+      >
+        Добавить лекцию
+      </app-button>
     }
   </div>
 

@@ -8,11 +8,11 @@
       (focus)="showSuggestions.set(true)"
       (blur)="showSuggestions.set(false)"
       placeholder="Поиск курсов"
-      class="w-full h-9 rounded-full pr-10 bg-gray-100 border border-gray-300 text-sm outline-none focus:border-teal-400 transition"
+      class="w-full h-9 rounded-full pr-10 bg-gray-100 border border-gray-300 text-sm outline-none focus:border-primary-400 transition"
     />
     <i
       class="pi pi-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none transition-colors"
-      [class.text-teal-400]="showSuggestions()"
+      [class.text-primary-400]="showSuggestions()"
     ></i>
   </div>
 

@@ -1,173 +1,166 @@
-<div class="py-10 px-4">
-  <div class="max-w-4xl mx-auto">
-    <button
-      type="button"
-      class="inline-flex items-center gap-2 text-sm hover:underline bg-transparent border-0 cursor-pointer p-0"
-      style="color: #10b981"
-      (click)="goBack()"
-    >
-      <i class="pi pi-arrow-left" aria-hidden="true"></i>
-      <span>Назад к курсам</span>
-    </button>
+<div class="py-8 max-w-7xl mx-auto">
+  <app-back-button label="Назад к курсам" />
 
-    @if (error()) {
-      <div class="mt-4 text-red-600">{{ error() }}</div>
-    }
+  @if (error()) {
+    <div class="mb-6 text-red-600">{{ error() }}</div>
+  }
 
-    @if (loading()) {
-      <div class="mt-4 text-gray-600">Loading...</div>
-    }
+  @if (loading()) {
+    <div class="mb-6 text-gray-600">Loading...</div>
+  }
 
-    @if (course()) {
-      <article class="mt-4">
-        <!-- Header: title, meta, subscribe/edit buttons, tabs -->
-        <app-course-header
-          [course]="course()!"
-          [subscribed]="subscribed()"
-          [submitting]="submitting()"
-          [showCourseForm]="showCourseForm()"
-          [courseForm]="courseForm"
-          [activeTab]="activeTab()"
-          (subscribe)="toggleSubscribe()"
-          (unsubscribe)="unsubscribe()"
-          (editCourse)="openEditCourse()"
-          (deleteCourse)="deleteCourse()"
-          (submitCourse)="submitCourse()"
-          (cancelForm)="cancelCourseForm()"
-          (tabChange)="switchTab($event)"
-        />
+  @if (state.course()) {
+    <article>
+      <!-- Header: title, meta, subscribe/edit buttons, tabs -->
+      <app-course-header
+        [course]="state.course()!"
+        [subscribed]="subscribed()"
+        [submitting]="state.submitting()"
+        [showCourseForm]="state.showCourseForm()"
+        [courseForm]="state.courseForm"
+        [activeTab]="state.activeTab()"
+        (subscribe)="toggleSubscribe()"
+        (unsubscribe)="unsubscribe()"
+        (editCourse)="openEditCourse()"
+        (deleteCourse)="deleteCourse()"
+        (submitCourse)="submitCourse()"
+        (cancelForm)="cancelCourseForm()"
+        (tabChange)="switchTab($event)"
+      />
 
-        <!-- Content tab (students always see this, teachers only when tab = content) -->
-        @if (!canEditCourse() || activeTab() === 'content') {
-          <!-- Non-enrolled student gate -->
-          @if (isStudent() && !subscribed()) {
-            <section class="py-8">
-              <div class="max-w-2xl mx-auto text-center">
-                <i class="pi pi-lock text-6xl mb-4" style="color: #000000"></i>
-                <h2 class="text-3xl font-bold text-gray-900 mb-3">Требуется подписка</h2>
-                <p class="text-lg text-gray-700 mb-6">
-                  Чтобы получить доступ к урокам, лекциям и заданиям этого курса, необходимо
-                  подписаться на него.
-                </p>
-                <button
-                  pButton
-                  type="button"
-                  label="Подписаться на курс"
-                  size="large"
-                  [disabled]="submitting()"
-                  [style]="'background-color: #10b981; border-color: #10b981;'"
-                  (click)="toggleSubscribe()"
-                ></button>
-                @if (submitError()) {
-                  <div class="mt-4 text-red-600">{{ submitError() }}</div>
-                }
-              </div>
-            </section>
-          }
+      <!-- Content tab (students always see this, teachers only when tab = content) -->
+      @if (!canEditCourse() || state.activeTab() === 'content') {
+        <!-- Non-enrolled student gate -->
+        @if (isStudent() && !subscribed()) {
+          <section class="py-8">
+            <div class="max-w-2xl mx-auto text-center">
+              <i class="pi pi-lock text-6xl text-gray-900 mb-4"></i>
+              <h2 class="text-3xl font-bold text-gray-900 mb-3">Требуется подписка</h2>
+              <p class="text-lg text-gray-700 mb-6">
+                Чтобы получить доступ к урокам, лекциям и заданиям этого курса, необходимо
+                подписаться на него.
+              </p>
+              <app-button
+                type="button"
+                variant="primary"
+                size="md"
+                [disabled]="enrolling()"
+                (clicked)="toggleSubscribe()"
+                label="Подписаться на курс"
+              >
+              </app-button>
 
-          <!-- Enrolled students & teachers -->
-          @if (!isStudent() || subscribed()) {
-            <app-course-lessons-section
-              [courseId]="courseId"
-              [lessons]="courseLessons()"
-              [courseProgress]="courseProgress()"
-              [courseLevelEditMode]="showCourseForm()"
-              [assessments]="assessments()"
-              [studentAssessments]="studentAssessments()"
-              [submissions]="submissions()"
-              (lessonsChange)="courseLessons.set($event)"
-              (assessmentsChange)="onAssessmentsChange($event)"
-              (submissionsChange)="submissions.set($event)"
-            />
+              @if (enrollmentError()) {
+                <div class="mt-4 text-red-600">{{ enrollmentError() }}</div>
+              }
+            </div>
+          </section>
+        }
 
-            <!-- Hidden: lectures section kept for potential future use -->
-            <app-course-lectures-section
-              #lecturesSection
-              [lessons]="courseLessons()"
-              [editMode]="showCourseForm()"
-              (lessonsChange)="courseLessons.set($event)"
-              style="display: none"
-            />
+        <!-- Enrolled students & teachers -->
+        @if (!isStudent() || subscribed()) {
+          <app-course-lessons-section
+            [courseId]="courseId"
+            [lessons]="state.courseLessons()"
+            [courseProgress]="state.courseProgress()"
+            [courseLevelEditMode]="state.showCourseForm()"
+            [assessments]="state.assessments()"
+            [studentAssessments]="state.studentAssessments()"
+            [submissions]="state.submissions()"
+            (lessonsChange)="state.updateLessons($event)"
+            (assessmentsChange)="onAssessmentsChange($event)"
+            (submissionsChange)="state.submissions.set($event)"
+            (progressUpdated)="reloadProgress()"
+          />
 
-            <!-- Hidden: assessments section now nested in lectures -->
-            <!--
+          <!-- Hidden: lectures section kept for potential future use -->
+          <app-course-lectures-section
+            #lecturesSection
+            [lessons]="state.courseLessons()"
+            [editMode]="state.showCourseForm()"
+            (lessonsChange)="state.updateLessons($event)"
+            class="hidden"
+          />
+
+          <!-- Hidden: assessments section now nested in lectures -->
+          <!--
             <app-course-assessments-section
               [courseId]="courseId"
-              [lessons]="courseLessons()"
-              [assessments]="assessments()"
-              [studentAssessments]="studentAssessments()"
-              [submissions]="submissions()"
-              [editMode]="showCourseForm()"
-              (assessmentsChange)="assessments.set($event)"
-              (submissionsChange)="submissions.set($event)"
+              [lessons]="state.courseLessons()"
+              [assessments]="state.assessments()"
+              [studentAssessments]="state.studentAssessments()"
+              [submissions]="state.submissions()"
+              [editMode]="state.showCourseForm()"
+              (assessmentsChange)="state.updateAssessments($event)"
+              (submissionsChange)="state.submissions.set($event)"
             />
             -->
 
-            @if (showCourseForm()) {
-              <!-- Кнопка добавить урок -->
-              <div class="flex justify-end">
-                <button
-                  pButton
-                  type="button"
-                  label="Добавить урок"
-                  [style]="'background-color: #10b981; border-color: #10b981;'"
-                  (click)="openAddLesson()"
-                ></button>
-              </div>
-            }
+          @if (state.showCourseForm()) {
+            <!-- Кнопка добавить урок -->
+            <div class="flex justify-end mt-6">
+              <app-button
+                type="button"
+                variant="primary"
+                size="md"
+                (clicked)="openAddLesson()"
+                label="Добавить урок"
+              >
+              </app-button>
+            </div>
+          }
 
-            <!-- Course-level assessments -->
-            <app-course-assessments-list
-              #assessmentsList
-              [courseId]="courseId"
-              [assessments]="assessments()"
-              [studentAssessments]="studentAssessments()"
-              [submissions]="submissions()"
-              [editMode]="showCourseForm()"
-              (assessmentsChange)="onAssessmentsChange($event)"
-              (submissionsChange)="submissions.set($event)"
-            />
-            @if (showCourseForm()) {
-              <!-- Кнопки управления курсом -->
-              <div class="flex gap-3 justify-end">
-                <button
-                  pButton
-                  type="button"
-                  label="Сохранить курс"
-                  [style]="'background-color: #10b981; border-color: #10b981;'"
-                  [disabled]="submitting()"
-                  (click)="submitCourse()"
-                ></button>
-                <button
-                  pButton
-                  type="button"
-                  label="Отмена"
-                  severity="secondary"
-                  [outlined]="true"
-                  (click)="cancelCourseForm()"
-                ></button>
-                <button
-                  pButton
-                  type="button"
-                  label="Удалить курс"
-                  severity="danger"
-                  [outlined]="true"
-                  (click)="deleteCourse()"
-                ></button>
-              </div>
-            }
+          <!-- Course-level assessments -->
+          <app-course-assessments-list
+            #assessmentsList
+            [courseId]="courseId"
+            [assessments]="state.assessments()"
+            [studentAssessments]="state.studentAssessments()"
+            [submissions]="state.submissions()"
+            [editMode]="state.showCourseForm()"
+            (assessmentsChange)="onAssessmentsChange($event)"
+            (submissionsChange)="state.submissions.set($event)"
+          />
+
+          @if (state.showCourseForm()) {
+            <!-- Кнопки управления курсом -->
+            <div class="flex gap-3 justify-end mt-6">
+              <app-button
+                type="button"
+                variant="primary"
+                size="md"
+                [disabled]="state.submitting()"
+                (clicked)="submitCourse()"
+                label="Сохранить курс"
+              >
+              </app-button>
+              <app-button
+                type="button"
+                variant="outlined"
+                size="md"
+                (clicked)="cancelCourseForm()"
+                label="Отмена"
+              >
+              </app-button>
+              <app-button
+                type="button"
+                variant="danger"
+                size="md"
+                (clicked)="deleteCourse()"
+                label="Удалить курс"
+              >
+              </app-button>
+            </div>
           }
         }
-
-        <!-- Analytics tab (teachers only) -->
-        @if (canEditCourse() && activeTab() === 'analytics') {
-          <app-course-analytics [courseId]="courseId" />
-        }
-      </article>
-    } @else {
-      @if (!loading() && !error()) {
-        <div class="mt-4 text-gray-600">Course not found</div>
       }
-    }
-  </div>
+
+      <!-- Analytics tab (teachers only) -->
+      @if (canEditCourse() && state.activeTab() === 'analytics') {
+        <app-course-analytics [courseId]="courseId" />
+      }
+    </article>
+  } @else if (!loading() && !error()) {
+    <div class="mt-4 text-gray-600">Course not found</div>
+  }
 </div>

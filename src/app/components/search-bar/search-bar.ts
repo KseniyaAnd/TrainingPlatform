@@ -13,7 +13,6 @@ import { CoursesService } from '../../services/courses/courses.service';
   standalone: true,
   imports: [FormsModule, InputTextModule],
   templateUrl: './search-bar.html',
-  styleUrl: './search-bar.css',
 })
 export class SearchBarComponent {
   private readonly coursesService = inject(CoursesService);

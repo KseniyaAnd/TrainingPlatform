@@ -1,91 +1,85 @@
-import { CommonModule, Location } from '@angular/common';
-import { Component, computed, inject, signal, ViewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Location } from '@angular/common';
+import { Component, computed, inject, ViewChild } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { firstValueFrom } from 'rxjs';
 
+import { BackButtonComponent } from '../../../components/back-button/back-button';
 import { Assessment } from '../../../models/assessment.model';
-import { Course } from '../../../models/course.model';
-import { Lecture } from '../../../models/lecture.model';
-import { Lesson } from '../../../models/lesson.model';
-import { CourseProgressResponse } from '../../../models/progress.model';
-import { AssessmentStudentResponse, SubmissionResponse } from '../../../models/submission.model';
 import { AuthStateService } from '../../../services/auth/auth-state.service';
+import { ButtonComponent } from '../../../shared/components/ui/button/button';
 import { CourseAnalyticsComponent } from './course-analytics/course-analytics';
 import { CourseAssessmentsListComponent } from './course-assessments-list/course-assessments-list';
-import { CourseDetailsDataService } from './course-details-data.service';
 import { CourseHeaderComponent } from './course-header/course-header';
 import { CourseLecturesSectionComponent } from './course-lectures-section/course-lectures-section';
-import {
-  CourseLessonsSectionComponent,
-  LessonWithLectures,
-} from './course-lessons-section/course-lessons-section';
+import { CourseLessonsSectionComponent } from './course-lessons-section/course-lessons-section';
+import { CourseChildComponentsService } from './services/course-child-components.service';
+import { CourseDataLoaderService } from './services/course-data-loader.service';
+import { CourseDetailsStateService } from './services/course-details-state.service';
+import { CourseEnrollmentService } from './services/course-enrollment.service';
+import { CourseOperationsService } from './services/course-operations.service';
 
 @Component({
   selector: 'app-course-details-page',
   standalone: true,
+  providers: [
+    CourseDataLoaderService,
+    CourseEnrollmentService,
+    CourseDetailsStateService,
+    CourseOperationsService,
+    CourseChildComponentsService,
+  ],
   imports: [
-    CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    ButtonModule,
     MessageModule,
+    BackButtonComponent,
     CourseHeaderComponent,
     CourseLessonsSectionComponent,
     CourseLecturesSectionComponent,
     CourseAnalyticsComponent,
     CourseAssessmentsListComponent,
+    ButtonComponent,
   ],
   templateUrl: './course-details.html',
 })
 export class CourseDetailsPage {
   readonly courseId: string;
 
-  private readonly dataService = inject(CourseDetailsDataService);
+  // ── Services ──────────────────────────────────────────────────────────────
+  private readonly dataLoader = inject(CourseDataLoaderService);
+  private readonly enrollment = inject(CourseEnrollmentService);
+  private readonly operations = inject(CourseOperationsService);
+  private readonly childComponents = inject(CourseChildComponentsService);
+  readonly state = inject(CourseDetailsStateService);
   private readonly authState = inject(AuthStateService);
-  private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
 
-  // ── Global state ──────────────────────────────────────────────────────────
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly submitting = signal(false);
-  readonly submitError = signal<string | null>(null);
-  readonly subscribed = signal(false);
-  readonly enrollmentId = signal<string | null>(null);
-
+  // ── Computed ──────────────────────────────────────────────────────────────
   readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
   readonly canEditCourse = computed(() => {
     const role = this.authState.role();
     return role === 'TEACHER' || role === 'ADMIN';
   });
 
-  // ── Course data ───────────────────────────────────────────────────────────
-  readonly course = signal<Course | undefined>(undefined);
-  readonly courseLessons = signal<LessonWithLectures[]>([]);
-  readonly assessments = signal<Assessment[]>([]);
-  readonly studentAssessments = signal<AssessmentStudentResponse[]>([]);
-  readonly submissions = signal<SubmissionResponse[]>([]);
-  readonly courseProgress = signal<CourseProgressResponse | null>(null);
+  // ── Expose services for template ──────────────────────────────────────────
+  readonly loading = this.dataLoader.loading;
+  readonly error = this.dataLoader.error;
+  readonly subscribed = this.enrollment.subscribed;
+  readonly enrolling = this.enrollment.enrolling;
+  readonly enrollmentError = this.enrollment.enrollmentError;
 
-  // ── UI state ──────────────────────────────────────────────────────────────
-  readonly activeTab = signal<'content' | 'analytics'>('content');
-  readonly showCourseForm = signal(false);
-
-  // ── Course edit form ──────────────────────────────────────────────────────
-  readonly courseForm = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3)]],
-    description: [''],
-  });
-
+  // ── ViewChildren ──────────────────────────────────────────────────────────
   @ViewChild(CourseLessonsSectionComponent)
-  lessonsSection?: CourseLessonsSectionComponent;
+  set lessonsSection(component: CourseLessonsSectionComponent | undefined) {
+    this.childComponents.registerLessonsSection(component);
+  }
 
   @ViewChild(CourseAssessmentsListComponent)
-  assessmentsListComponent?: CourseAssessmentsListComponent;
+  set assessmentsListComponent(component: CourseAssessmentsListComponent | undefined) {
+    this.childComponents.registerAssessmentsList(component);
+  }
 
   constructor(route: ActivatedRoute) {
     this.courseId = route.snapshot.paramMap.get('courseId') ?? '';
@@ -93,238 +87,157 @@ export class CourseDetailsPage {
   }
 
   // ── Data loading ──────────────────────────────────────────────────────────
+
+  /**
+   * Загрузить данные курса
+   */
   private async loadCourse(): Promise<void> {
     if (!this.courseId) return;
 
-    this.loading.set(true);
-    this.error.set(null);
+    // Для студентов сначала проверяем статус подписки
+    if (this.isStudent()) {
+      await this.enrollment.checkEnrollmentStatus(this.courseId);
 
-    try {
-      this.course.set(await firstValueFrom(this.dataService.getCourse(this.courseId)));
-
-      if (this.isStudent()) {
-        await this.loadStudentData();
-      } else {
-        await this.loadTeacherData();
+      // Если не подписан, загружаем только базовую информацию о курсе
+      if (!this.enrollment.subscribed()) {
+        const data = await this.dataLoader.loadCourseData(this.courseId, false);
+        if (data) {
+          this.state.setCourseData(data);
+        }
+        return;
       }
-    } catch (e: any) {
-      // Если пользователь не авторизован, перенаправляем на страницу входа
-      if (e?.status === 401 || e?.status === 403) {
+    }
+
+    // Загружаем полные данные курса
+    const data = await this.dataLoader.loadCourseData(this.courseId, this.isStudent());
+
+    if (data) {
+      this.state.setCourseData(data);
+    } else if (this.dataLoader.error()) {
+      // Обработка ошибок авторизации
+      const errorMsg = this.dataLoader.error();
+      if (errorMsg?.includes('401') || errorMsg?.includes('403')) {
         await this.router.navigate(['/login'], {
           queryParams: { returnUrl: `/courses/${this.courseId}` },
         });
-        return;
       }
-      this.error.set(e instanceof Error ? e.message : 'Failed to load course');
-      this.course.set(undefined);
-    } finally {
-      this.loading.set(false);
     }
-  }
-
-  private async loadStudentData(): Promise<void> {
-    const enrollment = await firstValueFrom(this.dataService.checkEnrollmentStatus(this.courseId));
-    this.subscribed.set(enrollment.isEnrolled);
-    this.enrollmentId.set(enrollment.enrollmentId);
-
-    if (!enrollment.isEnrolled) return;
-
-    const [lessons, studentAssessmentsList, submissions, progress] = await Promise.all([
-      firstValueFrom(this.dataService.getLessons(this.courseId)).catch(() => [] as Lesson[]),
-      firstValueFrom(this.dataService.getAssessmentsForStudent(this.courseId)).catch(
-        () => [] as AssessmentStudentResponse[],
-      ),
-      firstValueFrom(this.dataService.getMySubmissions()).catch(() => [] as SubmissionResponse[]),
-      firstValueFrom(this.dataService.getCourseProgress(this.courseId)).catch(
-        () => null as CourseProgressResponse | null,
-      ),
-    ]);
-
-    console.log('📚 Загружен список студенческих ассесментов:', studentAssessmentsList);
-
-    // Для студентов ассесменты уже приходят с полными данными из /courses/{id}/assessments
-    // Но на всякий случай парсим JSON-поля (это уже делается в сервисе)
-    this.studentAssessments.set(studentAssessmentsList ?? []);
-    this.submissions.set(submissions ?? []);
-    this.courseProgress.set(progress);
-    this.courseLessons.set(await this.loadLessonsWithLectures(lessons ?? []));
-  }
-
-  private async loadTeacherData(): Promise<void> {
-    const [lessons, assessmentsList] = await Promise.all([
-      firstValueFrom(this.dataService.getLessons(this.courseId)),
-      firstValueFrom(this.dataService.getAssessments(this.courseId)),
-    ]);
-
-    console.log('📚 Загружен список ассесментов:', assessmentsList);
-
-    // Загружаем полные данные для каждого ассесмента
-    const assessmentsWithDetails = await Promise.all(
-      (assessmentsList ?? []).map(async (assessment) => {
-        try {
-          const fullAssessment = await firstValueFrom(
-            this.dataService.getAssessmentDetails(assessment.id),
-          );
-          console.log(`✅ Загружены детали ассесмента ${assessment.id}:`, fullAssessment);
-          return fullAssessment;
-        } catch (e) {
-          console.warn(
-            `⚠️ Не удалось загрузить детали ассесмента ${assessment.id}, используем данные из списка:`,
-            e,
-          );
-          return assessment;
-        }
-      }),
-    );
-
-    console.log('📚 Все ассесменты с полными данными:', assessmentsWithDetails);
-    this.assessments.set(assessmentsWithDetails);
-    this.courseLessons.set(await this.loadLessonsWithLectures(lessons ?? []));
-  }
-
-  private async loadLessonsWithLectures(lessons: Lesson[]): Promise<LessonWithLectures[]> {
-    return Promise.all(
-      lessons.map(async (lesson) => {
-        const lectures = await firstValueFrom(this.dataService.getLectures(lesson.id)).catch(
-          () => [] as Lecture[],
-        );
-        return { ...lesson, kind: lesson.kind ?? 'lesson', lectures: lectures ?? [] };
-      }),
-    );
   }
 
   // ── Enrollment ────────────────────────────────────────────────────────────
-  async toggleSubscribe(): Promise<void> {
-    if (!this.isStudent() || this.subscribed() || this.submitting()) return;
 
-    this.submitting.set(true);
-    this.submitError.set(null);
-    try {
-      await firstValueFrom(this.dataService.enroll(this.courseId));
-      this.subscribed.set(true);
+  /**
+   * Подписаться на курс
+   */
+  async toggleSubscribe(): Promise<void> {
+    // Только студенты могут подписываться на курсы
+    if (!this.isStudent()) {
+      console.warn('Только студенты могут подписываться на курсы');
+      return;
+    }
+
+    const success = await this.enrollment.enroll(this.courseId);
+    if (success) {
       await this.loadCourse();
-    } catch (e: any) {
-      if (e?.status === 409) {
-        this.subscribed.set(true);
-        await this.loadCourse();
-      } else {
-        this.submitError.set(e instanceof Error ? e.message : 'Failed to enroll');
-      }
-    } finally {
-      this.submitting.set(false);
     }
   }
 
+  /**
+   * Отписаться от курса
+   */
   async unsubscribe(): Promise<void> {
-    if (!this.isStudent() || !this.subscribed() || this.submitting()) return;
+    // Только студенты могут отписываться от курсов
+    if (!this.isStudent()) {
+      console.warn('Только студенты могут отписываться от курсов');
+      return;
+    }
 
-    const enrollmentId = this.enrollmentId();
+    const enrollmentId = this.enrollment.enrollmentId();
     if (!enrollmentId) {
-      this.submitError.set('Enrollment ID not found');
+      this.state.setSubmitError('Enrollment ID not found');
       return;
     }
 
-    if (!confirm('Вы уверены, что хотите отписаться от курса? Ваш прогресс будет сохранен.')) {
-      return;
-    }
-
-    this.submitting.set(true);
-    this.submitError.set(null);
-    try {
-      await firstValueFrom(this.dataService.unenroll(enrollmentId));
-      this.subscribed.set(false);
-      this.enrollmentId.set(null);
+    const success = await this.enrollment.unenroll(enrollmentId);
+    if (success) {
       await this.loadCourse();
-    } catch (e: any) {
-      this.submitError.set(e instanceof Error ? e.message : 'Failed to unenroll');
-    } finally {
-      this.submitting.set(false);
     }
   }
 
   // ── Course edit ───────────────────────────────────────────────────────────
+
+  /**
+   * Открыть форму редактирования курса
+   */
   openEditCourse(): void {
-    const c = this.course();
-    if (!c) return;
-    this.courseForm.reset({ title: c.title ?? '', description: c.description ?? '' });
-    this.showCourseForm.set(true);
+    this.state.openEditForm();
   }
 
+  /**
+   * Отменить редактирование курса
+   */
   cancelCourseForm(): void {
-    this.showCourseForm.set(false);
-    // Отменяем редактирование assessments на уровне курса
-    this.assessmentsListComponent?.cancelAssessmentForm();
-    // Отменяем все редактирования в lessons section
-    if (this.lessonsSection) {
-      this.lessonsSection.cancelAssessmentForm();
-      this.lessonsSection.cancel(); // Отмена редактирования урока
-      this.lessonsSection.cancelLectureForm(); // Отмена формы лекции
-      this.lessonsSection.cancelLectureEdit(); // Отмена редактирования лекции
-      this.lessonsSection.cancelSectionEdit(); // Отмена редактирования секции
-    }
+    this.state.closeEditForm();
+    this.childComponents.cancelAllForms();
   }
 
+  /**
+   * Открыть форму добавления урока
+   */
   openAddLesson(): void {
-    this.lessonsSection?.openAdd();
+    this.childComponents.openAddLesson();
   }
 
+  /**
+   * Сохранить изменения курса
+   */
   async submitCourse(): Promise<void> {
-    if (this.courseForm.invalid || this.submitting()) return;
-    this.submitError.set(null);
-    try {
-      this.submitting.set(true);
-      const updated = await firstValueFrom(
-        this.dataService.updateCourse(this.courseId, {
-          title: this.courseForm.controls.title.value,
-          description: this.courseForm.controls.description.value,
-        }),
-      );
-      this.course.set(updated);
-      this.showCourseForm.set(false);
-    } catch (e) {
-      this.submitError.set(e instanceof Error ? e.message : 'Failed to update course');
-    } finally {
-      this.submitting.set(false);
-    }
+    await this.operations.submitCourse(this.courseId);
   }
 
+  /**
+   * Удалить курс
+   */
   async deleteCourse(): Promise<void> {
-    if (!confirm('Удалить курс?')) return;
-    try {
-      this.submitting.set(true);
-      await firstValueFrom(this.dataService.deleteCourse(this.courseId));
-      await this.router.navigateByUrl('/courses');
-    } catch (e) {
-      this.submitError.set(e instanceof Error ? e.message : 'Failed to delete course');
-    } finally {
-      this.submitting.set(false);
-    }
+    await this.operations.deleteCourse(this.courseId);
   }
 
   // ── Tab ───────────────────────────────────────────────────────────────────
+
+  /**
+   * Переключить вкладку
+   */
   switchTab(tab: 'content' | 'analytics'): void {
-    this.activeTab.set(tab);
+    this.state.switchTab(tab);
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
+
+  /**
+   * Вернуться назад
+   */
   goBack(): void {
     this.location.back();
   }
 
   // ── Assessment handlers ───────────────────────────────────────────────────
+
+  /**
+   * Обработать изменение списка assessments
+   */
   onAssessmentsChange(newAssessments: Assessment[]): void {
-    console.log('🔄 Обновление списка ассесментов:', {
-      oldCount: this.assessments().length,
-      newCount: newAssessments.length,
-      newAssessments: newAssessments.map((a) => ({
-        id: a.id,
-        title: a.title,
-        lectureId: a.lectureId,
-        lessonId: a.lessonId,
-        sourceType: a.sourceType,
-        sourceId: a.sourceId,
-      })),
-    });
-    this.assessments.set(newAssessments);
+    this.state.updateAssessments(newAssessments);
+  }
+
+  /**
+   * Перезагрузить прогресс курса
+   */
+  async reloadProgress(): Promise<void> {
+    if (!this.isStudent()) return;
+
+    const progress = await this.dataLoader.loadCourseProgress(this.courseId);
+    if (progress) {
+      this.state.setCourseProgress(progress);
+    }
   }
 }

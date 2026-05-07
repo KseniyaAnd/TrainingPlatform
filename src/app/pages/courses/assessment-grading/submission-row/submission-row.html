@@ -1,0 +1,57 @@
+<td>{{ submission().studentId }}</td>
+<td>
+  <div class="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
+    {{ submission().answerText }}
+  </div>
+</td>
+<td>
+  @if (isEditing()) {
+    <div class="flex items-center gap-3">
+      <p-inputNumber
+        [(ngModel)]="editScore"
+        [min]="0"
+        [max]="100"
+        [showButtons]="false"
+        suffix=" pts"
+        [inputStyle]="{ width: '80px' }"
+      />
+      <div class="flex items-center gap-2">
+        <app-button
+          type="button"
+          variant="outlined"
+          size="sm"
+          [icon]="'check'"
+          [iconOnly]="true"
+          (clicked)="handleSave()"
+          [disabled]="disabled()"
+          ariaLabel="Сохранить оценку"
+        />
+        <app-button
+          type="button"
+          variant="outlined"
+          size="sm"
+          [icon]="'times'"
+          [iconOnly]="true"
+          (clicked)="cancel.emit()"
+          [disabled]="disabled()"
+          ariaLabel="Отменить"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="flex items-center gap-2">
+      @if (submission().score !== null) {
+        <span>{{ submission().score }} pts</span>
+      } @else {
+        <span>Не оценено</span>
+      }
+      <i
+        class="pi pi-pencil cursor-pointer text-green-400 hover:text-green-500"
+        (click)="handleEdit()"
+        [class.opacity-50]="disabled()"
+        [class.pointer-events-none]="disabled()"
+      ></i>
+    </div>
+  }
+</td>
+<td>{{ formatDate(submission().submittedAt) }}</td>

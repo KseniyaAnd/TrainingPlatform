@@ -1,16 +1,15 @@
-import { CommonModule } from '@angular/common';
 import { Component, computed, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TagModule } from 'primeng/tag';
 import { Course } from '../../models/course.model';
 import { AuthStateService } from '../../services/auth/auth-state.service';
+import { TagComponent } from '../../shared/components/ui/tag/tag';
+import { FormatDatePipe } from '../../shared/pipes/format-date.pipe';
 
 @Component({
   selector: 'app-course-card',
   standalone: true,
-  imports: [CommonModule, RouterModule, TagModule],
+  imports: [RouterModule, FormatDatePipe, TagComponent],
   templateUrl: './course-card.html',
-  styleUrls: ['./course-card.css'],
 })
 export class CourseCardComponent {
   @Input() course!: Course;

@@ -51,27 +51,44 @@ export interface PlatformStatistics {
 }
 
 export interface UserDetails {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-  createdAt: string;
-  enrollments?: Array<{
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    createdAt: string;
+  };
+  enrollments: Array<{
+    id: string;
     courseId: string;
-    courseName: string;
+    courseTitle: string;
     enrolledAt: string;
     progress: number;
   }>;
-  courses?: Array<{
+  enrolledCourses: Array<{
     id: string;
     title: string;
+    description: string;
     createdAt: string;
   }>;
-  submissions?: Array<{
+  taughtCourses: Array<{
+    id: string;
+    title: string;
+    description: string;
+    createdAt: string;
+  }>;
+  submissions: Array<{
     id: string;
     assessmentId: string;
     assessmentTitle: string;
+    courseTitle: string;
     score: number | null;
     submittedAt: string;
+  }>;
+  createdAssessments: Array<{
+    id: string;
+    title: string;
+    courseId: string;
+    createdAt: string;
   }>;
 }

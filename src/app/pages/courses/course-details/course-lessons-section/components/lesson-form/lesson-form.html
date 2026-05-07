@@ -1,0 +1,38 @@
+<form class="mt-4 flex flex-col gap-4" [formGroup]="formService.form" (ngSubmit)="submit()">
+  <div class="flex flex-col gap-2">
+    <label for="lesson-title" class="text-sm font-medium text-gray-700">Название урока</label>
+    <input
+      id="lesson-title"
+      type="text"
+      formControlName="title"
+      placeholder="Введите название урока"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+    />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="lesson-content" class="text-sm font-medium text-gray-700">Текст урока</label>
+    <textarea
+      id="lesson-content"
+      formControlName="content"
+      placeholder="Введите текст урока"
+      rows="5"
+      class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-vertical"
+    ></textarea>
+  </div>
+
+  <div class="flex gap-2">
+    <app-button
+      type="submit"
+      variant="primary"
+      size="sm"
+      [disabled]="formService.submitting()"
+      [style]="'background-color: #10b981; border-color: #10b981;'"
+    >
+      Сохранить урок
+    </app-button>
+    <app-button type="button" variant="outlined" size="sm" (clicked)="cancel()">
+      Отмена
+    </app-button>
+  </div>
+</form>

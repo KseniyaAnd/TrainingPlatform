@@ -1,0 +1,103 @@
+<div class="py-3 flex items-center gap-4">
+  <button
+    type="button"
+    class="text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
+    (click)="toggleExpanded.emit()"
+  >
+    <i
+      class="pi text-xl transition-transform"
+      [class.pi-chevron-down]="!expanded()"
+      [class.pi-chevron-up]="expanded()"
+    ></i>
+  </button>
+
+  <i class="pi pi-user text-gray-600 text-xl flex-shrink-0"></i>
+
+  <div class="flex-1 min-w-0">
+    <div class="font-semibold text-gray-900 truncate">
+      {{ student().studentId }}
+    </div>
+    <div class="text-sm text-gray-600">
+      {{ student().gradedSubmissions }} / {{ student().totalSubmissions }} работ проверено
+    </div>
+  </div>
+
+  <app-button
+    variant="outlined"
+    size="sm"
+    icon="download"
+    [loading]="loading()"
+    (clicked)="downloadPlan.emit()"
+    label="Скачать план"
+  >
+  </app-button>
+
+  <div class="text-right flex-shrink-0">
+    <div class="text-sm text-gray-600">Средний балл</div>
+    <div class="text-2xl font-bold text-emerald-400">
+      {{ student().averageScore !== null ? student().averageScore : 'N/A' }}
+    </div>
+  </div>
+
+  <div
+    class="flex items-center gap-2 px-3 py-2 rounded-lg flex-shrink-0"
+    [ngClass]="formatter.getTrendColor(student().trend)"
+  >
+    <i class="pi text-lg" [ngClass]="formatter.getTrendIcon(student().trend)"></i>
+    <span class="font-medium">{{ formatter.getTrendLabel(student().trend) }}</span>
+  </div>
+</div>
+
+@if (expanded()) {
+  <div class="pb-4 pl-16">
+    @if (student().improvementFocus) {
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="pi pi-lightbulb text-emerald-400"></i>
+          <h4 class="font-semibold text-gray-900">Фокус для улучшения</h4>
+        </div>
+        <p class="text-gray-700">{{ student().improvementFocus }}</p>
+      </div>
+    }
+
+    <div class="mb-4">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="pi pi-chart-bar text-emerald-400"></i>
+        <h4 class="font-semibold text-gray-900">Уровень уверенности</h4>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div
+            class="h-full rounded-full transition-all"
+            [class.bg-emerald-500]="(student().confidence ?? 0) >= 0.7"
+            [class.bg-amber-500]="
+              (student().confidence ?? 0) >= 0.4 && (student().confidence ?? 0) < 0.7
+            "
+            [class.bg-red-500]="(student().confidence ?? 0) < 0.4"
+            [style.width.%]="(student().confidence ?? 0) * 100"
+          ></div>
+        </div>
+        <span class="text-sm font-medium text-gray-700">
+          {{ ((student().confidence ?? 0) * 100) }}%
+        </span>
+      </div>
+    </div>
+
+    @if (student().actions?.length) {
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <i class="pi pi-list text-emerald-400"></i>
+          <h4 class="font-semibold text-gray-900">Рекомендуемые действия</h4>
+        </div>
+        <ul class="space-y-2">
+          @for (action of student().actions!; track $index) {
+            <li class="flex items-start gap-2">
+              <span class="text-gray-400">•</span>
+              <span class="text-gray-700">{{ action }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+}

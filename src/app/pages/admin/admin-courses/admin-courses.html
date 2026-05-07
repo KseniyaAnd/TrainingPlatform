@@ -1,0 +1,94 @@
+<div class="max-w-7xl mx-auto py-8">
+  <app-back-button label="Назад" [route]="'/admin'" />
+
+  <h1 class="mb-6 text-3xl font-bold text-gray-900">Управление курсами</h1>
+
+  <app-loading-state
+    [loading]="loading()"
+    [error]="error()"
+    [isEmpty]="!courses()?.length"
+    [loadingText]="'Загрузка курсов...'"
+    [emptyText]="'Курсы не найдены'"
+    [emptyIcon]="'pi pi-book'"
+    [showRetry]="true"
+    (retry)="loadCourses()"
+  />
+
+  @if (courses()?.length) {
+    <div class="grid grid-cols-[355px_355px_355px] gap-4">
+      @for (course of courses()!; track course.id) {
+        <div class="flex flex-col gap-2">
+          <!-- Course Card -->
+          <div class="flex-1">
+            <app-course-card [course]="course" [clickable]="false" />
+          </div>
+
+          <!-- Admin Actions Grid -->
+          <div class="flex gap-2">
+            <app-button
+              icon="eye"
+              variant="ghost"
+              size="sm"
+              [fullWidth]="true"
+              (clicked)="viewCourse(course.id)"
+            />
+            <app-button
+              icon="pencil"
+              variant="ghost"
+              size="sm"
+              [fullWidth]="true"
+              (clicked)="editCourse(course.id)"
+            />
+            <app-button
+              icon="trash"
+              variant="danger"
+              size="sm"
+              [fullWidth]="true"
+              (clicked)="confirmDelete(course)"
+            />
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Delete Confirmation Dialog -->
+  <p-dialog
+    [visible]="deleteConfirmation() !== null"
+    (visibleChange)="!$event && cancelDelete()"
+    [modal]="true"
+    [closable]="true"
+    [style]="{ width: '500px' }"
+    header="Подтверждение удаления"
+  >
+    @if (deleteConfirmation()) {
+      <p class="mb-3">
+        Вы уверены, что хотите удалить курс
+        <strong>{{ deleteConfirmation()!.title }}</strong
+        >?
+      </p>
+      <p-message
+        severity="warn"
+        text="Это действие нельзя отменить. Все связанные данные будут удалены."
+        styleClass="w-full"
+      />
+    }
+
+    <ng-template pTemplate="footer">
+      <app-button
+        variant="secondary"
+        size="md"
+        label="Отмена"
+        (clicked)="cancelDelete()"
+        [disabled]="deleting()"
+      />
+      <app-button
+        variant="danger"
+        size="md"
+        label="Удалить"
+        [loading]="deleting()"
+        (clicked)="deleteCourse()"
+      />
+    </ng-template>
+  </p-dialog>
+</div>

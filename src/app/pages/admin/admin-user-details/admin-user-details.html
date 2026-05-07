@@ -1,0 +1,85 @@
+<div class="max-w-7xl mx-auto py-8">
+  <app-back-button label="Назад" [route]="'/admin/users'" />
+
+  <h1 class="mb-6 text-3xl font-bold text-gray-900">Детали пользователя</h1>
+
+  <app-loading-state
+    [loading]="loading()"
+    [error]="error()"
+    [loadingText]="'Загрузка данных пользователя...'"
+    [showRetry]="true"
+    (retry)="loadUserDetails()"
+  />
+
+  @if (userDetails()) {
+    <!-- User Info -->
+    <section class="mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">
+        {{ userDetails()!.user.username || 'Неизвестно' }}
+      </h2>
+      <p class="text-gray-600 mb-2">{{ userDetails()!.user.email || 'Нет email' }}</p>
+      <div class="flex items-center gap-3">
+        <p-tag
+          [value]="getRoleLabel(userDetails()!.user.role || '')"
+          [severity]="getRoleSeverity(userDetails()!.user.role || '')"
+        />
+        <span class="text-sm text-gray-500">
+          Зарегистрирован: {{ userDetails()!.user.createdAt | formatDate }}
+        </span>
+        <span class="text-sm text-gray-500">Средний балл: {{ getAverageScore() }}</span>
+      </div>
+    </section>
+
+    <!-- Enrollments Section (only for students) -->
+    @if (userDetails()!.user.role === 'STUDENT') {
+      <section class="mb-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">
+          Записи на курсы ({{ userDetails()!.enrollments.length || 0 }})
+        </h3>
+
+        @if (!userDetails()!.enrollments.length) {
+          <p class="text-gray-500 text-sm">Пользователь не записан ни на один курс</p>
+        } @else {
+          <p-table [value]="userDetails()!.enrollments!" [tableStyle]="{ 'min-width': '50rem' }">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Название курса</th>
+                <th>Дата подписки</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-enrollment>
+              <tr>
+                <td>{{ enrollment.courseTitle }}</td>
+                <td>{{ enrollment.enrolledAt | formatDate }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+      </section>
+    }
+
+    <!-- Courses Section (for teachers) -->
+    @if (userDetails()!.taughtCourses.length) {
+      <section class="mb-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">
+          Созданные курсы ({{ userDetails()!.taughtCourses!.length }})
+        </h3>
+
+        <p-table [value]="userDetails()!.taughtCourses!" [tableStyle]="{ 'min-width': '50rem' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Название курса</th>
+              <th>Дата создания</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-course>
+            <tr>
+              <td>{{ course.title }}</td>
+              <td>{{ course.createdAt | formatDate }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    }
+  }
+</div>

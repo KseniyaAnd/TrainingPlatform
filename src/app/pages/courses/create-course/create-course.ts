@@ -1,26 +1,24 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 
 import { Course } from '../../../models/course.model';
 import { CoursesService } from '../../../services/courses/courses.service';
+import { ButtonComponent } from '../../../shared/components/ui/button/button';
 
 @Component({
   selector: 'app-create-course-page',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     ReactiveFormsModule,
     CardModule,
     InputTextModule,
     MultiSelectModule,
-    ButtonModule,
+    ButtonComponent,
   ],
   templateUrl: './create-course.html',
 })

@@ -2,6 +2,7 @@ import { Component, computed, effect, ElementRef, input, output, viewChild } fro
 import { Router } from '@angular/router';
 import Glider from 'glider-js';
 import { Course } from '../../models/course.model';
+import { ButtonComponent } from '../../shared/components/ui';
 import { CourseCardComponent } from '../course-card/course-card';
 
 interface ResponsiveSettings {
@@ -11,7 +12,7 @@ interface ResponsiveSettings {
 
 @Component({
   selector: 'app-course-slider',
-  imports: [CourseCardComponent],
+  imports: [CourseCardComponent, ButtonComponent],
   templateUrl: './course-slider.html',
   styleUrl: './course-slider.css',
 })

@@ -1,9 +1,9 @@
 <div class="space-y-4">
   <!-- Форма добавления нового assessment -->
-  @if (showAddForm()) {
-    <div>
+  @if (formService.showForm()) {
+    <div class="mb-6">
       <h3 class="text-xl font-semibold mb-4">Новый assessment</h3>
-      <form [formGroup]="assessmentForm" class="space-y-4">
+      <form [formGroup]="formService.form" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Название *</label>
           <input
@@ -65,8 +65,7 @@
             type="checkbox"
             id="generateWithAI"
             formControlName="generateWithAI"
-            class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500"
-            style="accent-color: #10b981"
+            class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500 accent-emerald-500"
           />
           <label for="generateWithAI" class="text-sm text-gray-700 whitespace-nowrap">
             Генерировать с AI
@@ -74,8 +73,8 @@
         </div>
 
         <!-- Настройки генерации (показываем только если чекбокс включен) -->
-        @if (assessmentForm.controls.generateWithAI.value) {
-          <div>
+        @if (formService.form.get('generateWithAI')?.value) {
+          <div class="flex items-end gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1"
                 >Количество вопросов</label
@@ -86,57 +85,63 @@
                 min="1"
                 max="10"
                 class="w-32 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                [disabled]="generatingWithAI()"
+                [disabled]="formService.generatingWithAI()"
               />
             </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Сложность</label>
-              <select
+              <p-select
                 formControlName="difficulty"
-                class="w-48 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                [disabled]="generatingWithAI()"
-              >
-                <option value="EASY">Легкая</option>
-                <option value="MEDIUM">Средняя</option>
-                <option value="HARD">Сложная</option>
-              </select>
+                [options]="[
+                  { label: 'Легкая', value: 'EASY' },
+                  { label: 'Средняя', value: 'MEDIUM' },
+                  { label: 'Сложная', value: 'HARD' },
+                ]"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Выберите сложность"
+                styleClass="w-48"
+                [disabled]="formService.generatingWithAI()"
+              ></p-select>
             </div>
 
-            <button
-              pButton
+            <app-button
               type="button"
-              [label]="generatingWithAI() ? 'Генерация...' : 'Сгенерировать'"
-              [style]="'background-color: #10b981; border-color: #10b981;'"
-              [disabled]="generatingWithAI()"
-              (click)="generateAssessmentWithAI()"
-            ></button>
+              variant="primary"
+              size="md"
+              [disabled]="formService.generatingWithAI()"
+              (clicked)="generateAssessmentWithAI()"
+              [label]="formService.generatingWithAI() ? 'Генерация...' : 'Сгенерировать'"
+            >
+            </app-button>
           </div>
         }
 
         <div class="flex gap-3 justify-end">
-          <button
-            pButton
+          <app-button
             type="button"
+            variant="primary"
+            size="md"
+            [disabled]="formService.form.invalid || formService.submitting()"
+            (clicked)="saveAssessment()"
             label="Сохранить"
-            [style]="'background-color: #10b981; border-color: #10b981;'"
-            [disabled]="assessmentForm.invalid || savingAssessment()"
-            (click)="saveAssessment()"
-          ></button>
-          <button
-            pButton
+          >
+          </app-button>
+          <app-button
             type="button"
+            variant="outlined"
+            size="md"
+            (clicked)="cancelAssessmentForm()"
             label="Отмена"
-            severity="secondary"
-            [outlined]="true"
-            (click)="cancelAssessmentForm()"
-          ></button>
+          >
+          </app-button>
         </div>
       </form>
     </div>
   }
 
-  @if (courseLevelAssessments().length === 0 && !showAddForm()) {
+  @if (courseLevelAssessments().length === 0) {
     <p class="text-gray-600">Нет assessments на уровне курса</p>
   }
 
@@ -156,11 +161,11 @@
           ></i>
         </button>
 
-        @if (editingAssessmentId() === assessment.id) {
+        @if (formService.editingId() === assessment.id) {
           <!-- В режиме редактирования показываем поле ввода названия -->
           <input
             type="text"
-            [formControl]="assessmentForm.controls.title"
+            [formControl]="titleControl"
             class="flex-1 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xl font-semibold"
             placeholder="Введите название assessment"
           />
@@ -168,27 +173,27 @@
           <h3 class="text-xl font-semibold flex-1">{{ assessment.title }}</h3>
         }
 
-        @if (canEditCourse() && !isStudent()) {
+        @if (canEditCourse()) {
           @if (editMode()) {
-            @if (editingAssessmentId() !== assessment.id) {
-              <button
-                pButton
+            @if (formService.editingId() !== assessment.id) {
+              <app-button
                 type="button"
+                variant="outlined"
+                size="md"
+                (clicked)="openEditAssessment(assessment)"
                 label="Редактировать assessment"
-                [outlined]="true"
-                [style]="'color: #10b981; border-color: #10b981;'"
-                (click)="openEditAssessment(assessment)"
-              ></button>
+              >
+              </app-button>
             }
           } @else {
-            <button
-              pButton
+            <app-button
               type="button"
+              variant="outlined"
+              size="md"
+              (clicked)="gradeAssessment(assessment)"
               label="Оценить"
-              [outlined]="true"
-              [style]="'color: #10b981; border-color: #10b981;'"
-              (click)="gradeAssessment(assessment)"
-            ></button>
+            >
+            </app-button>
           }
         }
       </div>
@@ -196,9 +201,9 @@
       <!-- Содержимое (свертываемое) -->
       @if (!isCollapsed(assessment.id)) {
         <div class="space-y-4">
-          @if (editingAssessmentId() === assessment.id) {
+          @if (formService.editingId() === assessment.id) {
             <!-- Режим редактирования -->
-            <form [formGroup]="assessmentForm" class="space-y-4">
+            <form [formGroup]="formService.form" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
                 <textarea
@@ -250,8 +255,7 @@
                   type="checkbox"
                   [id]="'generateWithAI-' + assessment.id"
                   formControlName="generateWithAI"
-                  class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500"
-                  style="accent-color: #10b981"
+                  class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500 accent-emerald-500"
                 />
                 <label
                   [for]="'generateWithAI-' + assessment.id"
@@ -262,8 +266,8 @@
               </div>
 
               <!-- Настройки генерации (показываем только если чекбокс включен) -->
-              @if (assessmentForm.controls.generateWithAI.value) {
-                <div class="space-y-3">
+              @if (formService.form.get('generateWithAI')?.value) {
+                <div class="flex items-end gap-4">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"
                       >Количество вопросов</label
@@ -274,60 +278,66 @@
                       min="1"
                       max="10"
                       class="w-32 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      [disabled]="generatingWithAI()"
+                      [disabled]="formService.generatingWithAI()"
                     />
                   </div>
 
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Сложность</label>
-                    <select
+                    <p-select
                       formControlName="difficulty"
-                      class="w-48 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      [disabled]="generatingWithAI()"
-                    >
-                      <option value="EASY">Легкая</option>
-                      <option value="MEDIUM">Средняя</option>
-                      <option value="HARD">Сложная</option>
-                    </select>
+                      [options]="[
+                        { label: 'Легкая', value: 'EASY' },
+                        { label: 'Средняя', value: 'MEDIUM' },
+                        { label: 'Сложная', value: 'HARD' },
+                      ]"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Выберите сложность"
+                      styleClass="w-48"
+                      [disabled]="formService.generatingWithAI()"
+                    ></p-select>
                   </div>
 
-                  <button
-                    pButton
+                  <app-button
                     type="button"
-                    [label]="generatingWithAI() ? 'Генерация...' : 'Сгенерировать'"
-                    [style]="'background-color: #10b981; border-color: #10b981;'"
-                    [disabled]="generatingWithAI()"
-                    (click)="generateAssessmentWithAI()"
-                  ></button>
+                    variant="primary"
+                    size="md"
+                    [disabled]="formService.generatingWithAI()"
+                    (clicked)="generateAssessmentWithAI()"
+                    [label]="formService.generatingWithAI() ? 'Генерация...' : 'Сгенерировать'"
+                  >
+                  </app-button>
                 </div>
               }
 
               <!-- Кнопки управления формой -->
-              <div class="flex gap-3 justify-end">
-                <button
-                  pButton
+              <div class="flex gap-3 justify-end mb-6">
+                <app-button
                   type="button"
+                  variant="primary"
+                  size="md"
+                  [disabled]="formService.form.invalid || formService.submitting()"
+                  (clicked)="saveAssessment()"
                   label="Сохранить assesment"
-                  [style]="'background-color: #10b981; border-color: #10b981;'"
-                  [disabled]="assessmentForm.invalid || savingAssessment()"
-                  (click)="saveAssessment()"
-                ></button>
-                <button
-                  pButton
+                >
+                </app-button>
+                <app-button
                   type="button"
+                  variant="outlined"
+                  size="md"
+                  (clicked)="cancelAssessmentForm()"
                   label="Отмена"
-                  severity="secondary"
-                  [outlined]="true"
-                  (click)="cancelAssessmentForm()"
-                ></button>
-                <button
-                  pButton
+                >
+                </app-button>
+                <app-button
                   type="button"
+                  variant="danger"
+                  size="md"
+                  (clicked)="deleteAssessment(assessment.id)"
                   label="Удалить"
-                  severity="danger"
-                  [outlined]="true"
-                  (click)="deleteAssessment(assessment.id)"
-                ></button>
+                >
+                </app-button>
               </div>
             </form>
           } @else {
@@ -338,7 +348,7 @@
             <app-assessment-questions [questions]="assessment.questions ?? []" />
 
             <!-- Критерии оценки -->
-            @if (assessment.rubricCriteria && assessment.rubricCriteria.length > 0) {
+            @if (assessment.rubricCriteria?.length) {
               <div>
                 <h4 class="text-sm font-semibold text-gray-700 mb-2">Критерии оценки:</h4>
                 <div class="space-y-1">
@@ -360,8 +370,8 @@
             }
 
             <!-- Для преподавателей: показ ключей ответов -->
-            @if (canEditCourse() && !isStudent()) {
-              @if (assessment.answerKey && assessment.answerKey.length > 0) {
+            @if (canEditCourse()) {
+              @if (assessment.answerKey?.length) {
                 <div>
                   <h4 class="text-sm font-semibold text-gray-700 mb-2">Ключи ответов:</h4>
                   <div class="space-y-1">
@@ -379,15 +389,16 @@
   }
 
   <!-- Кнопка добавить assessment (только для преподавателей в режиме редактирования) -->
-  @if (canEditCourse() && editMode() && !showAddForm() && !editingAssessmentId()) {
+  @if (canEditCourse() && editMode()) {
     <div class="flex justify-end mb-4">
-      <button
-        pButton
+      <app-button
         type="button"
+        variant="primary"
+        size="md"
+        (clicked)="openAddAssessment()"
         label="Добавить assessment"
-        [style]="'background-color: #10b981; border-color: #10b981;'"
-        (click)="openAddAssessment()"
-      ></button>
+      >
+      </app-button>
     </div>
   }
 </div>

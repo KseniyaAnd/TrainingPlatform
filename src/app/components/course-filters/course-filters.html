@@ -1,45 +1,25 @@
-<div class="filters-container">
+<div class="flex flex-col gap-6">
   <!-- Tags Filter -->
-  <div class="filter-section">
-    <h3 class="filter-title">Теги</h3>
-    <div class="filter-chips">
-      <!-- Тег "Все" -->
-      <button
-        type="button"
-        class="filter-chip"
-        [class.active]="selectedTag() === null"
-        (click)="selectTag(null)"
-      >
-        Все
-      </button>
-
-      <!-- Остальные теги -->
+  <div class="flex flex-col gap-3">
+    <h3 class="text-sm font-semibold text-gray-700 m-0">Теги</h3>
+    <div class="flex flex-wrap gap-2">
+      <app-chip [active]="selectedTag() === null" (clicked)="selectTag(null)"> Все </app-chip>
       @for (tag of tags; track tag) {
-        <button
-          type="button"
-          class="filter-chip"
-          [class.active]="selectedTag() === tag"
-          (click)="selectTag(tag)"
-        >
+        <app-chip [active]="selectedTag() === tag" (clicked)="selectTag(tag)">
           {{ tag }}
-        </button>
+        </app-chip>
       }
     </div>
   </div>
 
   <!-- Sort Filter -->
-  <div class="filter-section">
-    <h3 class="filter-title">Сортировка</h3>
-    <div class="filter-chips">
+  <div class="flex flex-col gap-3">
+    <h3 class="text-sm font-semibold text-gray-700 m-0">Сортировка</h3>
+    <div class="flex flex-wrap gap-2">
       @for (option of sortOptions; track option.value) {
-        <button
-          type="button"
-          class="filter-chip"
-          [class.active]="selectedSort() === option.value"
-          (click)="selectSort(option.value)"
-        >
+        <app-chip [active]="selectedSort() === option.value" (clicked)="selectSort(option.value)">
           {{ option.label }}
-        </button>
+        </app-chip>
       }
     </div>
   </div>

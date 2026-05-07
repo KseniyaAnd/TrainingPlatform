@@ -1,20 +1,15 @@
-import { inject, Injectable, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Injectable, inject } from '@angular/core';
+import { FormGroup, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { Lecture } from '../../../../../models/lecture.model';
-import { CourseDetailsDataService } from '../../course-details-data.service';
-import { LessonWithLectures } from '../../course-lessons-section/course-lessons-section';
+import { CourseDataService } from '../../../../../services/courses/course-data.service';
+import { LessonWithLectures } from '../../../../../models/lesson-with-lectures.model';
+import { BaseFormService } from '../../../../../shared/services/base-form.service';
 
 @Injectable()
-export class LectureFormService {
-  private readonly dataService = inject(CourseDetailsDataService);
-  private readonly fb = inject(FormBuilder);
-
-  readonly showForm = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly submitting = signal(false);
-  readonly error = signal<string | null>(null);
+export class LectureFormService extends BaseFormService<Lecture> {
+  private readonly dataService = inject(CourseDataService);
 
   readonly form = this.fb.nonNullable.group({
     lessonId: ['', [Validators.required]],
@@ -23,29 +18,28 @@ export class LectureFormService {
     content: [''],
   });
 
-  openAdd(lessonId: string): void {
-    this.showForm.set(true);
-    this.editingId.set(null);
-    this.error.set(null);
+  createForm(data?: Lecture): FormGroup {
+    return this.fb.nonNullable.group({
+      lessonId: [data?.lessonId ?? '', [Validators.required]],
+      title: [data?.title ?? '', [Validators.required, Validators.minLength(3)]],
+      videoUrl: [data?.videoUrl ?? ''],
+      content: [data?.content ?? ''],
+    });
+  }
+
+  openAddLecture(lessonId: string): void {
+    super.openAdd();
     this.form.reset({ lessonId, title: '', videoUrl: '', content: '' });
   }
 
-  openEdit(lecture: Lecture): void {
-    this.showForm.set(true);
-    this.editingId.set(lecture.id);
-    this.error.set(null);
+  openEditLecture(lecture: Lecture): void {
+    super.openEdit(lecture.id);
     this.form.reset({
       lessonId: lecture.lessonId,
       title: lecture.title ?? '',
       videoUrl: lecture.videoUrl ?? '',
       content: lecture.content ?? '',
     });
-  }
-
-  cancel(): void {
-    this.showForm.set(false);
-    this.editingId.set(null);
-    this.error.set(null);
   }
 
   async submit(currentLessons: LessonWithLectures[]): Promise<LessonWithLectures[] | null> {
@@ -58,13 +52,13 @@ export class LectureFormService {
     const hasContent = Boolean(content);
 
     if ((hasVideo && hasContent) || (!hasVideo && !hasContent)) {
-      this.error.set('Укажите либо видео, либо текст');
+      this.setError('Укажите либо видео, либо текст');
       return null;
     }
 
-    this.error.set(null);
+    this.setError(null);
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       const editingId = this.editingId();
       const saved = editingId
         ? await firstValueFrom(
@@ -96,10 +90,10 @@ export class LectureFormService {
       this.cancel();
       return updated;
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to save lecture');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 
@@ -109,7 +103,7 @@ export class LectureFormService {
   ): Promise<LessonWithLectures[] | null> {
     if (!confirm('Удалить лекцию?')) return null;
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       await firstValueFrom(this.dataService.deleteLecture(lecture.id));
       if (this.editingId() === lecture.id) this.cancel();
       return currentLessons.map((l) =>
@@ -118,10 +112,10 @@ export class LectureFormService {
           : l,
       );
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to delete lecture');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 }

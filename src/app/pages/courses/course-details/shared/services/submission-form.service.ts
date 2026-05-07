@@ -1,36 +1,41 @@
-import { inject, Injectable, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Injectable, inject, signal } from '@angular/core';
+import { FormGroup, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { Assessment } from '../../../../../models/assessment.model';
 import { SubmissionResponse } from '../../../../../models/submission.model';
-import { CourseDetailsDataService } from '../../course-details-data.service';
+import { CourseDataService } from '../../../../../services/courses/course-data.service';
+import { BaseFormService } from '../../../../../shared/services/base-form.service';
 
 /**
  * Общий сервис для управления формой отправки ответов студентов на assessments
  */
 @Injectable()
-export class SubmissionFormService {
-  private readonly dataService = inject(CourseDetailsDataService);
-  private readonly fb = inject(FormBuilder);
+export class SubmissionFormService extends BaseFormService {
+  private readonly dataService = inject(CourseDataService);
 
   readonly submittingAssessmentId = signal<string | null>(null);
-  readonly error = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     answerText: ['', [Validators.required, Validators.minLength(10)]],
   });
+
+  createForm(data?: any): FormGroup {
+    return this.fb.nonNullable.group({
+      answerText: [data?.answerText ?? '', [Validators.required, Validators.minLength(10)]],
+    });
+  }
 
   async submitAnswer(
     assessment: Assessment,
     currentSubmissions: SubmissionResponse[],
   ): Promise<SubmissionResponse[] | null> {
     if (this.form.invalid || this.submittingAssessmentId()) {
-      this.error.set('Пожалуйста, заполните ответ (минимум 10 символов)');
+      this.setError('Пожалуйста, заполните ответ (минимум 10 символов)');
       return null;
     }
 
-    this.error.set(null);
+    this.setError(null);
     this.submittingAssessmentId.set(assessment.id);
 
     try {
@@ -40,7 +45,7 @@ export class SubmissionFormService {
       this.form.reset();
       return [submission, ...currentSubmissions];
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Не удалось отправить ответ');
+      this.setError(this.handleError(e));
       return null;
     } finally {
       this.submittingAssessmentId.set(null);
@@ -49,7 +54,7 @@ export class SubmissionFormService {
 
   reset(): void {
     this.form.reset();
-    this.error.set(null);
+    this.setError(null);
     this.submittingAssessmentId.set(null);
   }
 }

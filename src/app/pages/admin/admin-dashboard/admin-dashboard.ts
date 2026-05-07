@@ -1,44 +1,82 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { MessageModule } from 'primeng/message';
 
+import { StatisticCardComponent } from '../../../components/statistic-card/statistic-card';
 import { PlatformStatistics } from '../../../models/analytics.model';
 import { AdminService } from '../../../services/admin/admin.service';
+import { ButtonComponent } from '../../../shared/components/ui/button/button';
+import { LoadingStateComponent } from '../../../shared/components/ui/loading-state/loading-state';
+import { handleLoadError } from '../../../shared/utils/error-handler.utils';
+import {
+  createLoadingState,
+  resetLoadingState,
+  setLoadingError,
+  setLoadingSuccess,
+} from '../../../shared/utils/loading-state';
+
+interface StatisticCardData {
+  icon: string;
+  value: number;
+  label: string;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ButtonModule, CardModule, MessageModule],
+  imports: [ButtonComponent, LoadingStateComponent, StatisticCardComponent],
   templateUrl: './admin-dashboard.html',
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly router = inject(Router);
 
-  readonly statistics = signal<PlatformStatistics | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  private readonly state = createLoadingState<PlatformStatistics>();
+  readonly platformStats = this.state.data;
+  readonly loading = this.state.loading;
+  readonly error = this.state.error;
+
+  readonly statisticsCards = computed<StatisticCardData[]>(() => {
+    const stats = this.platformStats();
+    if (!stats) return [];
+
+    return [
+      {
+        icon: 'pi-users',
+        value: stats.usersCount,
+        label: 'Пользователей',
+      },
+      {
+        icon: 'pi-book',
+        value: stats.coursesCount,
+        label: 'Курсов',
+      },
+      {
+        icon: 'pi-user-plus',
+        value: stats.enrollmentsCount,
+        label: 'Записей на курсы',
+      },
+      {
+        icon: 'pi-star',
+        value: stats.averageSubmissionScore,
+        label: 'Средний балл',
+      },
+    ];
+  });
 
   ngOnInit(): void {
     this.loadStatistics();
   }
 
   loadStatistics(): void {
-    this.loading.set(true);
-    this.error.set(null);
+    resetLoadingState(this.state);
 
     this.adminService.getPlatformStatistics().subscribe({
       next: (stats) => {
-        this.statistics.set(stats);
-        this.loading.set(false);
+        setLoadingSuccess(this.state, stats);
       },
       error: (err) => {
-        console.error('Failed to load platform statistics:', err);
-        this.error.set('Не удалось загрузить статистику платформы');
-        this.loading.set(false);
+        const errorMessage = handleLoadError(err, 'platform statistics');
+        setLoadingError(this.state, errorMessage);
       },
     });
   }

@@ -1,25 +1,34 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { BackButtonComponent } from '../../../components/back-button/back-button';
 import { CourseCardComponent } from '../../../components/course-card/course-card';
 import { Course } from '../../../models/course.model';
 import { CoursesService } from '../../../services/courses/courses.service';
+import { ButtonComponent } from '../../../shared/components/ui/button/button';
+import { LoadingStateComponent } from '../../../shared/components/ui/loading-state/loading-state';
+import { handleLoadError } from '../../../shared/utils/error-handler.utils';
+import {
+  createLoadingState,
+  resetLoadingState,
+  setLoadingError,
+  setLoadingSuccess,
+} from '../../../shared/utils/loading-state';
 
 @Component({
   selector: 'app-admin-courses',
   standalone: true,
   imports: [
-    CommonModule,
-    ButtonModule,
+    ButtonComponent,
     DialogModule,
     MessageModule,
     TooltipModule,
     CourseCardComponent,
+    BackButtonComponent,
+    LoadingStateComponent,
   ],
   templateUrl: './admin-courses.html',
 })
@@ -27,9 +36,10 @@ export class AdminCoursesComponent implements OnInit {
   private readonly coursesService = inject(CoursesService);
   private readonly router = inject(Router);
 
-  readonly courses = signal<Course[]>([]);
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  private readonly state = createLoadingState<Course[]>([]);
+  readonly courses = this.state.data;
+  readonly loading = this.state.loading;
+  readonly error = this.state.error;
   readonly deleteConfirmation = signal<Course | null>(null);
   readonly deleting = signal(false);
 
@@ -38,19 +48,16 @@ export class AdminCoursesComponent implements OnInit {
   }
 
   loadCourses(): void {
-    this.loading.set(true);
-    this.error.set(null);
+    resetLoadingState(this.state);
 
     // Load all courses (admin can see all)
     this.coursesService.getCourses().subscribe({
       next: (response) => {
-        this.courses.set(response.items);
-        this.loading.set(false);
+        setLoadingSuccess(this.state, response.items);
       },
       error: (err) => {
-        console.error('Failed to load courses:', err);
-        this.error.set('Не удалось загрузить список курсов');
-        this.loading.set(false);
+        const errorMessage = handleLoadError(err, 'courses');
+        setLoadingError(this.state, errorMessage);
       },
     });
   }
@@ -80,7 +87,8 @@ export class AdminCoursesComponent implements OnInit {
     this.coursesService.deleteCourse(course.id).subscribe({
       next: () => {
         // Remove from list
-        this.courses.update((courses) => courses.filter((c) => c.id !== course.id));
+        const currentCourses = this.courses() || [];
+        this.courses.set(currentCourses.filter((c) => c.id !== course.id));
         this.deleteConfirmation.set(null);
         this.deleting.set(false);
       },
@@ -90,19 +98,5 @@ export class AdminCoursesComponent implements OnInit {
         this.deleting.set(false);
       },
     });
-  }
-
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return 'Не указано';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  }
-
-  goBack(): void {
-    void this.router.navigate(['/admin']);
   }
 }

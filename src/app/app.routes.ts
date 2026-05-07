@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './guards/admin.guard';
 import { AdminCoursesComponent } from './pages/admin/admin-courses/admin-courses';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard';
 import { AdminUserDetailsComponent } from './pages/admin/admin-user-details/admin-user-details';
@@ -49,7 +48,6 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
-        canActivate: [adminGuard],
         children: [
           {
             path: '',

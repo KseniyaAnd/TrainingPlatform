@@ -1,97 +1,40 @@
-<div class="py-8 max-w-[1120px] mx-auto">
-  <h1 class="text-3xl font-bold text-gray-900 mb-3">Панель администратора</h1>
+<div class="max-w-7xl mx-auto py-8">
+  <h1 class="mb-6 text-3xl font-bold text-gray-900">Панель администратора</h1>
 
-  @if (loading()) {
-    <div class="flex flex-col items-center justify-center py-16 gap-4">
-      <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
-      <p class="text-gray-600">Загрузка статистики...</p>
-    </div>
-  }
+  <app-loading-state
+    [loading]="loading()"
+    [error]="error()"
+    [showRetry]="true"
+    (retry)="loadStatistics()"
+  />
 
-  @if (error()) {
-    <p-message severity="error" [text]="error()!" styleClass="mb-4" />
-    <div class="flex justify-center">
-      <p-button label="Повторить" icon="pi pi-refresh" (onClick)="loadStatistics()" />
-    </div>
-  }
-
-  @if (statistics() && !loading()) {
-    <div class="flex gap-6 mb-3">
-      <!-- Users Card -->
-      <div
-        class="rounded-lg border border-teal-400 p-3 cursor-pointer hover:shadow-lg transition-shadow flex-1 flex justify-center"
-        (click)="navigateToUsers()"
-      >
-        <div class="flex items-center gap-4">
-          <div class="flex items-center justify-center flex-shrink-0 gap-3">
-            <i class="pi pi-users text-3xl text-green-500"></i>
-            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ statistics()!.usersCount }}</h3>
-            <p class="text-sm text-gray-600">Пользователей</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Courses Card -->
-      <div
-        class="rounded-lg border border-teal-400 p-3 cursor-pointer hover:shadow-lg transition-shadow flex-1 flex justify-center"
-        (click)="navigateToCourses()"
-      >
-        <div class="flex items-center gap-4">
-          <div class="flex items-center justify-center flex-shrink-0 gap-3">
-            <i class="pi pi-book text-3xl text-green-500"></i>
-            <h3 class="text-3xl font-bold text-gray-900 mb-1">{{ statistics()!.coursesCount }}</h3>
-            <p class="text-sm text-gray-600">Курсов</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Enrollments Card -->
-      <div class="rounded-lg border border-teal-400 p-3 flex-1 flex justify-center">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center justify-center flex-shrink-0 gap-3">
-            <i class="pi pi-user-plus text-3xl text-green-500"></i>
-            <h3 class="text-3xl font-bold text-gray-900 mb-1">
-              {{ statistics()!.enrollmentsCount }}
-            </h3>
-            <p class="text-sm text-gray-600">Записей на курсы</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Average Score Card -->
-      <div class="rounded-lg border border-teal-400 p-3 flex-1 flex justify-center">
-        <div class="flex items-center gap-4">
-          <div class="flex items-center justify-center flex-shrink-0 gap-3">
-            <i class="pi pi-star text-3xl text-green-500"></i>
-            <h3 class="text-3xl font-bold text-gray-900 mb-1">
-              {{ statistics()!.averageSubmissionScore }}
-            </h3>
-            <p class="text-sm text-grey-600">Средний балл</p>
-          </div>
-        </div>
-      </div>
+  @if (platformStats()) {
+    <div class="mb-6 flex gap-6">
+      @for (stat of statisticsCards(); track stat.label) {
+        <app-statistic-card [icon]="stat.icon" [value]="stat.value" [label]="stat.label" />
+      }
     </div>
 
-    <div class="mt-3">
-      <h2 class="text-2xl font-semibold text-gray-900 mb-3">Быстрые действия</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <p-button
+    <section>
+      <h2 class="mb-4 text-2xl font-semibold text-gray-900">Быстрые действия</h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <app-button
+          icon="users"
+          variant="ghost"
+          size="md"
           label="Управление пользователями"
-          icon="pi pi-users"
-          styleClass="w-full justify-start"
-          [outlined]="true"
-          size="large"
-          (onClick)="navigateToUsers()"
+          [fullWidth]="true"
+          (clicked)="navigateToUsers()"
         />
-        <p-button
+        <app-button
+          icon="book"
+          variant="ghost"
+          size="md"
           label="Управление курсами"
-          icon="pi pi-book"
-          styleClass="w-full justify-start"
-          [outlined]="true"
-          size="large"
-          (onClick)="navigateToCourses()"
+          [fullWidth]="true"
+          (clicked)="navigateToCourses()"
         />
       </div>
-    </div>
+    </section>
   }
 </div>

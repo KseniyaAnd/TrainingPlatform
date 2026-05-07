@@ -1,67 +1,57 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-7xl mx-auto py-8">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-    <div>
-      <p class="text-2xl font-bold inline-flex items-top">
-        @if (isMyCoursesScope()) {
-          @if (isTeacher()) {
-            Управление созданными курсами
-          } @else {
-            Ваши записанные курсы
-          }
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-gray-900">
+      @if (isMyCoursesScope()) {
+        @if (isTeacher()) {
+          Управление созданными курсами
+        } @else {
+          Ваши записанные курсы
         }
-      </p>
-    </div>
+      } @else {
+        Список курсов
+      }
+    </h1>
 
     @if (isMyCoursesScope() && isTeacher()) {
-      <a
+      <app-button
         routerLink="/courses/create"
-        class="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-400 text-white font-medium hover:bg-emerald-500 transition-colors shadow-sm whitespace-nowrap"
-      >
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-        Создать курс
-      </a>
+        icon="plus"
+        variant="primary"
+        size="md"
+        label="Создать курс"
+      />
     }
   </div>
 
   <!-- Error State -->
   @if (error()) {
-    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-      <div class="flex items-start">
-        <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-            clip-rule="evenodd"
-          />
-        </svg>
-        <div>
-          <h3 class="text-sm font-medium text-red-800">Error loading courses</h3>
-          <p class="mt-1 text-sm text-red-700">{{ error() }}</p>
-        </div>
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+      <svg class="w-5 h-5 text-red-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <div>
+        <h3 class="text-sm font-medium text-red-800">Error loading courses</h3>
+        <p class="mt-1 text-sm text-red-700">{{ error() }}</p>
       </div>
     </div>
   }
 
   <!-- Filters -->
-  <div class="mb-4">
-    <app-course-filters
-      [selectedTag]="tag()"
-      [selectedSort]="selectedSort()"
-      (filtersChange)="onFiltersChange($event)"
-    ></app-course-filters>
-  </div>
+  <app-course-filters
+    class="mb-6 block"
+    [selectedTag]="tag()"
+    [selectedSort]="selectedSort()"
+    (filtersChange)="onFiltersChange($event)"
+  ></app-course-filters>
 
   <!-- Loading State -->
-  @if (loading() && items().length === 0) {
-    <div class="courses-grid">
+  @if (loading() && !filteredItems().length) {
+    <div class="grid grid-cols-[355px_355px_355px] gap-4">
       @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
         <div class="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
           <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -78,58 +68,19 @@
   }
 
   <!-- Empty State -->
-  @if (!loading() && filteredItems().length === 0 && !error()) {
-    <div class="text-center py-12">
-      <svg
-        class="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      </svg>
-      <h3 class="mt-4 text-lg font-medium text-gray-900">Курсы не найдены</h3>
-      <p class="mt-2 text-sm text-gray-500">
-        @if (isMyCoursesScope()) {
-          @if (isTeacher()) {
-            Вы еще не создали ни одного курса. Начните с создания вашего первого курса!
-          } @else {
-            Вы еще не записались ни на один курс. Изучите доступные курсы, чтобы начать.
-          }
-        } @else {
-          На данный момент курсы недоступны.
-        }
-      </p>
-      @if (isMyCoursesScope() && isTeacher()) {
-        <div class="mt-6">
-          <a
-            routerLink="/courses/create"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-400 hover:bg-emerald-500"
-          >
-            Создать первый курс
-          </a>
-        </div>
-      } @else if (isMyCoursesScope() && isStudent()) {
-        <div class="mt-6">
-          <a
-            routerLink="/courses"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-400 hover:bg-emerald-500"
-          >
-            Изучить курсы
-          </a>
-        </div>
-      }
-    </div>
+  @if (!loading() && !filteredItems().length && !error()) {
+    <app-empty-state
+      icon="pi-book"
+      [title]="emptyStateTitle()"
+      [message]="emptyStateMessage()"
+      [actionLabel]="emptyStateActionLabel()"
+      [actionLink]="emptyStateActionLink()"
+    />
   }
 
   <!-- Courses Grid -->
-  @if (filteredItems().length > 0) {
-    <div class="courses-grid">
+  @if (filteredItems().length) {
+    <div class="grid grid-cols-[355px_355px_355px] gap-4">
       @for (course of filteredItems(); track course.id) {
         <app-course-card
           [course]="course"
@@ -144,52 +95,43 @@
     </div>
 
     <!-- Loading More Indicator -->
-    @if (loading() && items().length > 0) {
-      <div class="mt-8 flex justify-center">
-        <div class="inline-flex items-center px-4 py-2 text-sm text-gray-600">
-          <svg
-            class="animate-spin -ml-1 mr-3 h-5 w-5 text-violet-600"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          Loading more courses...
-        </div>
+    @if (loading()) {
+      <div class="mt-8 flex justify-center items-center px-4 py-2 text-sm text-gray-600">
+        <svg
+          class="animate-spin -ml-1 mr-3 h-5 w-5 text-violet-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        Loading more courses...
       </div>
     }
 
     <!-- Load More Button -->
     @if (nextCursor() && !loading()) {
       <div class="mt-8 flex justify-center">
-        <button
+        <app-button
           type="button"
-          class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
-          (click)="loadMore()"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          Load more courses
-        </button>
+          icon="refresh"
+          variant="secondary"
+          size="md"
+          label="Load more courses"
+          (clicked)="loadMore()"
+        />
       </div>
     }
   }

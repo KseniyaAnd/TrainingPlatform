@@ -1,47 +1,39 @@
-import { inject, Injectable, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Injectable, inject } from '@angular/core';
+import { FormGroup, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { Lesson } from '../../../../../models/lesson.model';
-import { CourseDetailsDataService } from '../../course-details-data.service';
-import { LessonWithLectures } from '../course-lessons-section';
+import { CourseDataService } from '../../../../../services/courses/course-data.service';
+import { LessonWithLectures } from '../../../../../models/lesson-with-lectures.model';
+import { BaseFormService } from '../../../../../shared/services/base-form.service';
 
 /**
  * Сервис для управления формой отдела лекций (Lesson с kind='lecture')
  */
 @Injectable()
-export class LectureSectionFormService {
-  private readonly dataService = inject(CourseDetailsDataService);
-  private readonly fb = inject(FormBuilder);
-
-  readonly showForm = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly submitting = signal(false);
-  readonly error = signal<string | null>(null);
+export class LectureSectionFormService extends BaseFormService<Lesson> {
+  private readonly dataService = inject(CourseDataService);
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
     content: [''], // Описание отдела (необязательное)
   });
 
-  openAdd(): void {
-    this.showForm.set(true);
-    this.editingId.set(null);
-    this.error.set(null);
+  createForm(data?: Lesson): FormGroup {
+    return this.fb.nonNullable.group({
+      title: [data?.title ?? '', [Validators.required, Validators.minLength(3)]],
+      content: [data?.content ?? ''],
+    });
+  }
+
+  openAddSection(): void {
+    super.openAdd();
     this.form.reset({ title: '', content: '' });
   }
 
-  openEdit(section: Lesson): void {
-    this.showForm.set(true);
-    this.editingId.set(section.id);
-    this.error.set(null);
+  openEditSection(section: Lesson): void {
+    super.openEdit(section.id);
     this.form.reset({ title: section.title ?? '', content: section.content ?? '' });
-  }
-
-  cancel(): void {
-    this.showForm.set(false);
-    this.editingId.set(null);
-    this.error.set(null);
   }
 
   async submit(
@@ -49,10 +41,10 @@ export class LectureSectionFormService {
     currentLessons: LessonWithLectures[],
   ): Promise<LessonWithLectures[] | null> {
     if (this.form.invalid || this.submitting()) return null;
-    this.error.set(null);
+    this.setError(null);
 
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       const editingId = this.editingId();
       const contentValue = this.form.controls.content.value || '';
       const createdOrUpdated = editingId
@@ -86,10 +78,10 @@ export class LectureSectionFormService {
         return [next, ...currentLessons];
       }
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to save lecture section');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 
@@ -99,15 +91,15 @@ export class LectureSectionFormService {
   ): Promise<LessonWithLectures[] | null> {
     if (!confirm('Удалить отдел лекций? Все лекции внутри будут удалены.')) return null;
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       await firstValueFrom(this.dataService.deleteLesson(sectionId));
       if (this.editingId() === sectionId) this.cancel();
       return currentLessons.filter((l) => l.id !== sectionId);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to delete lecture section');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 }

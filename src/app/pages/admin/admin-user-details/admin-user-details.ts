@@ -1,37 +1,50 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { MessageModule } from 'primeng/message';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 
+import { BackButtonComponent } from '../../../components/back-button/back-button';
 import { UserDetails } from '../../../models/analytics.model';
 import { AdminService } from '../../../services/admin/admin.service';
+import { UserAnalyticsService } from '../../../services/analytics/user-analytics.service';
+import { LoadingStateComponent } from '../../../shared/components/ui/loading-state/loading-state';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { handleLoadError } from '../../../shared/utils/error-handler.utils';
+import {
+  createLoadingState,
+  resetLoadingState,
+  setLoadingError,
+  setLoadingSuccess,
+} from '../../../shared/utils/loading-state';
+import { getRoleLabel, getRoleSeverity } from '../../../shared/utils/role.utils';
 
 @Component({
   selector: 'app-admin-user-details',
   standalone: true,
-  imports: [CommonModule, ButtonModule, CardModule, MessageModule, ProgressBarModule, TagModule],
+  imports: [TableModule, TagModule, BackButtonComponent, LoadingStateComponent, FormatDatePipe],
   templateUrl: './admin-user-details.html',
 })
 export class AdminUserDetailsComponent implements OnInit {
   private readonly adminService = inject(AdminService);
-  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly analyticsService = inject(UserAnalyticsService);
 
-  readonly userDetails = signal<UserDetails | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  private readonly state = createLoadingState<UserDetails>();
+  readonly userDetails = this.state.data;
+  readonly loading = this.state.loading;
+  readonly error = this.state.error;
+
+  // Expose utility functions for template
+  readonly getRoleSeverity = getRoleSeverity;
+  readonly getRoleLabel = getRoleLabel;
+  readonly getScoreSeverity = this.analyticsService.getScoreSeverity;
 
   ngOnInit(): void {
     const userId = this.route.snapshot.paramMap.get('userId');
     if (userId) {
       this.loadUserDetails(userId);
     } else {
-      this.error.set('ID пользователя не указан');
-      this.loading.set(false);
+      setLoadingError(this.state, 'ID пользователя не указан');
     }
   }
 
@@ -39,64 +52,25 @@ export class AdminUserDetailsComponent implements OnInit {
     const id = userId || this.route.snapshot.paramMap.get('userId');
     if (!id) return;
 
-    this.loading.set(true);
-    this.error.set(null);
+    resetLoadingState(this.state);
 
     this.adminService.getUserDetails(id).subscribe({
       next: (details) => {
-        this.userDetails.set(details);
-        this.loading.set(false);
+        // Обогащаем данные через сервис
+        const enrichedDetails = this.analyticsService.enrichUserDetails(details);
+        setLoadingSuccess(this.state, enrichedDetails);
       },
       error: (err) => {
-        console.error('Failed to load user details:', err);
-        this.error.set('Не удалось загрузить данные пользователя');
-        this.loading.set(false);
+        const errorMessage = handleLoadError(err, 'user details');
+        setLoadingError(this.state, errorMessage);
       },
     });
   }
 
-  getRoleSeverity(role: string): 'warn' | 'info' | 'success' | 'secondary' {
-    switch (role) {
-      case 'ADMIN':
-        return 'warn';
-      case 'TEACHER':
-        return 'info';
-      case 'STUDENT':
-        return 'success';
-      default:
-        return 'secondary';
-    }
-  }
-
-  getRoleLabel(role: string): string {
-    switch (role) {
-      case 'ADMIN':
-        return 'Администратор';
-      case 'TEACHER':
-        return 'Преподаватель';
-      case 'STUDENT':
-        return 'Студент';
-      default:
-        return role;
-    }
-  }
-
-  getScoreSeverity(score: number): 'success' | 'warn' | 'danger' {
-    if (score >= 80) return 'success';
-    if (score >= 60) return 'warn';
-    return 'danger';
-  }
-
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  goBack(): void {
-    void this.router.navigate(['/admin/users']);
+  /**
+   * Получить средний балл студента по всем оценкам
+   */
+  getAverageScore(): string {
+    return this.analyticsService.calculateAverageScore(this.userDetails());
   }
 }

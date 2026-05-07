@@ -4,13 +4,8 @@
     <app-logo />
 
     <!-- Explore Button -->
-    <p-button
-      label="Все курсы"
-      [text]="true"
-      size="small"
-      (onClick)="navigateToCourses()"
-      styleClass="!border-b !border-b-transparent !bg-transparent hover:!border-b-teal-400 !rounded-none shrink-0"
-    />
+    <app-button variant="ghost" size="sm" (clicked)="navigateToCourses()" label="Все курсы">
+    </app-button>
 
     <!-- Search Bar - занимает всю доступную ширину -->
     <div class="flex-1 min-w-0">

@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
+import { ChipComponent } from '../../shared/components/ui/chip/chip';
 
 export interface CourseFilters {
   tag: string | null;
@@ -9,9 +9,8 @@ export interface CourseFilters {
 @Component({
   selector: 'app-course-filters',
   standalone: true,
-  imports: [CommonModule],
+  imports: [ChipComponent],
   templateUrl: './course-filters.html',
-  styleUrls: ['./course-filters.css'],
 })
 export class CourseFiltersComponent {
   // Inputs как signals

@@ -1,0 +1,7 @@
+<div class="flex flex-wrap gap-3">
+  @for (filter of filters; track filter.value) {
+    <app-chip [active]="selectedRole() === filter.value" (clicked)="roleChanged.emit(filter.value)">
+      {{ filter.label }}
+    </app-chip>
+  }
+</div>

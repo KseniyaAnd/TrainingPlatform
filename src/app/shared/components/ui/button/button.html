@@ -1,0 +1,44 @@
+@if (routerLink()) {
+  <a
+    [routerLink]="routerLink()"
+    [queryParams]="queryParams()"
+    [class]="classes()"
+    [attr.aria-label]="ariaLabel()"
+  >
+    @if (loading()) {
+      <i class="pi pi-spin pi-spinner mr-1"></i>
+    }
+    @if (icon() && !loading()) {
+      <i [class]="'pi pi-' + icon() + ' mr-1'"></i>
+    }
+    @if (!iconOnly()) {
+      @if (label()) {
+        {{ label() }}
+      } @else {
+        <ng-content></ng-content>
+      }
+    }
+  </a>
+} @else {
+  <button
+    [type]="type()"
+    [disabled]="disabled() || loading()"
+    [class]="classes()"
+    [attr.aria-label]="ariaLabel()"
+    (click)="!disabled() && !loading() && clicked.emit()"
+  >
+    @if (loading()) {
+      <i class="pi pi-spin pi-spinner mr-1"></i>
+    }
+    @if (icon() && !loading()) {
+      <i [class]="'pi pi-' + icon() + ' mr-1'"></i>
+    }
+    @if (!iconOnly()) {
+      @if (label()) {
+        {{ label() }}
+      } @else {
+        <ng-content></ng-content>
+      }
+    }
+  </button>
+}

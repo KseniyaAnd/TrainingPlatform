@@ -1,9 +1,10 @@
-import { inject, Injectable, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { Injectable, inject, signal } from '@angular/core';
+import { AbstractControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
-import { CourseDetailsDataService } from '../../course-details-data.service';
-import { LessonWithLectures } from '../course-lessons-section';
+import { CourseDataService } from '../../../../../services/courses/course-data.service';
+import { LessonWithLectures } from '../../../../../models/lesson-with-lectures.model';
+import { BaseFormService } from '../../../../../shared/services/base-form.service';
 
 // Custom validator: either videoUrl or content must be provided, but not both
 function videoOrContentValidator(control: AbstractControl): ValidationErrors | null {
@@ -19,15 +20,10 @@ function videoOrContentValidator(control: AbstractControl): ValidationErrors | n
 }
 
 @Injectable()
-export class LectureFormService {
-  private readonly dataService = inject(CourseDetailsDataService);
-  private readonly fb = inject(FormBuilder);
+export class LectureFormService extends BaseFormService {
+  private readonly dataService = inject(CourseDataService);
 
-  readonly showForm = signal(false);
   readonly lessonId = signal<string | null>(null);
-  readonly editingId = signal<string | null>(null);
-  readonly submitting = signal(false);
-  readonly error = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group(
     {
@@ -38,19 +34,26 @@ export class LectureFormService {
     { validators: videoOrContentValidator },
   );
 
-  openAdd(lessonId: string): void {
-    this.showForm.set(true);
+  createForm(data?: any): FormGroup {
+    return this.fb.nonNullable.group(
+      {
+        title: [data?.title ?? '', [Validators.required, Validators.minLength(3)]],
+        videoUrl: [data?.videoUrl ?? ''],
+        content: [data?.content ?? ''],
+      },
+      { validators: videoOrContentValidator },
+    );
+  }
+
+  openAddLecture(lessonId: string): void {
+    super.openAdd();
     this.lessonId.set(lessonId);
-    this.editingId.set(null);
-    this.error.set(null);
     this.form.reset({ title: '', videoUrl: '', content: '' });
   }
 
-  openEdit(lecture: any, lessonId: string): void {
-    this.showForm.set(true);
+  openEditLecture(lecture: any, lessonId: string): void {
+    super.openEdit(lecture.id);
     this.lessonId.set(lessonId);
-    this.editingId.set(lecture.id);
-    this.error.set(null);
     this.form.reset({
       title: lecture.title ?? '',
       videoUrl: lecture.videoUrl ?? '',
@@ -58,11 +61,9 @@ export class LectureFormService {
     });
   }
 
-  cancel(): void {
-    this.showForm.set(false);
+  override cancel(): void {
+    super.cancel();
     this.lessonId.set(null);
-    this.editingId.set(null);
-    this.error.set(null);
   }
 
   async submit(currentLessons: LessonWithLectures[]): Promise<LessonWithLectures[] | null> {
@@ -70,7 +71,7 @@ export class LectureFormService {
 
     const lessonId = this.lessonId();
     if (!lessonId) {
-      this.error.set('Lesson ID не найден');
+      this.setError('Lesson ID не найден');
       return null;
     }
 
@@ -79,9 +80,9 @@ export class LectureFormService {
     const hasVideo = Boolean(videoUrl);
     const hasContent = Boolean(content);
 
-    this.error.set(null);
+    this.setError(null);
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       const editingId = this.editingId();
 
       if (editingId) {
@@ -123,10 +124,10 @@ export class LectureFormService {
         return result;
       }
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Не удалось сохранить лекцию');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 }

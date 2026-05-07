@@ -10,8 +10,7 @@
             placeholder="Название курса"
           />
           <textarea
-            class="text-base text-gray-700 border border-gray-300 rounded-lg px-4 py-2 w-full resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            style="height: 80px"
+            class="text-base text-gray-700 border border-gray-300 rounded-lg px-4 py-2 w-full h-20 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             formControlName="description"
             placeholder="Описание курса"
           ></textarea>
@@ -34,7 +33,7 @@
         @if (course().description) {
           <p class="mt-2 text-gray-700">{{ course().description }}</p>
         }
-        @if (course().tags && course().tags!.length > 0) {
+        @if (course().tags?.length) {
           <div class="mt-3 flex flex-wrap gap-2">
             @for (tag of course().tags!; track tag) {
               <span
@@ -59,39 +58,37 @@
 
         @if (!isTeacher()) {
           @if (subscribed()) {
-            <button
-              pButton
+            <app-button
               type="button"
-              class="whitespace-nowrap"
+              variant="outlined"
+              size="md"
+              [disabled]="submitting()"
+              (clicked)="unsubscribe.emit()"
               label="Отписаться"
-              [outlined]="true"
-              [disabled]="submitting()"
-              [style]="'color: #ef4444; border-color: #ef4444;'"
-              (click)="unsubscribe.emit()"
-            ></button>
+            >
+            </app-button>
           } @else {
-            <button
-              pButton
+            <app-button
               type="button"
-              class="whitespace-nowrap"
-              label="Подписаться"
+              variant="primary"
+              size="md"
               [disabled]="submitting()"
-              [style]="'background-color: #10b981; border-color: #10b981;'"
-              (click)="subscribe.emit()"
-            ></button>
+              (clicked)="subscribe.emit()"
+              label="Подписаться"
+            >
+            </app-button>
           }
         }
 
         @if (canEditCourse()) {
-          <button
-            pButton
+          <app-button
             type="button"
+            variant="outlined"
+            size="md"
+            (clicked)="editCourse.emit()"
             label="Редактировать"
-            class="whitespace-nowrap"
-            [outlined]="true"
-            [style]="'color: #10b981; border-color: #10b981;'"
-            (click)="editCourse.emit()"
-          ></button>
+          >
+          </app-button>
         }
       </div>
     </div>

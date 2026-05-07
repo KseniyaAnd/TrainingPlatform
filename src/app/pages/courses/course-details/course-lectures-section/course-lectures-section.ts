@@ -1,23 +1,21 @@
-import { CommonModule } from '@angular/common';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 
 import { Lecture } from '../../../../models/lecture.model';
 import { AuthStateService } from '../../../../services/auth/auth-state.service';
+import { ButtonComponent } from '../../../../shared/components/ui/button/button';
 import { LessonWithLectures } from '../course-lessons-section/course-lessons-section';
-import { LectureFormComponent } from './components/lecture-form/lecture-form.component';
-import { LecturesListComponent } from './components/lectures-list/lectures-list.component';
+import { LectureFormComponent } from './components/lecture-form/lecture-form';
+import { LecturesListComponent } from './components/lectures-list/lectures-list';
 import { LectureFormService } from './services/lecture-form.service';
 
 @Component({
   selector: 'app-course-lectures-section',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    ButtonModule,
+    ButtonComponent,
     MessageModule,
     LectureFormComponent,
     LecturesListComponent,
@@ -49,11 +47,11 @@ export class CourseLecturesSectionComponent {
       this.formService.error.set('Сначала добавьте урок');
       return;
     }
-    this.formService.openAdd(firstId);
+    this.formService.openAddLecture(firstId);
   }
 
   openEdit(lecture: Lecture): void {
-    this.formService.openEdit(lecture);
+    this.formService.openEditLecture(lecture);
   }
 
   async submit(): Promise<void> {

@@ -38,7 +38,8 @@ export class LessonUiStateService {
   }
 
   isLessonCollapsed(lessonId: string): boolean {
-    return this.collapsedLessons().has(lessonId);
+    // По умолчанию все свернуты (true), если не добавлены в collapsedLessons как развернутые
+    return !this.collapsedLessons().has(lessonId);
   }
 
   toggleLectureCollapsed(lectureId: string): void {
@@ -48,7 +49,8 @@ export class LessonUiStateService {
   }
 
   isLectureCollapsed(lectureId: string): boolean {
-    return this.collapsedLectures().has(lectureId);
+    // По умолчанию все свернуты (true), если не добавлены в collapsedLectures как развернутые
+    return !this.collapsedLectures().has(lectureId);
   }
 
   toggleAssessmentCollapsed(assessmentId: string): void {
@@ -58,7 +60,8 @@ export class LessonUiStateService {
   }
 
   isAssessmentCollapsed(assessmentId: string): boolean {
-    return this.collapsedAssessments().has(assessmentId);
+    // По умолчанию все свернуты (true), если не добавлены в collapsedAssessments как развернутые
+    return !this.collapsedAssessments().has(assessmentId);
   }
 
   reset(): void {

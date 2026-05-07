@@ -1,47 +1,39 @@
-import { inject, Injectable, signal } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Injectable, inject } from '@angular/core';
+import { FormGroup, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { Lesson } from '../../../../../models/lesson.model';
-import { CourseDetailsDataService } from '../../course-details-data.service';
-import { LessonWithLectures } from '../course-lessons-section';
+import { CourseDataService } from '../../../../../services/courses/course-data.service';
+import { LessonWithLectures } from '../../../../../models/lesson-with-lectures.model';
+import { BaseFormService } from '../../../../../shared/services/base-form.service';
 
 /**
  * Сервис для управления формой урока (создание/редактирование)
  */
 @Injectable()
-export class LessonFormService {
-  private readonly dataService = inject(CourseDetailsDataService);
-  private readonly fb = inject(FormBuilder);
-
-  readonly showForm = signal(false);
-  readonly editingId = signal<string | null>(null);
-  readonly submitting = signal(false);
-  readonly error = signal<string | null>(null);
+export class LessonFormService extends BaseFormService<Lesson> {
+  private readonly dataService = inject(CourseDataService);
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
     content: ['', [Validators.required, Validators.minLength(1)]],
   });
 
-  openAdd(): void {
-    this.showForm.set(true);
-    this.editingId.set(null);
-    this.error.set(null);
+  createForm(data?: Lesson): FormGroup {
+    return this.fb.nonNullable.group({
+      title: [data?.title ?? '', [Validators.required, Validators.minLength(3)]],
+      content: [data?.content ?? '', [Validators.required, Validators.minLength(1)]],
+    });
+  }
+
+  openAddLesson(): void {
+    super.openAdd();
     this.form.reset({ title: '', content: '' });
   }
 
-  openEdit(lesson: Lesson): void {
-    this.showForm.set(true);
-    this.editingId.set(lesson.id);
-    this.error.set(null);
+  openEditLesson(lesson: Lesson): void {
+    super.openEdit(lesson.id);
     this.form.reset({ title: lesson.title ?? '', content: lesson.content ?? '' });
-  }
-
-  cancel(): void {
-    this.showForm.set(false);
-    this.editingId.set(null);
-    this.error.set(null);
   }
 
   async submit(
@@ -49,10 +41,10 @@ export class LessonFormService {
     currentLessons: LessonWithLectures[],
   ): Promise<LessonWithLectures[] | null> {
     if (this.form.invalid || this.submitting()) return null;
-    this.error.set(null);
+    this.setError(null);
 
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       const editingId = this.editingId();
       const createdOrUpdated = editingId
         ? await firstValueFrom(
@@ -85,10 +77,10 @@ export class LessonFormService {
         return [...currentLessons, next];
       }
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to save lesson');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 
@@ -98,15 +90,15 @@ export class LessonFormService {
   ): Promise<LessonWithLectures[] | null> {
     if (!confirm('Удалить урок?')) return null;
     try {
-      this.submitting.set(true);
+      this.setSubmitting(true);
       await firstValueFrom(this.dataService.deleteLesson(lessonId));
       if (this.editingId() === lessonId) this.cancel();
       return currentLessons.filter((l) => l.id !== lessonId);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to delete lesson');
+      this.setError(this.handleError(e));
       return null;
     } finally {
-      this.submitting.set(false);
+      this.setSubmitting(false);
     }
   }
 }

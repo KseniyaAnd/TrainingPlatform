@@ -1,9 +1,9 @@
-import { Component, computed, EventEmitter, inject, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Course } from '../../models/course.model';
-import { AuthStateService } from '../../services/auth/auth-state.service';
 import { TagComponent } from '../../shared/components/ui/tag/tag';
 import { FormatDatePipe } from '../../shared/pipes/format-date.pipe';
+import { RoleCheckerService } from '../../shared/services/role-checker.service';
 
 @Component({
   selector: 'app-course-card',
@@ -21,9 +21,9 @@ export class CourseCardComponent {
   @Output() enroll = new EventEmitter<void>();
   @Output() unenroll = new EventEmitter<void>();
 
-  private readonly authState = inject(AuthStateService);
+  private readonly roleChecker = inject(RoleCheckerService);
 
-  readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
+  readonly isStudent = this.roleChecker.isStudent;
   readonly enrolling = signal(false);
 
   async handleEnroll(event?: Event): Promise<void> {

@@ -2,8 +2,8 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { CourseWithEnrollment } from '../../../models/course.model';
-import { AuthStateService } from '../../../services/auth/auth-state.service';
 import { CoursesService } from '../../../services/courses/courses.service';
+import { RoleCheckerService } from '../../../shared/services/role-checker.service';
 
 /**
  * Сервис для управления состоянием страницы курсов
@@ -12,7 +12,7 @@ import { CoursesService } from '../../../services/courses/courses.service';
 @Injectable()
 export class CoursesPageStateService {
   private readonly coursesService = inject(CoursesService);
-  private readonly authState = inject(AuthStateService);
+  private readonly roleChecker = inject(RoleCheckerService);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -21,8 +21,8 @@ export class CoursesPageStateService {
   readonly searchQuery = signal<string | null>(null);
 
   readonly isMyCoursesScope = computed(() => this.scope() === 'me');
-  readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
-  readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
+  readonly isTeacher = this.roleChecker.isTeacher;
+  readonly isStudent = this.roleChecker.isStudent;
 
   /**
    * Загрузить первую страницу курсов
@@ -62,7 +62,7 @@ export class CoursesPageStateService {
 
     try {
       const q = this.searchQuery();
-      const role = this.authState.role();
+      const role = this.roleChecker.getCurrentRole();
       const scope = this.scope();
 
       if (scope === 'me') {

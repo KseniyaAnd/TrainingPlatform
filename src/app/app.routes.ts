@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard, authGuard, teacherGuard } from './guards/index';
 import { AdminCoursesComponent } from './pages/admin/admin-courses/admin-courses.js';
 import { AdminDashboardComponent } from './pages/admin/admin-dashboard/admin-dashboard.js';
 import { AdminUserDetailsComponent } from './pages/admin/admin-user-details/admin-user-details.js';
@@ -23,20 +24,24 @@ export const routes: Routes = [
       {
         path: 'courses',
         component: CoursesPage,
+        canActivate: [authGuard],
         // Query params: ?scope=me (my courses), ?scope=all or no param (all courses)
         // Additional filters: ?tag=..., ?q=...
       },
       {
         path: 'courses/create',
         component: CreateCoursePage,
+        canActivate: [authGuard, teacherGuard],
       },
       {
         path: 'courses/:courseId',
         component: CourseDetailsPage,
+        canActivate: [authGuard],
       },
       {
         path: 'assessments/:assessmentId/grade',
         component: AssessmentGradingComponent,
+        canActivate: [authGuard, teacherGuard],
       },
       {
         path: 'register',
@@ -48,6 +53,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
+        canActivate: [authGuard, adminGuard],
         children: [
           {
             path: '',

@@ -1,6 +1,6 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 
-import { AuthStateService } from '../../../services/auth/auth-state.service';
+import { RoleCheckerService } from '../../../shared/services/role-checker.service';
 
 export interface EmptyStateConfig {
   title: string;
@@ -14,10 +14,10 @@ export interface EmptyStateConfig {
  */
 @Injectable()
 export class CoursesEmptyStateService {
-  private readonly authState = inject(AuthStateService);
+  private readonly roleChecker = inject(RoleCheckerService);
 
-  readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
-  readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
+  readonly isTeacher = this.roleChecker.isTeacher;
+  readonly isStudent = this.roleChecker.isStudent;
 
   /**
    * Получить конфигурацию empty state для "Мои курсы"

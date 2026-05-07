@@ -1,9 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { AuthStateService } from '../../services/auth/auth-state.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { ButtonComponent } from '../../shared/components/ui/button/button';
+import { RoleCheckerService } from '../../shared/services/role-checker.service';
 
 @Component({
   selector: 'app-user-menu',
@@ -12,13 +12,13 @@ import { ButtonComponent } from '../../shared/components/ui/button/button';
   templateUrl: './user-menu.html',
 })
 export class UserMenuComponent {
-  private readonly authState = inject(AuthStateService);
+  private readonly roleChecker = inject(RoleCheckerService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly isAuthenticated = this.authState.isAuthenticated;
-  readonly username = this.authState.username;
-  readonly isAdmin = computed(() => this.authState.role() === 'ADMIN');
+  readonly isAuthenticated = this.roleChecker.isAuthenticated;
+  readonly username = this.roleChecker.username;
+  readonly isAdmin = this.roleChecker.isAdmin;
 
   logout(): void {
     this.authService.logout();

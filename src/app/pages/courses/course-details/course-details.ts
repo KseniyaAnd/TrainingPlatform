@@ -1,13 +1,13 @@
 import { Location } from '@angular/common';
-import { Component, computed, inject, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MessageModule } from 'primeng/message';
 
 import { BackButtonComponent } from '../../../components/back-button/back-button';
 import { Assessment } from '../../../models/assessment.model';
-import { AuthStateService } from '../../../services/auth/auth-state.service';
 import { ButtonComponent } from '../../../shared/components/ui/button/button';
+import { RoleCheckerService } from '../../../shared/services/role-checker.service';
 import { CourseAnalyticsComponent } from './course-analytics/course-analytics';
 import { CourseAssessmentsListComponent } from './course-assessments-list/course-assessments-list';
 import { CourseHeaderComponent } from './course-header/course-header';
@@ -52,16 +52,13 @@ export class CourseDetailsPage {
   private readonly operations = inject(CourseOperationsService);
   private readonly childComponents = inject(CourseChildComponentsService);
   readonly state = inject(CourseDetailsStateService);
-  private readonly authState = inject(AuthStateService);
+  private readonly roleChecker = inject(RoleCheckerService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
 
   // ── Computed ──────────────────────────────────────────────────────────────
-  readonly isStudent = computed(() => this.authState.role() === 'STUDENT');
-  readonly canEditCourse = computed(() => {
-    const role = this.authState.role();
-    return role === 'TEACHER' || role === 'ADMIN';
-  });
+  readonly isStudent = this.roleChecker.isStudent;
+  readonly canEditCourse = this.roleChecker.canManageCourses;
 
   // ── Expose services for template ──────────────────────────────────────────
   readonly loading = this.dataLoader.loading;

@@ -1,17 +1,17 @@
 import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CourseCardComponent } from '../../components/course-card/course-card';
+import { CourseCardComponent } from '../../components/course-card/course-card.js';
 import {
   CourseFilters,
   CourseFiltersComponent,
-} from '../../components/course-filters/course-filters';
-import { CoursesService } from '../../services/courses/courses.service';
-import { ButtonComponent } from '../../shared/components/ui/button/button';
-import { EmptyStateComponent } from '../../shared/components/ui/empty-state/empty-state';
-import { CoursesEmptyStateService } from './services/courses-empty-state.service';
-import { CoursesFilterService } from './services/courses-filter.service';
-import { CoursesPageStateService } from './services/courses-page-state.service';
+} from '../../components/course-filters/course-filters.js';
+import { CoursesService } from '../../services/courses/courses.service.js';
+import { ButtonComponent } from '../../shared/components/ui/button/button.js';
+import { EmptyStateComponent } from '../../shared/components/ui/empty-state/empty-state.js';
+import { CoursesEmptyStateService } from './services/courses-empty-state.service.js';
+import { CoursesFilterService } from './services/courses-filter.service.js';
+import { CoursesPageStateService } from './services/courses-page-state.service.js';
 
 @Component({
   selector: 'app-courses-page',

@@ -1,5 +1,10 @@
-<form class="mt-4 grid gap-3" [formGroup]="formService.form" (ngSubmit)="onSubmit.emit()">
-  <label class="grid gap-1">
+<form
+  class="mt-4 grid gap-3"
+  style="display: grid !important"
+  [formGroup]="formService.form"
+  (ngSubmit)="onSubmit.emit()"
+>
+  <label class="grid gap-1" style="display: grid !important">
     <span class="text-sm text-gray-700">Урок</span>
     <select class="border rounded px-3 py-2" formControlName="lessonId">
       @for (l of lessons(); track l.id) {
@@ -7,15 +12,15 @@
       }
     </select>
   </label>
-  <label class="grid gap-1">
+  <label class="grid gap-1" style="display: grid !important">
     <span class="text-sm text-gray-700">Название лекции</span>
     <input class="border rounded px-3 py-2" type="text" formControlName="title" />
   </label>
-  <label class="grid gap-1">
+  <label class="grid gap-1" style="display: grid !important">
     <span class="text-sm text-gray-700">Видео URL (если заполняешь, текст должен быть пустым)</span>
     <input class="border rounded px-3 py-2" type="text" formControlName="videoUrl" />
   </label>
-  <label class="grid gap-1">
+  <label class="grid gap-1" style="display: grid !important">
     <span class="text-sm text-gray-700"
       >Текст лекции (если заполняешь, видео должно быть пустым)</span
     >
@@ -25,14 +30,16 @@
     <app-button
       type="submit"
       variant="primary"
-      size="sm"
+      size="md"
+      label="Сохранить лекцию"
       [disabled]="formService.submitting()"
-      [style]="'background-color: #10b981; border-color: #10b981;'"
-    >
-      Сохранить лекцию
-    </app-button>
-    <app-button type="button" variant="outlined" size="sm" (clicked)="formService.cancel()">
-      Отмена
-    </app-button>
+    />
+    <app-button
+      type="button"
+      variant="outlined"
+      size="md"
+      label="Отмена"
+      (clicked)="formService.cancel()"
+    />
   </div>
 </form>

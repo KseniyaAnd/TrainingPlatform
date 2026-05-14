@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 
@@ -17,9 +17,23 @@ import { CoursesService } from '../../services/courses/courses.service';
 export class SearchBarComponent {
   private readonly coursesService = inject(CoursesService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly search = signal('');
   readonly showSuggestions = signal(false);
+
+  constructor() {
+    // Initialize search from URL query parameter
+    this.route.queryParamMap.subscribe((params) => {
+      const q = params.get('q');
+      if (q) {
+        this.search.set(q);
+      } else if (this.search()) {
+        // Clear search if no query parameter
+        this.search.set('');
+      }
+    });
+  }
 
   readonly suggestions = toSignal(
     toObservable(this.search).pipe(
@@ -60,7 +74,6 @@ export class SearchBarComponent {
   showAllResults(): void {
     const q = this.search().trim();
     if (q) {
-      this.search.set('');
       this.showSuggestions.set(false);
       void this.router.navigate(['/courses'], { queryParams: { q } });
     }

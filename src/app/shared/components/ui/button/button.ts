@@ -33,11 +33,11 @@ export class ButtonComponent {
     };
 
     const variants = {
-      primary: 'bg-primary-400 text-white hover:bg-primary-500 disabled:bg-primary-200',
+      primary: 'bg-primary-500 text-white hover:bg-primary-600 disabled:bg-primary-200',
       secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:bg-gray-100',
       danger: 'bg-red-500 text-white hover:bg-red-600 disabled:bg-red-200',
       ghost:
-        'bg-transparent text-primary-400 border border-primary-400 hover:bg-primary-100 disabled:border-primary-200 disabled:text-primary-200',
+        'bg-transparent text-primary-500 border border-primary-500 hover:bg-primary-100 disabled:border-primary-200 disabled:text-primary-200',
       outlined:
         'bg-transparent border border-primary-500 text-primary-500 hover:bg-primary-50 disabled:border-primary-200 disabled:text-primary-200',
     };

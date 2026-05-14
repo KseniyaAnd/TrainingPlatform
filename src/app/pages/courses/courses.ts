@@ -75,7 +75,7 @@ export class CoursesPage {
       const sortByParam = params.get('sortBy');
       const sortBy = sortByParam === 'date' || sortByParam === 'title' ? sortByParam : null;
 
-      this.filterService.updateFilters({ tag, sortBy });
+      this.filterService.updateFilters({ tag, sortBy, searchQuery: q });
 
       // Load courses when scope or query changes
       void this.pageState.loadFirstPage(scope, q, (courses, nextCursor) => {

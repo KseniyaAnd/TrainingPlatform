@@ -1,7 +1,7 @@
 @if (lectures().length === 0) {
   <p class="mt-4 text-gray-600">Пока нет лекций</p>
 } @else {
-  <div class="mt-5 grid gap-4">
+  <div class="mt-5 grid gap-4" style="display: grid !important">
     @for (lecture of lectures(); track lecture.id) {
       <app-lecture-card
         [lecture]="lecture"

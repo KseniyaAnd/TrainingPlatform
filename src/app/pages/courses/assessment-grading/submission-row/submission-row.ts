@@ -18,6 +18,7 @@ export class SubmissionRowComponent {
   readonly edit = output<void>();
   readonly save = output<number>();
   readonly cancel = output<void>();
+  readonly viewDetails = output<void>();
 
   editScore = 0;
 

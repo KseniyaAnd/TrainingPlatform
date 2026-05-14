@@ -1,9 +1,11 @@
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 
 import { BackButtonComponent } from '../../../components/back-button/back-button';
+import { SubmissionResponse } from '../../../models/submission.model';
 import { AuthStateService } from '../../../services/auth/auth-state.service';
 import { ButtonComponent } from '../../../shared/components/ui/button/button';
 import { LoadingStateComponent } from '../../../shared/components/ui/loading-state/loading-state';
@@ -16,6 +18,7 @@ import { SubmissionRowComponent } from './submission-row/submission-row';
   imports: [
     ButtonComponent,
     TableModule,
+    DialogModule,
     BackButtonComponent,
     LoadingStateComponent,
     SubmissionRowComponent,
@@ -30,6 +33,9 @@ export class AssessmentGradingComponent implements OnInit {
   readonly state = inject(AssessmentGradingStateService);
 
   readonly isTeacher = computed(() => this.authState.role() === 'TEACHER');
+
+  showDetailsModal = false;
+  selectedSubmission: SubmissionResponse | null = null;
 
   ngOnInit(): void {
     // Check if user is a teacher
@@ -60,5 +66,19 @@ export class AssessmentGradingComponent implements OnInit {
 
   saveGrade(submissionId: string, score: number): void {
     this.state.saveGrade(submissionId, score);
+  }
+
+  viewSubmissionDetails(submission: SubmissionResponse): void {
+    this.selectedSubmission = submission;
+    this.showDetailsModal = true;
+  }
+
+  formatDate(dateString: string | null): string {
+    if (!dateString) return 'Не оценено';
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   }
 }

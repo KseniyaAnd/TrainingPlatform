@@ -95,25 +95,33 @@ export class CourseDetailsPage {
     if (this.isStudent()) {
       await this.enrollment.checkEnrollmentStatus(this.courseId);
 
-      // Если не подписан, загружаем только базовую информацию о курсе
+      // Если не подписан, загружаем только базовую информацию о курсе (без уроков/лекций)
       if (!this.enrollment.subscribed()) {
-        const data = await this.dataLoader.loadCourseData(this.courseId, false);
+        const data = await this.dataLoader.loadCourseData(this.courseId, false, false);
         if (data) {
           this.state.setCourseData(data);
+        } else {
+          // Если не удалось загрузить даже базовую информацию (403),
+          // создаём минимальный объект курса для отображения заглушки
+          console.log(
+            'Не удалось загрузить информацию о курсе (403), показываем заглушку подписки',
+          );
+          // Не устанавливаем данные курса, чтобы показать только заглушку
         }
         return;
       }
     }
 
     // Загружаем полные данные курса
-    const data = await this.dataLoader.loadCourseData(this.courseId, this.isStudent());
+    const data = await this.dataLoader.loadCourseData(this.courseId, this.isStudent(), true);
 
     if (data) {
       this.state.setCourseData(data);
     } else if (this.dataLoader.error()) {
       // Обработка ошибок авторизации
       const errorMsg = this.dataLoader.error();
-      if (errorMsg?.includes('401') || errorMsg?.includes('403')) {
+      // Перенаправляем на логин только если пользователь не авторизован (401)
+      if (errorMsg?.includes('401')) {
         await this.router.navigate(['/login'], {
           queryParams: { returnUrl: `/courses/${this.courseId}` },
         });

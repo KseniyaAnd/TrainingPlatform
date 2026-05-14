@@ -4,13 +4,13 @@
   <p class="text-gray-600 mb-6 max-w-md">{{ message() }}</p>
   @if (actionLabel()) {
     @if (actionLink()) {
-      <app-button [variant]="actionVariant()" [routerLink]="actionLink()!">
-        {{ actionLabel() }}
-      </app-button>
+      <app-button
+        [variant]="actionVariant()"
+        [routerLink]="actionLink()!"
+        [label]="actionLabel()!"
+      />
     } @else {
-      <app-button [variant]="actionVariant()" (clicked)="action.emit()">
-        {{ actionLabel() }}
-      </app-button>
+      <app-button [variant]="actionVariant()" [label]="actionLabel()!" (clicked)="action.emit()" />
     }
   }
 </div>

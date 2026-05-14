@@ -55,12 +55,10 @@
       <app-button
         type="submit"
         variant="primary"
-        size="sm"
+        size="md"
+        label="Отправить ответ"
         [disabled]="formService.submittingAssessmentId() === assessment().id"
-        [style]="'background-color: #10b981; border-color: #10b981;'"
-      >
-        Отправить ответ
-      </app-button>
+      />
     </div>
   </form>
 }

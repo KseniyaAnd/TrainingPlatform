@@ -43,8 +43,8 @@ export type AssessmentDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface GenerateAssessmentDraftRequest {
   courseId: string;
-  lessonId?: string;
-  lectureId?: string;
+  sourceType: 'LESSON' | 'LECTURE';
+  sourceId?: string;
   questionCount: number;
   difficulty: AssessmentDifficulty;
 }
@@ -171,10 +171,15 @@ export class CourseContentService {
   generateAssessmentDraft(
     payload: GenerateAssessmentDraftRequest,
   ): Observable<AssessmentDraftResponse> {
-    return this.http.post<AssessmentDraftResponse>(
-      `${environment.apiUrl}/assessments/generate`,
-      payload,
-    );
+    console.log('📡 CourseContentService.generateAssessmentDraft вызван с payload:', payload);
+    return this.http
+      .post<AssessmentDraftResponse>(`${environment.apiUrl}/assessments/generate`, payload)
+      .pipe(
+        map((response) => {
+          console.log('✅ Ответ от /assessments/generate:', response);
+          return response;
+        }),
+      );
   }
 
   createAssessmentFromDraft(payload: CreateAssessmentFromDraftRequest): Observable<Assessment> {

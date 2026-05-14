@@ -1,7 +1,15 @@
 <td>{{ submission().studentId }}</td>
 <td>
-  <div class="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
-    {{ submission().answerText }}
+  <div class="flex items-center gap-2">
+    <div class="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
+      {{ submission().answerText }}
+    </div>
+    <i
+      class="pi pi-eye cursor-pointer text-green-400 hover:text-green-500"
+      (click)="viewDetails.emit()"
+      [class.opacity-50]="disabled()"
+      [class.pointer-events-none]="disabled()"
+    ></i>
   </div>
 </td>
 <td>

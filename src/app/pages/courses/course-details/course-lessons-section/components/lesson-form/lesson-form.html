@@ -25,14 +25,10 @@
     <app-button
       type="submit"
       variant="primary"
-      size="sm"
+      size="md"
+      label="Сохранить урок"
       [disabled]="formService.submitting()"
-      [style]="'background-color: #10b981; border-color: #10b981;'"
-    >
-      Сохранить урок
-    </app-button>
-    <app-button type="button" variant="outlined" size="sm" (clicked)="cancel()">
-      Отмена
-    </app-button>
+    />
+    <app-button type="button" variant="outlined" size="md" label="Отмена" (clicked)="cancel()" />
   </div>
 </form>

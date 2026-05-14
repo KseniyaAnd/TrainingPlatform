@@ -51,7 +51,7 @@
 
   <!-- Loading State -->
   @if (loading() && !filteredItems().length) {
-    <div class="grid grid-cols-[355px_355px_355px] gap-4">
+    <div class="grid grid-cols-[355px_355px_355px] gap-4" style="display: grid !important">
       @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
         <div class="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
           <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -80,7 +80,7 @@
 
   <!-- Courses Grid -->
   @if (filteredItems().length) {
-    <div class="grid grid-cols-[355px_355px_355px] gap-4">
+    <div class="grid grid-cols-[355px_355px_355px] gap-4" style="display: grid !important">
       @for (course of filteredItems(); track course.id) {
         <app-course-card
           [course]="course"

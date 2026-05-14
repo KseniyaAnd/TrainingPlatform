@@ -15,7 +15,7 @@
   />
 
   @if (courses()?.length) {
-    <div class="grid grid-cols-[355px_355px_355px] gap-4">
+    <div class="grid grid-cols-[355px_355px_355px] gap-4" style="display: grid !important">
       @for (course of courses()!; track course.id) {
         <div class="flex flex-col gap-2">
           <!-- Course Card -->

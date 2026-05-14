@@ -111,6 +111,7 @@ export class CourseAssessmentsListComponent {
   }
 
   async generateAssessmentWithAI(): Promise<void> {
+    console.log('🎯 Вызов generateAssessmentWithAI, courseId:', this.courseId());
     await this.formService.generateAssessmentWithAI(this.courseId());
   }
 }

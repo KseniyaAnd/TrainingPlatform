@@ -12,6 +12,7 @@ import { LessonEditModeHelperService } from '../../services/lesson-edit-mode-hel
 import { LessonFormService } from '../../services/lesson-form.service';
 import { LessonUiStateService } from '../../services/lesson-ui-state.service';
 import { TeacherLessonsActionsService } from '../../services/teacher-lessons-actions.service';
+import { AssessmentFormComponent } from '../assessment-form/assessment-form';
 import { ErrorDisplayComponent } from '../error-display/error-display';
 import { LectureFormComponent } from '../lecture-form/lecture-form';
 import { LessonContentComponent } from '../lesson-content/lesson-content';
@@ -26,6 +27,7 @@ import { LessonFormComponent } from '../lesson-form/lesson-form';
     LessonFormComponent,
     LessonContentComponent,
     LectureFormComponent,
+    AssessmentFormComponent,
     ButtonComponent,
   ],
   providers: [
@@ -101,6 +103,10 @@ export class TeacherLessonsViewComponent {
     this.lectureSectionFormService.openAddSection();
   }
 
+  openAddAssessmentForLesson(lessonId: string): void {
+    this.assessmentFormService.openAddAssessmentForLesson(lessonId);
+  }
+
   // Form cancel methods - delegate to helper or form services
   cancel(): void {
     this.editModeHelper.cancelLessonEdit();
@@ -145,8 +151,11 @@ export class TeacherLessonsViewComponent {
 
   // Lecture methods - simplified wrappers
   async submitLecture(): Promise<void> {
+    console.log('📝 submitLecture вызван');
     const result = await this.lectureFormService.submit(this.lessons());
+    console.log('✅ Результат submit лекции:', result);
     if (result) {
+      console.log('📤 Эмитим lessonsChange');
       this.lessonsChange.emit(result);
     }
   }
@@ -213,5 +222,9 @@ export class TeacherLessonsViewComponent {
 
   getTeacherAssessmentsForLecture(lectureId: string): Assessment[] {
     return this.assessments().filter((a) => a.sourceId === lectureId && a.sourceType === 'LECTURE');
+  }
+
+  getTeacherAssessmentsForLesson(lessonId: string): Assessment[] {
+    return this.assessments().filter((a) => a.sourceId === lessonId && a.sourceType === 'LESSON');
   }
 }

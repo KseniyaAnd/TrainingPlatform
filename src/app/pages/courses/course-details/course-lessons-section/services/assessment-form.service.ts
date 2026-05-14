@@ -19,6 +19,8 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
   private readonly dataService = inject(CourseDataService);
 
   readonly lectureId = signal<string | null>(null);
+  readonly lessonId = signal<string | null>(null);
+  readonly sourceType = signal<'LESSON' | 'LECTURE'>('LECTURE');
 
   // AI generation state
   readonly useAi = signal(false);
@@ -43,6 +45,27 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
   openAddAssessment(lectureId: string): void {
     super.openAdd();
     this.lectureId.set(lectureId);
+    this.lessonId.set(null);
+    this.sourceType.set('LECTURE');
+    this.useAi.set(false);
+    this.isDraftMode.set(false);
+    this.draft.set(null);
+    this.aiQuestionCount.set(5);
+    this.aiDifficulty.set('MEDIUM');
+    this.form.reset({
+      title: '',
+      description: '',
+      questionsText: '',
+      answerKeyText: '',
+      rubricCriteriaText: '',
+    });
+  }
+
+  openAddAssessmentForLesson(lessonId: string): void {
+    super.openAdd();
+    this.lessonId.set(lessonId);
+    this.lectureId.set(null);
+    this.sourceType.set('LESSON');
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
@@ -59,7 +82,9 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
 
   openEditAssessment(assessment: Assessment): void {
     super.openEdit(assessment.id);
-    this.lectureId.set(assessment.lectureId ?? assessment.sourceId ?? null);
+    this.lectureId.set(assessment.lectureId ?? null);
+    this.lessonId.set(assessment.lessonId ?? null);
+    this.sourceType.set(assessment.sourceType === 'LESSON' ? 'LESSON' : 'LECTURE');
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
@@ -93,6 +118,8 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
   override cancel(): void {
     super.cancel();
     this.lectureId.set(null);
+    this.lessonId.set(null);
+    this.sourceType.set('LECTURE');
     this.useAi.set(false);
     this.isDraftMode.set(false);
     this.draft.set(null);
@@ -109,10 +136,15 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
   async generateDraft(courseId: string): Promise<void> {
     if (this.generatingDraft()) return;
     const lectureId = this.lectureId();
+    const lessonId = this.lessonId();
+    const sourceType = this.sourceType();
 
-    // Если нет lectureId, показываем предупреждение, но продолжаем
-    if (!lectureId) {
-      console.warn('⚠️ Генерация ассесмента без привязки к лекции');
+    // Определяем sourceId в зависимости от типа
+    const sourceId = sourceType === 'LESSON' ? lessonId : lectureId;
+
+    // Если нет sourceId, показываем предупреждение, но продолжаем
+    if (!sourceId) {
+      console.warn('⚠️ Генерация ассесмента без привязки к уроку/лекции');
     }
 
     this.setError(null);
@@ -120,7 +152,8 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
       this.generatingDraft.set(true);
       const payload: GenerateAssessmentDraftRequest = {
         courseId,
-        lectureId: lectureId ?? undefined,
+        sourceType,
+        sourceId: sourceId ?? undefined,
         questionCount: this.aiQuestionCount(),
         difficulty: this.aiDifficulty(),
       };
@@ -148,18 +181,25 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
     if (this.form.invalid || this.submitting()) return null;
 
     const lectureId = this.lectureId();
+    const lessonId = this.lessonId();
+    const sourceType = this.sourceType();
     const editingId = this.editingId();
 
-    // При создании нового ассесмента lectureId обязателен
-    // При редактировании - необязателен (ассесмент может быть привязан к уроку)
-    if (!editingId && !lectureId) {
-      this.setError('Lecture ID не найден. Невозможно создать ассесмент без привязки к лекции.');
+    // Определяем sourceId в зависимости от типа
+    const sourceId = sourceType === 'LESSON' ? lessonId : lectureId;
+
+    // При создании нового ассесмента sourceId обязателен
+    // При редактировании - необязателен
+    if (!editingId && !sourceId) {
+      this.setError(
+        'Source ID не найден. Невозможно создать ассесмент без привязки к уроку/лекции.',
+      );
       return null;
     }
 
     let questions = this.parseLines(this.form.controls['questionsText'].value);
     let answerKey = this.parseLines(this.form.controls['answerKeyText'].value);
-    let rubricCriteria = this.parseLines(this.form.controls['rubricCriteriaText'].value);
+    let rubricCriteria = this.parseRubricCriteria(this.form.controls['rubricCriteriaText'].value);
 
     if (!questions.length || !answerKey.length || !rubricCriteria.length) {
       this.setError('Вопросы, ответы и критерии обязательны');
@@ -201,13 +241,12 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
       } else {
         // Создание нового assessment
         console.log('➕ Создание нового ассесмента:', payload);
-        const created = await firstValueFrom(
-          this.dataService.createAssessment({
-            courseId,
-            lectureId: lectureId!,
-            ...payload,
-          }),
-        );
+        const createPayload = {
+          courseId,
+          ...(sourceType === 'LESSON' ? { lessonId: sourceId! } : { lectureId: sourceId! }),
+          ...payload,
+        };
+        const created = await firstValueFrom(this.dataService.createAssessment(createPayload));
         console.log('✅ Ассесмент создан:', created);
         this.cancel();
         return [created, ...currentAssessments];
@@ -226,6 +265,48 @@ export class AssessmentFormService extends BaseFormService<Assessment> {
       .split('\n')
       .map((l) => l.trim())
       .filter(Boolean);
+  }
+
+  /**
+   * Парсит критерии оценивания, группируя строки по номерам вопросов
+   * Например:
+   * "1. Вопрос 1 – 30 баллов.
+   * - Критерий 1 – 15 баллов.
+   * - Критерий 2 – 15 баллов.
+   * 2. Вопрос 2 – 30 баллов."
+   *
+   * Превращается в:
+   * ["1. Вопрос 1 – 30 баллов.\n- Критерий 1 – 15 баллов.\n- Критерий 2 – 15 баллов.",
+   *  "2. Вопрос 2 – 30 баллов."]
+   */
+  private parseRubricCriteria(raw: string): string[] {
+    const lines = raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const result: string[] = [];
+    let currentGroup: string[] = [];
+
+    for (const line of lines) {
+      // Проверяем, начинается ли строка с номера (например, "1.", "2.", "3.")
+      const startsWithNumber = /^\d+\./.test(line);
+
+      if (startsWithNumber && currentGroup.length > 0) {
+        // Начинается новая группа, сохраняем предыдущую
+        result.push(currentGroup.join('\n'));
+        currentGroup = [line];
+      } else {
+        // Продолжаем текущую группу
+        currentGroup.push(line);
+      }
+    }
+
+    // Добавляем последнюю группу
+    if (currentGroup.length > 0) {
+      result.push(currentGroup.join('\n'));
+    }
+
+    return result;
   }
 
   private joinLines(items: string[]): string {

@@ -28,35 +28,34 @@
         (tabChange)="switchTab($event)"
       />
 
+      <!-- Enrollment gate for unenrolled students -->
+      @if (isStudent() && !subscribed()) {
+        <section class="py-8">
+          <div class="max-w-2xl mx-auto text-center">
+            <i class="pi pi-lock text-6xl text-gray-900 mb-4"></i>
+            <h2 class="text-3xl font-bold text-gray-900 mb-3">Требуется подписка</h2>
+            <p class="text-lg text-gray-700 mb-6">
+              Чтобы получить доступ к урокам, лекциям и заданиям этого курса, необходимо подписаться
+              на него.
+            </p>
+            <app-button
+              type="button"
+              variant="primary"
+              size="md"
+              [disabled]="enrolling()"
+              (clicked)="toggleSubscribe()"
+              label="Подписаться на курс"
+            />
+
+            @if (enrollmentError()) {
+              <div class="mt-4 text-red-600">{{ enrollmentError() }}</div>
+            }
+          </div>
+        </section>
+      }
+
       <!-- Content tab (students always see this, teachers only when tab = content) -->
       @if (!canEditCourse() || state.activeTab() === 'content') {
-        <!-- Non-enrolled student gate -->
-        @if (isStudent() && !subscribed()) {
-          <section class="py-8">
-            <div class="max-w-2xl mx-auto text-center">
-              <i class="pi pi-lock text-6xl text-gray-900 mb-4"></i>
-              <h2 class="text-3xl font-bold text-gray-900 mb-3">Требуется подписка</h2>
-              <p class="text-lg text-gray-700 mb-6">
-                Чтобы получить доступ к урокам, лекциям и заданиям этого курса, необходимо
-                подписаться на него.
-              </p>
-              <app-button
-                type="button"
-                variant="primary"
-                size="md"
-                [disabled]="enrolling()"
-                (clicked)="toggleSubscribe()"
-                label="Подписаться на курс"
-              >
-              </app-button>
-
-              @if (enrollmentError()) {
-                <div class="mt-4 text-red-600">{{ enrollmentError() }}</div>
-              }
-            </div>
-          </section>
-        }
-
         <!-- Enrolled students & teachers -->
         @if (!isStudent() || subscribed()) {
           <app-course-lessons-section

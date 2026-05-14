@@ -38,14 +38,27 @@ export class CourseDataLoaderService {
    * Загрузить все данные курса
    * @param courseId ID курса
    * @param isStudent true если загружаем для студента
+   * @param loadFullData true если загружать полные данные (уроки, лекции и т.д.)
    * @returns CourseData или null если ошибка
    */
-  async loadCourseData(courseId: string, isStudent: boolean): Promise<CourseData | null> {
+  async loadCourseData(
+    courseId: string,
+    isStudent: boolean,
+    loadFullData: boolean = true,
+  ): Promise<CourseData | null> {
     this.loading.set(true);
     this.error.set(null);
 
     try {
       const course = await firstValueFrom(this.dataService.getCourse(courseId));
+
+      // Если не нужны полные данные, возвращаем только базовую информацию о курсе
+      if (!loadFullData) {
+        return {
+          course,
+          lessons: [],
+        };
+      }
 
       if (isStudent) {
         return await this.loadStudentData(courseId, course);
@@ -53,8 +66,17 @@ export class CourseDataLoaderService {
         return await this.loadTeacherData(courseId, course);
       }
     } catch (e: any) {
-      this.error.set(e instanceof Error ? e.message : 'Failed to load course');
-      return null;
+      // Для 403 (Forbidden) не устанавливаем ошибку - это нормально для неподписанного студента
+      // Для других ошибок устанавливаем сообщение об ошибке
+      const status = e?.status;
+      if (status === 403) {
+        console.log('403 Forbidden - студент не подписан на курс');
+        // Не устанавливаем error, чтобы показать заглушку подписки
+        return null;
+      } else {
+        this.error.set(e instanceof Error ? e.message : 'Failed to load course');
+        return null;
+      }
     } finally {
       this.loading.set(false);
     }

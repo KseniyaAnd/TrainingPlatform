@@ -32,6 +32,7 @@
           (edit)="startEditing(submission.id)"
           (save)="saveGrade(submission.id, $event)"
           (cancel)="cancelEditing()"
+          (viewDetails)="viewSubmissionDetails(submission)"
         ></tr>
       </ng-template>
     </p-table>
@@ -44,4 +45,20 @@
       </div>
     }
   }
+
+  <!-- Modal for viewing submission details -->
+  <p-dialog
+    [(visible)]="showDetailsModal"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [header]="'Подробный ответ студента'"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    @if (selectedSubmission) {
+      <div class="space-y-4">
+        {{ selectedSubmission.answerText }}
+      </div>
+    }
+  </p-dialog>
 </div>

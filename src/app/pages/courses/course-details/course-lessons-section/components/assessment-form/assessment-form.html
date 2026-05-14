@@ -21,7 +21,7 @@
   <!-- AI Draft Form -->
   @if (formService.useAi()) {
     <div class="flex flex-col gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-3" style="display: grid !important">
         <div class="flex flex-col gap-1">
           <label class="text-xs font-medium text-gray-700">Количество вопросов</label>
           <input
@@ -49,14 +49,12 @@
       <app-button
         type="button"
         variant="primary"
-        size="sm"
+        size="md"
+        label="Сгенерировать"
         [fullWidth]="true"
         [disabled]="formService.generatingDraft()"
         (clicked)="generateDraft()"
-        [style]="'background-color: #10b981; border-color: #10b981;'"
-      >
-        Сгенерировать
-      </app-button>
+      />
       @if (formService.isDraftMode()) {
         <div class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
           <i class="pi pi-info-circle"></i>
@@ -68,7 +66,7 @@
   }
 
   <div class="flex flex-col gap-2">
-    <label class="text-sm font-medium text-gray-700">Название assessment</label>
+    <label class="text-sm font-medium text-gray-700">Название задания</label>
     <input
       type="text"
       formControlName="title"
@@ -121,19 +119,19 @@
     <app-button
       type="submit"
       variant="primary"
-      size="sm"
+      size="md"
+      label="Сохранить задание"
       [disabled]="formService.submitting()"
-      [style]="'background-color: #10b981; border-color: #10b981;'"
-    >
-      Сохранить assessment
-    </app-button>
-    <app-button type="button" variant="outlined" size="sm" (clicked)="cancel()">
-      Отмена
-    </app-button>
+    />
+    <app-button type="button" variant="outlined" size="md" label="Отмена" (clicked)="cancel()" />
     @if (formService.editingId()) {
-      <app-button type="button" variant="danger" size="sm" (clicked)="deleteAssessment()">
-        Удалить assessment
-      </app-button>
+      <app-button
+        type="button"
+        variant="danger"
+        size="md"
+        label="Удалить задание"
+        (clicked)="deleteAssessment()"
+      />
     }
   </div>
 </form>

@@ -76,19 +76,42 @@ export class CourseAssessmentFormService extends BaseFormService<Assessment> {
     try {
       this.setSubmitting(true);
       const formValue = this.form.getRawValue();
+
+      const questions = formValue.questions
+        ? formValue.questions
+            .split('\n')
+            .map((q: string) => q.trim())
+            .filter(Boolean)
+        : [];
+      const answerKey = formValue.answerKey
+        ? formValue.answerKey
+            .split('\n')
+            .map((a: string) => a.trim())
+            .filter(Boolean)
+        : [];
+      const rubricCriteria = formValue.rubricCriteria
+        ? this.parseRubricCriteria(formValue.rubricCriteria)
+        : [];
+
+      // Проверяем, что массивы имеют одинаковую длину
+      if (questions.length !== answerKey.length || questions.length !== rubricCriteria.length) {
+        const minLength = Math.min(questions.length, answerKey.length, rubricCriteria.length);
+        this.setError(
+          `Количество вопросов (${questions.length}), ответов (${answerKey.length}) и критериев (${rubricCriteria.length}) должно совпадать. Будет использовано минимальное значение: ${minLength}`,
+        );
+        // Обрезаем до минимальной длины
+        questions.splice(minLength);
+        answerKey.splice(minLength);
+        rubricCriteria.splice(minLength);
+      }
+
       const payload = {
         courseId,
         title: formValue.title,
         description: formValue.description || '',
-        questions: formValue.questions
-          ? formValue.questions.split('\n').filter((q: string) => q.trim())
-          : [],
-        answerKey: formValue.answerKey
-          ? formValue.answerKey.split('\n').filter((a: string) => a.trim())
-          : [],
-        rubricCriteria: formValue.rubricCriteria
-          ? formValue.rubricCriteria.split('\n').filter((r: string) => r.trim())
-          : [],
+        questions,
+        answerKey,
+        rubricCriteria,
       };
 
       const editingId = this.editingId();
@@ -137,12 +160,7 @@ export class CourseAssessmentFormService extends BaseFormService<Assessment> {
    * Сгенерировать assessment с помощью AI
    */
   async generateAssessmentWithAI(courseId: string): Promise<void> {
-    const title = this.form.controls['title'].value.trim();
-
-    if (!title) {
-      this.setError('Пожалуйста, введите название assessment перед генерацией');
-      return;
-    }
+    console.log('🔍 Начало генерации assessment с AI');
 
     this.generatingWithAI.set(true);
     this.setError(null);
@@ -151,19 +169,25 @@ export class CourseAssessmentFormService extends BaseFormService<Assessment> {
       const questionCount = this.form.controls['questionCount'].value;
       const difficulty = this.form.controls['difficulty'].value;
 
+      console.log('🚀 Генерация assessment с AI:', { courseId, questionCount, difficulty });
+
       const draft = await firstValueFrom(
         this.dataService.generateAssessmentDraft({
           courseId,
+          sourceType: 'LESSON', // По умолчанию для курсовых ассессментов
+          sourceId: undefined, // Не привязан к конкретному уроку
           questionCount,
           difficulty,
         }),
       );
 
+      console.log('✅ Получен черновик assessment:', draft);
+
       // Заполняем форму сгенерированными данными
       this.form.patchValue(
         {
-          title: draft.title || title,
-          description: draft.description,
+          title: draft.title || '',
+          description: draft.description || '',
           questions: this.joinLines(draft.questions ?? []),
           answerKey: this.joinLines(draft.answerKey ?? []),
           rubricCriteria: this.joinLines(draft.rubricCriteria ?? []),
@@ -171,6 +195,7 @@ export class CourseAssessmentFormService extends BaseFormService<Assessment> {
         { emitEvent: false },
       );
     } catch (e) {
+      console.error('❌ Ошибка генерации assessment:', e);
       this.setError('Не удалось сгенерировать assessment с помощью AI');
     } finally {
       this.generatingWithAI.set(false);
@@ -182,5 +207,47 @@ export class CourseAssessmentFormService extends BaseFormService<Assessment> {
    */
   private joinLines(items: string[]): string {
     return (items ?? []).join('\n');
+  }
+
+  /**
+   * Парсит критерии оценивания, группируя строки по номерам вопросов
+   * Например:
+   * "1. Вопрос 1 – 30 баллов.
+   * - Критерий 1 – 15 баллов.
+   * - Критерий 2 – 15 баллов.
+   * 2. Вопрос 2 – 30 баллов."
+   *
+   * Превращается в:
+   * ["1. Вопрос 1 – 30 баллов.\n- Критерий 1 – 15 баллов.\n- Критерий 2 – 15 баллов.",
+   *  "2. Вопрос 2 – 30 баллов."]
+   */
+  private parseRubricCriteria(raw: string): string[] {
+    const lines = raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const result: string[] = [];
+    let currentGroup: string[] = [];
+
+    for (const line of lines) {
+      // Проверяем, начинается ли строка с номера (например, "1.", "2.", "3.")
+      const startsWithNumber = /^\d+\./.test(line);
+
+      if (startsWithNumber && currentGroup.length > 0) {
+        // Начинается новая группа, сохраняем предыдущую
+        result.push(currentGroup.join('\n'));
+        currentGroup = [line];
+      } else {
+        // Продолжаем текущую группу
+        currentGroup.push(line);
+      }
+    }
+
+    // Добавляем последнюю группу
+    if (currentGroup.length > 0) {
+      result.push(currentGroup.join('\n'));
+    }
+
+    return result;
   }
 }
